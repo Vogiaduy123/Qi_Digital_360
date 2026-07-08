@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Virtual Tour Qi</title>
+  <script src="/js/admin-runtime-config.js"></script>
+  <script src="/js/admin-api-base.js"></script>
+  <link rel="stylesheet" href="/css/admin-dashboard.css">
+  <link rel="stylesheet" href="/css/admin-header.css">
+</head>
+<body>
+  <div class="dash-bg" aria-hidden="true"></div>
+
+  <div class="dash-page">
+    <header class="dash-header dash-header--nav">
+      <div class="admin-header" id="adminHeaderMount" style="background:transparent;border:none;box-shadow:none;padding:0;position:static;"></div>
+      <script src="/js/admin-nav.js"></script>
+    </header>
+
+    <main class="dash-main">
+      <div class="dash-hero">
+        <h2>Dashboard</h2>
+        <p>Quản lý toàn bộ virtual tour — tòa nhà, phòng 360°, hotspot, minimap và kịch bản tự động.</p>
+      </div>
+
+      <div class="dash-stats" id="dashStats">
+        <div class="dash-stat">
+          <div class="dash-stat__icon dash-stat__icon--blue">🏢</div>
+          <div>
+            <div class="dash-stat__value" id="statBuildings">—</div>
+            <div class="dash-stat__label">Tòa nhà</div>
+          </div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat__icon dash-stat__icon--green">🏠</div>
+          <div>
+            <div class="dash-stat__value" id="statRooms">—</div>
+            <div class="dash-stat__label">Phòng 360°</div>
+          </div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat__icon dash-stat__icon--purple">📤</div>
+          <div>
+            <div class="dash-stat__value" id="statHotspots">—</div>
+            <div class="dash-stat__label">Hotspot</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="dash-section-title">Công cụ quản lý</p>
+      <nav class="dash-grid" aria-label="Menu quản lý">
+        <a href="/admin/buildings.html" class="dash-card dash-card--buildings">
+          <div class="dash-card__icon">🏢</div>
+          <div class="dash-card__body">
+            <div class="dash-card__title">Cấu trúc Tòa nhà</div>
+            <div class="dash-card__desc">Quản lý và nhóm các phòng theo tòa nhà</div>
+          </div>
+          <span class="dash-card__arrow">→</span>
+        </a>
+
+        <a href="/admin/upload.html" class="dash-card dash-card--upload">
+          <div class="dash-card__icon">📤</div>
+          <div class="dash-card__body">
+            <div class="dash-card__title">Upload Panorama</div>
+            <div class="dash-card__desc">Tải lên ảnh 360° mới cho phòng</div>
+          </div>
+          <span class="dash-card__arrow">→</span>
+        </a>
+
+        <a href="/admin/rooms.html" class="dash-card dash-card--rooms">
+          <div class="dash-card__icon">🏠</div>
+          <div class="dash-card__body">
+            <div class="dash-card__title">Quản lý Phòng</div>
+            <div class="dash-card__desc">Thêm hotspot, tư liệu, mail và cảm biến</div>
+          </div>
+          <span class="dash-card__arrow">→</span>
+        </a>
+
+        <a href="/admin/minimap.html" class="dash-card dash-card--minimap">
+          <div class="dash-card__icon">🗺️</div>
+          <div class="dash-card__body">
+            <div class="dash-card__title">Minimap</div>
+            <div class="dash-card__desc">Chỉnh sửa bản đồ và vị trí phòng</div>
+          </div>
+          <span class="dash-card__arrow">→</span>
+        </a>
+
+        <a href="/admin/tour.html" class="dash-card dash-card--tour">
+          <div class="dash-card__icon">⚡</div>
+          <div class="dash-card__body">
+            <div class="dash-card__title">Kịch bản Auto Tour</div>
+            <div class="dash-card__desc">Tạo lộ trình tour tự động</div>
+          </div>
+          <span class="dash-card__arrow">→</span>
+        </a>
+
+        <a href="/" class="dash-card dash-card--view">
+          <div class="dash-card__icon">👁️</div>
+          <div class="dash-card__body">
+            <div class="dash-card__title">Xem Tour</div>
+            <div class="dash-card__desc">Trải nghiệm virtual tour như người dùng</div>
+          </div>
+          <span class="dash-card__arrow">→</span>
+        </a>
+      </nav>
+    </main>
+
+    <footer class="dash-footer">
+      Qi Technologies · Virtual Tour Manager
+    </footer>
+  </div>
+
+  <script>
+    (async function loadStats() {
+      try {
+        const [roomsRes, buildingsRes] = await Promise.all([
+          fetch('/api/rooms'),
+          fetch('/api/admin/buildings')
+        ]);
+        const rooms = await roomsRes.json();
+        const buildingsData = await buildingsRes.json();
+        const buildings = buildingsData.success ? buildingsData.buildings : [];
+
+        let hotspotCount = 0;
+        if (Array.isArray(rooms)) {
+          rooms.forEach(r => {
+            hotspotCount += (r.hotspots?.length || 0)
+              + (r.mediaHotspots?.length || 0)
+              + (r.mailHotspots?.length || 0);
+          });
+          document.getElementById('statRooms').textContent = rooms.length;
+        }
+
+        document.getElementById('statBuildings').textContent = buildings.length;
+        document.getElementById('statHotspots').textContent = hotspotCount;
+      } catch (e) {
+        console.warn('Could not load dashboard stats:', e);
+      }
+    })();
+  </script>
+</body>
+</html>

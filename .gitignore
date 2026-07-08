@@ -1,0 +1,16 @@
+node_modules
+dist
+.env
+.env.*
+!.env.example
+
+# Local storage and temporary files
+uploads/
+backend/tiles/
+backend/raw/
+
+# Logs and environment configs
+*.log
+.gemini/
+.agents/
+.vscode/

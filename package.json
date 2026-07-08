@@ -1,0 +1,31 @@
+{
+  "name": "virtual-tour",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "build": "vite build",
+    "dev:ui": "vite",
+    "build:ui": "vite build",
+    "dev": "concurrently \"npm start\" \"npm run dev:ui\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "multer": "^2.0.2",
+    "nodemailer": "^6.10.1",
+    "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "vite": "^8.0.0"
+  }
+}

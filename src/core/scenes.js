@@ -1,0 +1,79 @@
+const scenes = {};
+const roomsData = {};
+
+let env = {
+  getViewer: () => null,
+  switchRoom: (id) => {}
+};
+
+export function initScenesFeature(dependencies) {
+  env = { ...env, ...dependencies };
+}
+
+export function getScenes() { 
+  return scenes; 
+}
+
+export function getRoomsData() { 
+  return roomsData; 
+}
+
+export function initRooms(rooms, roomSelectEl) {
+  // Reset roomsData
+  Object.keys(roomsData).forEach(k => delete roomsData[k]);
+
+  // Rebuild room dropdown
+  if (roomSelectEl) roomSelectEl.innerHTML = "";
+
+  const viewer = env.getViewer();
+
+  rooms.forEach(room => {
+    roomsData[room.id] = room;
+
+    // Create scene if new
+    if (!scenes[room.id]) {
+      let source, geometry;
+
+      if (room.tilesConfig && room.tilesConfig.levels && room.tilesPath) {
+        // Multi-resolution Tile Pyramid
+        let basePath = room.tilesPath;
+        if (basePath.startsWith('http')) {
+          // Full Supabase Storage URL — dùng trực tiếp
+          // basePath đã là https://...supabase.co/.../tiles/room_id
+        } else if (!basePath.startsWith('/')) {
+          // Relative path cũ (legacy local) — prefix /backend/
+          basePath = '/backend/' + basePath;
+        }
+        
+        // Marzipano Multi-Res Equirectangular support
+        source = Marzipano.ImageUrlSource.fromString(basePath + "/{z}/{y}/{x}.jpg");
+        geometry = new Marzipano.EquirectGeometry(room.tilesConfig.levels);
+      } else {
+        // Legacy single image fallback
+        const imageUrl = room.image.startsWith('http') ? room.image : window.location.origin + room.image;
+        source = Marzipano.ImageUrlSource.fromString(imageUrl);
+        geometry = new Marzipano.EquirectGeometry([{ width: 4000 }]);
+      }
+
+      const view = new Marzipano.RectilinearView({ fov: Math.PI / 2 });
+
+      const scene = viewer.createScene({ source, geometry, view });
+      scenes[room.id] = scene;
+    }
+
+    // Room option
+    if (roomSelectEl) {
+      const option = document.createElement("option");
+      option.value = room.id;
+      option.textContent = room.name;
+      roomSelectEl.appendChild(option);
+    }
+  });
+
+  // Add change event listener via onchange to prevent duplicate listeners
+  if (roomSelectEl) {
+    roomSelectEl.onchange = (e) => {
+      env.switchRoom(parseInt(e.target.value));
+    };
+  }
+}

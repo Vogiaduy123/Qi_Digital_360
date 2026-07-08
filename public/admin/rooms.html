@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Phòng - Admin</title>
+  <script src="/js/admin-runtime-config.js"></script>
+  <script src="/js/admin-api-base.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+  <link rel="stylesheet" href="/css/admin-rooms.css?v=3">
+  <style>
+    /* Styling for dragging hotspot (no pulsing/scaling) */
+    .pnlm-custom-nav-hotspot.moving-active,
+    .pnlm-custom-media-hotspot.moving-active {
+      box-shadow: 0 0 0 4px #2563eb, 0 0 20px rgba(37, 99, 235, 0.8);
+      border-radius: 50%;
+      z-index: 999999 !important;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Background -->
+  <div class="app-bg"></div>
+
+  <!-- App Root -->
+  <div class="app-root">
+
+    <!-- ===== ICON SIDEBAR (LEFT) ===== -->
+    <nav class="icon-sidebar">
+      <!-- Logo -->
+      <a class="logo-btn" href="/admin/index.html" title="Dashboard">
+        <img src="/images/logo-qi.png" alt="Qi">
+      </a>
+
+      <!-- Nav/Tab icons -->
+      <button class="icon-btn active" onclick="switchTab('rooms')" title="Danh sách Phòng">
+        <span class="ico">🏠</span>
+        <span class="icon-label">Phòng</span>
+      </button>
+      <button class="icon-btn" onclick="switchTab('transitions')" title="Hotspot Di chuyển">
+        <span class="ico">🔀</span>
+        <span class="icon-label">H.Spot</span>
+      </button>
+      <button class="icon-btn" onclick="switchTab('media')" title="Tư liệu Phòng">
+        <span class="ico">📂</span>
+        <span class="icon-label">T.Liệu</span>
+      </button>
+      <button class="icon-btn" onclick="switchTab('mail')" title="Ghi chú & Mail">
+        <span class="ico">✉</span>
+        <span class="icon-label">Mail</span>
+      </button>
+      <button class="icon-btn" onclick="switchTab('sensors')" title="Cảm biến IoT">
+        <span class="ico">📶</span>
+        <span class="icon-label">Sens</span>
+      </button>
+
+      <a href="/" class="icon-btn" title="Xem Tour">
+        <span class="ico">👁</span>
+        <span class="icon-label">Xem</span>
+      </a>
+    </nav>
+
+    <!-- ===== MIDDLE CONFIGURATION PANEL (LEFT SIDEBAR) ===== -->
+    <aside class="rooms-panel">
+
+      <!-- Shared room list — always visible across all tabs -->
+      <div class="rooms-shared">
+        <div class="rooms-search-bar">
+          <span class="search-label">Phòng</span>
+          <input type="text" class="search-input" id="roomSearchInput" placeholder="Tìm kiếm..." oninput="filterRoomsBySearch(this.value)">
+        </div>
+
+        <div class="rooms-panel-heading">
+          <h2>Danh sách Phòng</h2>
+          <div class="rooms-meta-row">
+            <span class="rooms-count" id="roomsCountLabel">0 phòng</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <select id="filterBuilding" onchange="renderRooms()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--text);font-size:11px;padding:4px 8px;outline:none;cursor:pointer;font-family:inherit;">
+                <option value="">Tất cả tòa nhà</option>
+                <option value="none">Phòng rời</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="rooms-list-wrap rooms-shared-list">
+          <div id="roomsList">
+            <div class="empty-state">
+              <div class="empty-state-icon">📭</div>
+              <p>Chưa có phòng nào</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="fab-btn" id="fabAddRoom" title="Thêm phòng mới" onclick="openAddRoomModal()">
+          +
+        </button>
+      </div>
+
+      <!-- Tab-specific content (shown when not on Phòng tab) -->
+      <div class="rooms-tab-content">
+
+      <!-- === TAB 2: MOVE HOTSPOTS === -->
+      <div class="sub-panel" id="panel-transitions">
+        <div class="rooms-panel-heading">
+          <h2>Hotspot Di chuyển</h2>
+          <span class="rooms-count" id="transitionsCountLabel">0 hotspot</span>
+        </div>
+        <div class="rooms-list-wrap">
+          <div id="transitionsActiveRoomInfo" style="margin-bottom:12px;font-size:12px;color:var(--text-muted);"></div>
+          
+          <button type="button" class="btn btn-primary" id="addHotspotBtn" style="margin-bottom:15px;width:100%;">➕ Thêm điểm di chuyển</button>
+          
+          <div class="hotspots-list" id="hotspotsList">
+            <div class="empty-state compact">Chọn phòng để quản lý hotspot</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === TAB 3: MEDIA / TƯ LIỆU === -->
+      <div class="sub-panel" id="panel-media">
+        <div class="rooms-panel-heading">
+          <h2>Tư liệu của Phòng</h2>
+          <span class="rooms-count" id="mediaCountLabel">0 tư liệu</span>
+        </div>
+        <div class="rooms-list-wrap">
+          <div id="mediaActiveRoomInfo" style="margin-bottom:15px;font-size:12px;color:var(--text-muted);"></div>
+
+          <button type="button" class="btn btn-edit" id="addMediaBtn" style="margin-bottom:15px;width:100%;">📁 Thêm tài liệu / hình ảnh</button>
+
+          <div class="hotspots-list" id="mediaHotspotsList">
+            <div class="empty-state">Chọn phòng để quản lý tư liệu</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === TAB 4: MAIL HOTSPOTS === -->
+      <div class="sub-panel" id="panel-mail">
+        <div class="rooms-panel-heading">
+          <h2>Ghi chú & Gửi Mail</h2>
+          <span class="rooms-count" id="mailCountLabel">0 h.spot</span>
+        </div>
+        <div class="rooms-list-wrap">
+          <div id="mailActiveRoomInfo" style="margin-bottom:15px;font-size:12px;color:var(--text-muted);"></div>
+
+          <button type="button" class="btn btn-success" id="addMailBtn" onclick="openAddMailModal()" style="margin-bottom:15px;width:100%;">✉️ Thêm điểm gửi mail</button>
+
+          <div class="hotspots-list" id="mailHotspotsList">
+            <div class="empty-state">Chọn phòng để quản lý điểm mail</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === TAB 5: ENVIRONMENT SENSORS === -->
+      <div class="sub-panel" id="panel-sensors">
+        <div class="rooms-panel-heading">
+          <h2>Cảm biến IoT</h2>
+          <div class="rooms-meta-row">
+            <span class="rooms-count" id="sensorsCountLabel">0 thiết bị</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span id="autoRefreshStatus" style="font-size:11px;color:rgba(200,210,230,0.5);">🔄 OFF</span>
+              <button class="btn btn-small" onclick="toggleAutoRefresh()" style="background:rgba(255,255,255,0.08);color:var(--text-muted);border:none;margin:0;font-size:10px;padding:4px 8px;">Toggle</button>
+            </div>
+          </div>
+        </div>
+        <div class="rooms-list-wrap">
+          <div id="sensorsActiveRoomInfo" style="margin-bottom:15px;font-size:12px;color:var(--text-muted);"></div>
+
+          <button type="button" class="btn btn-success" id="addSensorBtn" style="margin-bottom:15px;width:100%;">🌡️ Thêm thiết bị IoT</button>
+
+          <div id="sensorsList">
+            <div class="empty-state">Chọn phòng để quản lý cảm biến</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === TAB 6: MINIMAP CONFIG === -->
+      <div class="sub-panel" id="panel-minimap">
+        <div class="rooms-panel-heading">
+          <h2>Sơ đồ Minimap</h2>
+        </div>
+        <div class="rooms-list-wrap">
+          <p style="font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:15px;">
+            Thiết lập sơ đồ mặt bằng và định vị vị trí phòng. Click để mở trang quản lý sơ đồ tổng quát:
+          </p>
+          <a href="/admin/minimap.html" class="btn btn-primary" style="display:block;text-align:center;text-decoration:none;line-height:1.8;">🗺️ Mở Trình Quản Lý Minimap</a>
+        </div>
+      </div>
+
+      </div><!-- /.rooms-tab-content -->
+      
+    </aside>
+
+    <!-- ===== MAIN PANEL (PANORAMA VIEWER) ===== -->
+    <main class="main-panel">
+      <!-- Top bar -->
+      <header class="main-header">
+        <a class="main-header-logo" href="/admin/index.html" title="Dashboard">
+          <img src="/images/logo-qi.png" alt="Qi" onerror="this.style.display='none'">
+          <span>VR Admin</span>
+        </a>
+        <div class="main-header-spacer"></div>
+        <nav class="main-header-nav">
+          <a href="/admin/buildings.html">🏢 Tòa nhà</a>
+          <a href="/admin/upload.html">📤 Upload</a>
+          <a href="/admin/rooms.html" class="active">🚪 Phòng</a>
+          <a href="/admin/minimap.html">🗺️ Minimap</a>
+          <a href="/admin/tour.html">⚡ Kịch bản</a>
+          <a href="/" class="main-header-nav-tour">👁️ Xem Tour</a>
+        </nav>
+      </header>
+
+      <!-- Main content -->
+      <div class="main-content" style="padding:0;display:flex;flex-direction:column;height:100%;">
+        
+        <!-- Room Info Panel Overlay (Sticky top bar for selected room) -->
+        <div id="roomEditTopBar" style="display:none;background:rgba(10,12,18,0.85);border-bottom:1px solid var(--border);padding:10px 20px;align-items:center;gap:12px;z-index:100;backdrop-filter:blur(10px);">
+          <span style="font-size:14px;font-weight:700;color:#fff;" id="currentRoomTitle">🏠 Chọn phòng để chỉnh sửa</span>
+          <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end;">
+            <div class="building-row" style="margin-bottom:0;padding:4px 8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px;">
+              <label style="font-size:11px;">Tòa nhà:</label>
+              <select id="editRoomBuilding" style="padding:4px 8px;font-size:11px;background:none;border:none;color:#fff;outline:none;">
+                <option value="">-- Phòng rời --</option>
+              </select>
+            </div>
+            <button class="btn btn-small btn-primary" onclick="saveRoomBuilding()" style="margin:0;padding:6px 12px;font-size:11px;">💾 Đổi</button>
+          </div>
+        </div>
+
+        <!-- Empty state message -->
+        <div id="selectedRoomInfo" class="empty-state" style="padding: 120px 20px;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;">
+          <div class="empty-state-icon">👆</div>
+          <p style="font-size:16px;font-weight:600;color:rgba(200,210,230,0.6);margin-bottom:6px;">Chọn phòng từ danh sách bên trái</p>
+          <p style="font-size:13px;color:var(--text-muted);">Hoặc chuyển đổi các tab để quản lý các tính năng liên quan.</p>
+        </div>
+
+        <!-- Panorama Viewport (Expands fully when room is active) -->
+        <div id="panoramaViewerWrapper" style="display:none;flex:1;position:relative;width:100%;height:100%;">
+          <!-- Drag Hotspot Instruction Banner -->
+          <div id="hotspotMoveBanner" style="display:none;position:absolute;top:15px;left:50%;transform:translateX(-50%);background:rgba(37,99,235,0.9);color:white;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 4px 15px rgba(0,0,0,0.35);backdrop-filter:blur(6px);align-items:center;gap:12px;border:1px solid rgba(255,255,255,0.15);">
+            <span>📍 Chế độ di chuyển Hotspot: Nhấp và Kéo thả hotspot để chọn vị trí mới.</span>
+            <button onclick="finishMoveHotspot()" style="background:white;color:#2563eb;border:none;padding:5px 14px;border-radius:15px;font-weight:bold;cursor:pointer;font-size:12px;transition:all 0.15s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Hoàn tất</button>
+          </div>
+          <!-- Drag Media Hotspot Instruction Banner -->
+          <div id="mediaHotspotMoveBanner" style="display:none;position:absolute;top:15px;left:50%;transform:translateX(-50%);background:rgba(37,99,235,0.9);color:white;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 4px 15px rgba(0,0,0,0.35);backdrop-filter:blur(6px);align-items:center;gap:12px;border:1px solid rgba(255,255,255,0.15);">
+            <span>📍 Chế độ di chuyển Tư liệu: Nhấp và Kéo thả tư liệu để chọn vị trí mới.</span>
+            <button onclick="finishMoveMediaHotspot()" style="background:white;color:#2563eb;border:none;padding:5px 14px;border-radius:15px;font-weight:bold;cursor:pointer;font-size:12px;transition:all 0.15s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Hoàn tất</button>
+          </div>
+          <div id="panoramaViewer" style="width:100%;height:100%;background:#050608;"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== MODALS ===== -->
+
+  <!-- Add Room Modal -->
+  <div class="modal" id="addRoomModal">
+    <div class="modal-content" style="max-width:420px;">
+      <div class="modal-header">
+        <h3>➕ Thêm Phòng Mới</h3>
+        <button class="close-modal" type="button" onclick="document.getElementById('addRoomModal').classList.remove('active')">&times;</button>
+      </div>
+      <form id="addRoomForm" onsubmit="submitAddRoom(event)">
+        <div class="form-group">
+          <label>Tên phòng</label>
+          <input type="text" id="newRoomName" placeholder="Ví dụ: Cổng vào, Sảnh chính..." required>
+        </div>
+        <div class="form-group">
+          <label>Tòa nhà</label>
+          <select id="newRoomBuilding">
+            <option value="">-- Phòng rời (không có) --</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button type="submit" class="btn btn-primary" style="flex:1;margin-bottom:0;">✅ Tạo phòng</button>
+          <button type="button" class="btn" onclick="document.getElementById('addRoomModal').classList.remove('active')" style="flex:1;margin-bottom:0;background:rgba(255,255,255,0.07);color:var(--text-muted);">Hủy</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Sensor Modal -->
+  <div class="modal" id="sensorModal">
+    <div class="modal-content" style="max-width:700px;max-height:90vh;overflow-y:auto;">
+      <div class="modal-header">
+        <h3 id="sensorModalTitle">🌡️ Thêm Thiết bị IoT</h3>
+        <button class="close-modal" type="button" onclick="closeSensorModal()">&times;</button>
+      </div>
+
+      <form id="sensorForm">
+        <div class="form-group">
+          <label>Tên cảm biến:</label>
+          <input type="text" id="sensorName" placeholder="Ví dụ: Cảm biến phòng khách" required>
+        </div>
+
+        <div class="form-group">
+          <label>Loại thiết bị:</label>
+          <select id="sensorType" onchange="toggleSensorFields()">
+            <option value="environment">🌡️ Cảm biến môi trường (Nhiệt độ, Độ ẩm, PM2.5)</option>
+            <option value="camera">📹 Camera IoT</option>
+          </select>
+        </div>
+
+        <input type="hidden" id="sensorYaw" value="0">
+        <input type="hidden" id="sensorPitch" value="0">
+
+        <!-- API Configuration Section -->
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:15px;margin-bottom:15px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <h4 style="margin:0;font-size:14px;color:#fff;">⚙️ Cấu hình API cho phòng này</h4>
+            <button type="button" id="toggleApiConfig" onclick="toggleApiConfigSection()" style="padding:6px 12px;background:rgba(37,99,235,0.2);color:var(--accent-light);border:1px solid rgba(37,99,235,0.3);border-radius:4px;cursor:pointer;font-size:12px;">📝 Chỉnh sửa</button>
+          </div>
+
+          <div id="apiConfigSection" style="display:none;">
+            <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:12px;margin-bottom:10px;">
+              <h5 style="margin:0 0 10px;font-size:13px;color:#93c5fd;">🌤️ OpenWeatherMap API</h5>
+              <div style="margin-bottom:8px;">
+                <label style="display:block;margin-bottom:3px;font-size:11px;font-weight:600;color:var(--text-muted);">API URL:</label>
+                <input type="text" id="roomWeatherUrl" placeholder="https://api.openweathermap.org/data/2.5/weather">
+              </div>
+              <div style="margin-bottom:8px;">
+                <label style="display:block;margin-bottom:3px;font-size:11px;font-weight:600;color:var(--text-muted);">API Key:</label>
+                <input type="text" id="roomWeatherApiKey" placeholder="Nhập API key">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div>
+                  <label style="display:block;margin-bottom:3px;font-size:11px;font-weight:600;color:var(--text-muted);">Vĩ độ:</label>
+                  <input type="number" id="roomWeatherLat" step="0.0001" value="10.7769">
+                </div>
+                <div>
+                  <label style="display:block;margin-bottom:3px;font-size:11px;font-weight:600;color:var(--text-muted);">Kinh độ:</label>
+                  <input type="number" id="roomWeatherLon" step="0.0001" value="106.7009">
+                </div>
+              </div>
+            </div>
+
+            <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:12px;">
+              <h5 style="margin:0 0 10px;font-size:13px;color:#fbbf24;">💨 WAQI API</h5>
+              <div style="margin-bottom:8px;">
+                <label style="display:block;margin-bottom:3px;font-size:11px;font-weight:600;color:var(--text-muted);">API URL:</label>
+                <input type="text" id="roomAirUrl" placeholder="https://api.waqi.info/feed/@13659/">
+              </div>
+              <div>
+                <label style="display:block;margin-bottom:3px;font-size:11px;font-weight:600;color:var(--text-muted);">API Token:</label>
+                <input type="text" id="roomAirToken" placeholder="Nhập token">
+              </div>
+            </div>
+          </div>
+
+          <div id="apiConfigSummary" style="font-size:12px;color:var(--text-muted);">
+            <p style="margin:5px 0;">🌤️ Weather: <span id="summaryWeatherStatus">Chưa cấu hình</span></p>
+            <p style="margin:5px 0;">💨 Air Quality: <span id="summaryAirStatus">Chưa cấu hình</span></p>
+          </div>
+        </div>
+
+        <!-- Environment Sensor Fields -->
+        <div id="environmentFields">
+          <div class="form-group">
+            <label style="display:flex;justify-content:space-between;align-items:center;">
+              <span>Dữ liệu môi trường:</span>
+              <button type="button" class="btn btn-small btn-success" onclick="fetchRealWeatherData()" style="margin:0;">🌍 Lấy thực</button>
+            </label>
+            <div id="weatherDataInfo" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;font-size:12px;color:var(--text-muted);min-height:20px;"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Nhiệt độ (°C):</label>
+            <input type="number" id="sensorTemp" min="0" max="50" step="0.1" value="25">
+          </div>
+          <div class="form-group">
+            <label>Độ ẩm (%):</label>
+            <input type="number" id="sensorHumidity" min="0" max="100" step="1" value="60">
+          </div>
+          <div class="form-group">
+            <label>PM2.5 (µg/m³):</label>
+            <input type="number" id="sensorPM25" min="0" max="500" step="0.1" value="25">
+          </div>
+        </div>
+
+        <!-- Camera Fields -->
+        <div id="cameraFields" style="display:none;">
+          <div class="form-group">
+            <label style="display:flex;align-items:center;gap:10px;">
+              <input type="checkbox" id="useWebcam" onchange="toggleWebcam()" style="width:auto;margin:0;">
+              <span>💻 Sử dụng Webcam Laptop (Test)</span>
+            </label>
+            <div id="webcamPreview" style="display:none;margin-top:10px;text-align:center;">
+              <video id="webcamVideo" autoplay playsinline muted style="width:100%;max-width:400px;border-radius:8px;border:2px solid var(--accent);"></video>
+              <div style="margin-top:8px;">
+                <button type="button" class="btn btn-small btn-success" onclick="startWebcam()" style="margin:0 5px;">▶️ Bật Webcam</button>
+                <button type="button" class="btn btn-small btn-danger" onclick="stopWebcam()" style="margin:0 5px;">⏹️ Tắt Webcam</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" id="manualCameraUrlGroup">
+            <label>📡 URL Stream Camera:</label>
+            <input type="text" id="cameraStreamUrl" placeholder="https://camera-gateway.local/live/cam01/whep">
+          </div>
+
+          <div class="form-group">
+            <label>📸 URL Ảnh Snapshot:</label>
+            <input type="text" id="cameraSnapshotUrl" placeholder="http://192.168.1.100/snapshot.jpg">
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-small btn-edit" onclick="previewCameraStream()" style="margin:0;">🎥 Xem stream</button>
+              <button type="button" class="btn btn-small" onclick="checkCameraStreamUrl()" style="margin:0;background:rgba(139,92,246,0.2);color:#a78bfa;border:1px solid rgba(139,92,246,0.3);">📡 Kiểm tra URL</button>
+            </div>
+            <div id="cameraConnectionStatus" style="margin-top:8px;font-size:12px;color:var(--text-muted);min-height:18px;"></div>
+            <div id="snapshotPreviewWrapper" style="display:none;margin-top:10px;border:1px solid var(--border);border-radius:8px;padding:8px;background:rgba(255,255,255,0.03);min-height:120px;"></div>
+          </div>
+
+          <div class="form-group">
+            <label>📐 Độ phân giải:</label>
+            <select id="cameraResolution">
+              <option value="1920x1080">1920x1080 (Full HD)</option>
+              <option value="1280x720">1280x720 (HD)</option>
+              <option value="640x480">640x480 (VGA)</option>
+              <option value="3840x2160">3840x2160 (4K)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>🔌 Trạng thái:</label>
+            <select id="cameraStatus">
+              <option value="online">🟢 Online</option>
+              <option value="offline">🔴 Offline</option>
+              <option value="maintenance">🟡 Bảo trì</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>📝 Ghi chú:</label>
+            <textarea id="cameraNotes" rows="3" placeholder="Thông tin bổ sung về camera..."></textarea>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;">
+          <button type="submit" class="btn btn-success" style="flex:1;margin-bottom:0;">💾 Lưu</button>
+          <button type="button" class="btn" onclick="closeSensorModal()" style="flex:1;margin-bottom:0;background:rgba(255,255,255,0.07);color:var(--text-muted);">Hủy</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Hotspot Modal -->
+  <div class="modal" id="hotspotModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Thêm Hotspot</h3>
+        <button class="close-modal" type="button" onclick="closeHotspotModal()">&times;</button>
+      </div>
+      <form id="hotspotForm">
+        <div class="form-group">
+          <label>Phòng đích</label>
+          <select id="targetRoom">
+            <option value="">-- Chọn phòng đích --</option>
+          </select>
+        </div>
+        <!-- Hidden Yaw and Pitch fields as they are edited via drag and drop now -->
+        <div style="display: none;">
+          <div class="form-group">
+            <label>Góc Yaw (-180 - 180°)</label>
+            <input type="number" id="yaw" min="-180" max="180" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Góc Pitch (-90 - 90°)</label>
+            <input type="number" id="pitch" min="-90" max="90" step="0.01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Xoay (0 - 360°)</label>
+          <input type="number" id="rotation" min="0" max="360" step="0.01" value="0">
+        </div>
+        <div class="form-group">
+          <label>Màu sắc</label>
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+            <input type="text" id="color" placeholder="#ff0000" value="#ff0000">
+            <input type="color" id="colorPicker" value="#ff0000" style="width:42px;height:38px;cursor:pointer;border:none;border-radius:6px;background:none;">
+          </div>
+          <div>
+            <div class="color-swatch" data-color="#ff0000" style="background:#ff0000;" title="Đỏ"></div>
+            <div class="color-swatch" data-color="#00ff00" style="background:#00ff00;" title="Xanh lá"></div>
+            <div class="color-swatch" data-color="#3b82f6" style="background:#3b82f6;" title="Xanh dương"></div>
+            <div class="color-swatch" data-color="#ffff00" style="background:#ffff00;" title="Vàng"></div>
+            <div class="color-swatch" data-color="#ff00ff" style="background:#ff00ff;" title="Hồng"></div>
+            <div class="color-swatch" data-color="#00ffff" style="background:#00ffff;" title="Cyan"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Icon hotspot (tùy chọn)</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+            <input type="text" id="hotspotIconUrl" placeholder="https://... hoặc /uploads/media/...">
+            <label class="btn btn-small btn-edit" style="margin:0;white-space:nowrap;cursor:pointer;">
+              📁
+              <input type="file" id="hotspotIconFile" accept="image/*" style="display:none;">
+            </label>
+          </div>
+          <div id="hotspotIconFileInfo" style="font-size:12px;color:var(--text-muted);"></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button type="submit" class="btn btn-primary" style="flex:1;margin-bottom:0;">💾 Lưu</button>
+          <button type="button" class="btn" onclick="closeHotspotModal()" style="flex:1;margin-bottom:0;background:rgba(255,255,255,0.07);color:var(--text-muted);">Hủy</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Media Hotspot Modal -->
+  <div class="modal" id="mediaHotspotModal">
+    <div class="modal-content" style="max-width:600px;">
+      <div class="modal-header">
+        <h3>📁 Thêm Tư liệu</h3>
+        <button class="close-modal" type="button" onclick="closeMediaHotspotModal()">&times;</button>
+      </div>
+
+      <form id="mediaHotspotForm">
+        <div class="form-group">
+          <label>Tiêu đề:</label>
+          <input type="text" id="mediaTitle" placeholder="Ví dụ: Tranh sơn mài..." required>
+        </div>
+        <div class="form-group">
+          <label>Mô tả:</label>
+          <textarea id="mediaDescription" rows="2" placeholder="Thông tin chi tiết..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Loại tư liệu:</label>
+          <select id="mediaType" required onchange="updateMediaUploadHint()">
+            <option value="">-- Chọn loại --</option>
+            <option value="image">🖼️ Hình ảnh</option>
+            <option value="pdf">📄 PDF</option>
+            <option value="video">🎥 Video</option>
+            <option value="3d">🧊 Mô hình 3D</option>
+            <option value="youtube">▶️ YouTube</option>
+            <option value="facebook">👍 Facebook</option>
+            <option value="web">🌐 Trang web</option>
+            <option value="note">📝 Ghi chú</option>
+          </select>
+        </div>
+
+        <div id="fileUploadSection" class="form-group">
+          <label>Upload file:</label>
+          <div style="background:rgba(255,255,255,0.04);border:2px dashed rgba(37,99,235,0.4);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:border-color 0.2s;" onclick="document.getElementById('mediaFileInput').click()" onmouseover="this.style.borderColor='rgba(37,99,235,0.7)'" onmouseout="this.style.borderColor='rgba(37,99,235,0.4)'">
+            <div style="font-size:28px;margin-bottom:8px;">📁</div>
+            <div id="mediaUploadHint" style="color:var(--accent-light);font-weight:600;font-size:13px;">Chọn file</div>
+            <div id="mediaFileInfo" style="color:var(--text-muted);font-size:11px;margin-top:6px;"></div>
+          </div>
+          <input type="file" id="mediaFileInput" style="display:none;" onchange="handleMediaFileSelect(event)">
+        </div>
+
+        <div id="linkInputSection" class="form-group" style="display:none;">
+          <label>Link URL:</label>
+          <input type="text" id="mediaUrl" placeholder="https://www.youtube.com/watch?v=...">
+        </div>
+
+        <!-- Hidden Yaw and Pitch fields for media hotspots as they are edited via drag and drop now -->
+        <div style="display: none;">
+          <div class="form-group">
+            <label>Góc Yaw (-180 - 180°):</label>
+            <input type="number" id="mediaYaw" min="-180" max="180" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Góc Pitch (-90 - 90°):</label>
+            <input type="number" id="mediaPitch" min="-90" max="90" step="0.01">
+          </div>
+        </div>
+
+        <div id="polygonHighlightSection" style="display:none;margin-bottom:16px;">
+          <label style="display:block;margin-bottom:6px;font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">
+            🔷 Vùng Highlight 3D (tùy chọn)
+          </label>
+          <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:8px;padding:12px;">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+              Vẽ vùng bao quanh vật thể trên ảnh 360 để tạo highlight màu xanh trong tour.<br>
+              <em>Cần ít nhất 3 điểm. Sau khi bật vẽ, click lên ảnh panorama phía trên.</em>
+            </p>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+              <button type="button" id="polygonDrawBtn" onclick="togglePolygonDrawMode()" style="padding:7px 12px;background:var(--accent);color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✏️ Bắt đầu vẽ</button>
+              <button type="button" onclick="undoPolygonPoint()" style="padding:7px 12px;background:rgba(251,191,36,0.2);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);border-radius:6px;font-size:12px;cursor:pointer;">↩️ Xóa điểm cuối</button>
+              <button type="button" onclick="clearPolygon()" style="padding:7px 12px;background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;font-size:12px;cursor:pointer;">🗑️ Xóa tất cả</button>
+            </div>
+            <div id="polygonStatus" style="font-size:11px;color:var(--accent-light);min-height:16px;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;">
+          <button type="submit" class="btn btn-success" style="flex:1;margin-bottom:0;">💾 Lưu</button>
+          <button type="button" class="btn" onclick="closeMediaHotspotModal()" style="flex:1;margin-bottom:0;background:rgba(255,255,255,0.07);color:var(--text-muted);">Hủy</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Mail Hotspot Modal -->
+  <div class="modal" id="mailHotspotModal">
+    <div class="modal-content" style="max-width:500px;">
+      <div class="modal-header">
+        <h3 id="mailModalTitle">✉️ Thêm Điểm Gửi Mail</h3>
+        <button class="close-modal" type="button" onclick="closeMailModal()">&times;</button>
+      </div>
+      <form id="mailHotspotForm" onsubmit="submitMailHotspot(event)">
+        <div class="form-group">
+          <label>Tiêu đề:</label>
+          <input type="text" id="mailTitle" placeholder="Ví dụ: Liên hệ bộ phận kỹ thuật" required>
+        </div>
+        <div class="form-group">
+          <label>Email người nhận:</label>
+          <input type="email" id="mailRecipient" placeholder="nhanvien@congty.com" required>
+        </div>
+        <div class="form-group">
+          <label>Tiêu đề Email:</label>
+          <input type="text" id="mailSubject" placeholder="Yêu cầu kiểm tra thiết bị">
+        </div>
+        <div class="form-group">
+          <label>Nội dung mẫu:</label>
+          <textarea id="mailBody" rows="3" placeholder="Nội dung email mặc định..."></textarea>
+        </div>
+        <div class="form-group" style="background:rgba(255,255,255,0.04);padding:10px;border-radius:6px;border:1px solid var(--border);">
+          <label>Tọa độ trên ảnh 360:</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <input type="number" id="mailYaw" step="0.01" placeholder="Yaw" required>
+            <input type="number" id="mailPitch" step="0.01" placeholder="Pitch" required>
+          </div>
+          <button type="button" class="btn btn-small btn-success" onclick="startMailPositionPick()" style="margin-top:8px;margin-bottom:0;">🎯 Chọn trên ảnh 360</button>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:15px;">
+          <button type="submit" class="btn btn-success" style="flex:1;margin-bottom:0;">💾 Lưu</button>
+          <button type="button" class="btn" onclick="closeMailModal()" style="flex:1;margin-bottom:0;background:rgba(255,255,255,0.07);color:var(--text-muted);">Hủy</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Media Preview Modal -->
+  <div class="modal" id="mediaPreviewModal">
+    <div class="modal-content" style="max-width:800px; width:90%; background:#111827; border:1px solid rgba(255,255,255,0.1); border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.5); padding: 20px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="mediaPreviewTitle" style="color:white; margin:0; font-size:16px;">🖼️ Xem trước tư liệu</h3>
+        <button class="close-modal" type="button" onclick="closeMediaPreviewModal()" style="background:none; border:none; color:#9ca3af; font-size:24px; cursor:pointer; transition:color 0.15s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#9ca3af'">&times;</button>
+      </div>
+      <div id="mediaPreviewBody" style="padding:20px 0 10px 0; display:flex; justify-content:center; align-items:center; min-height:200px; max-height:60vh; overflow-y:auto;">
+        <!-- Content will be injected by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin-rooms.js?v=3"></script>
+</body>
+
+</html>

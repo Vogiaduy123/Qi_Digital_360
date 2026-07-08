@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Panorama - Admin</title>
+  <script src="/js/admin-runtime-config.js"></script>
+  <script src="/js/admin-api-base.js"></script>
+  <link rel="stylesheet" href="/css/admin-header.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(43, 50, 120, 0.22), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(241, 166, 35, 0.14), transparent 26%),
+        linear-gradient(180deg, #0b1020 0%, #0f1428 100%);
+      min-height: 100vh;
+      color: #e8ecff;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+    }
+
+    .panel {
+      background: rgba(10, 14, 28, 0.78);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      overflow: hidden;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .panel-header {
+      padding: 24px 28px;
+      background: linear-gradient(135deg, rgba(43,50,120,0.95), rgba(18,22,45,0.95));
+      color: white;
+    }
+
+    .panel-title {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .panel-subtitle {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-top: 6px;
+    }
+
+    .panel-body {
+      padding: 28px;
+    }
+
+    .upload-shell {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .upload-hero {
+      padding: 24px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
+    }
+
+    .upload-hero h2 {
+      font-size: 28px;
+      line-height: 1.15;
+      margin-bottom: 10px;
+      color: #f5f7ff;
+    }
+
+    .upload-hero p {
+      color: rgba(232,236,255,0.72);
+      line-height: 1.6;
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .upload-steps {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .step-card {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: #dfe5ff;
+    }
+
+    .step-badge {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(43,50,120,0.9);
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .upload-area {
+      border: 1.5px dashed rgba(255,255,255,0.18);
+      border-radius: 16px;
+      padding: 42px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(255,255,255,0.04);
+      margin-bottom: 20px;
+    }
+
+    .upload-area:hover {
+      border-color: rgba(255,255,255,0.34);
+      background: rgba(255,255,255,0.07);
+    }
+
+    .upload-area.dragging {
+      border-color: #7d8cff;
+      background: rgba(125,140,255,0.12);
+      transform: scale(1.02);
+      box-shadow: 0 6px 22px rgba(125,140,255,0.18);
+    }
+
+    .upload-icon {
+      font-size: 44px;
+      margin-bottom: 12px;
+    }
+
+    .upload-text {
+      color: #f3f6ff;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .upload-hint {
+      color: rgba(232,236,255,0.68);
+      font-size: 13px;
+    }
+
+    input[type="file"],
+    input[type="text"],
+    input[type="number"],
+    select {
+      display: block;
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      background: rgba(255,255,255,0.06);
+      color: #f3f6ff;
+      transition: all 0.2s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #7d8cff;
+      box-shadow: 0 0 0 3px rgba(125, 140, 255, 0.12);
+      background: rgba(255,255,255,0.08);
+    }
+
+    select option {
+      background-color: #0f1428;
+      color: #f3f6ff;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: rgba(232,236,255,0.82);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .preview-image {
+      width: 100%;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      max-height: 320px;
+      object-fit: cover;
+      display: none;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .preview-image.active {
+      display: block;
+    }
+
+    .file-info {
+      background: rgba(255,255,255,0.06);
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      display: none;
+      border-left: 3px solid #7d8cff;
+    }
+
+    .file-info.active {
+      display: block;
+    }
+
+    .file-info p {
+      margin-bottom: 4px;
+      color: rgba(232,236,255,0.75);
+    }
+
+    .file-info strong {
+      color: #f3f6ff;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 11px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 10px;
+      letter-spacing: 0.3px;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary { background: #2B3278;
+      color: white;
+      box-shadow: 0 10px 24px rgba(43, 50, 120, 0.28);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 14px 28px rgba(43, 50, 120, 0.34);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      color: #dbe3ff;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.18);
+    }
+
+    .progress-section {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .progress-section.active {
+      display: block;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #7d8cff, #2B3278);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      text-align: center;
+      color: rgba(232,236,255,0.72);
+      font-size: 12px;
+    }
+
+    .console-output {
+      margin-top: 20px;
+      background: #0b0f18;
+      color: #d9e1ff;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 11px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .console-output.active {
+      display: block;
+    }
+
+    .console-output pre {
+      margin: 4px 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .success { color: #7ef0b2; }
+    .error { color: #ff8a8a; }
+    .info { color: #aab8ff; }
+
+    /* ===== SELECTED FILES LIST ===== */
+    .selected-files-list {
+      margin-top: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .file-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px 14px;
+      transition: all 0.2s ease;
+    }
+
+    .file-card-preview {
+      width: 50px;
+      height: 50px;
+      border-radius: 4px;
+      object-fit: cover;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
+    }
+
+    .file-card-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .file-card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .file-card-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e8ecff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-card-size {
+      font-size: 11px;
+      color: rgba(232, 236, 255, 0.6);
+      flex-shrink: 0;
+    }
+
+    .file-card-input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .file-card-input-row label {
+      font-size: 11px;
+      color: rgba(232, 236, 255, 0.7);
+      white-space: nowrap;
+      font-weight: normal;
+      text-transform: none;
+      margin-bottom: 0;
+    }
+
+    .file-card-input-row input {
+      margin-bottom: 0;
+      padding: 6px 10px;
+      font-size: 12px;
+      flex: 1;
+    }
+
+    .file-card-status {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(232, 236, 255, 0.8);
+      flex-shrink: 0;
+      text-align: center;
+      min-width: 85px;
+    }
+
+    .file-card-status.pending {
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(232, 236, 255, 0.8);
+    }
+
+    .file-card-status.uploading {
+      background: rgba(125, 140, 255, 0.15);
+      color: #a5b4fc;
+      border: 1px solid rgba(125, 140, 255, 0.3);
+    }
+
+    .file-card-status.success {
+      background: rgba(46, 204, 113, 0.15);
+      color: #2ecc71;
+      border: 1px solid rgba(46, 204, 113, 0.3);
+    }
+
+    .file-card-status.error {
+      background: rgba(231, 76, 60, 0.15);
+      color: #e74c3c;
+      border: 1px solid rgba(231, 76, 60, 0.3);
+    }
+
+    @media (max-width: 900px) {
+      .upload-shell { grid-template-columns: 1fr; }
+      .upload-hero h2 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== HEADER ===== -->
+  <div class="admin-header" id="adminHeaderMount"></div>
+  <script src="/js/admin-nav.js"></script>
+
+  <!-- ===== CONTAINER ===== -->
+  <div class="container">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">📤 Upload Panorama</div>
+        <div class="panel-subtitle">Giao diện độc lập • JPG, PNG, WEBP • Tối đa 20MB</div>
+      </div>
+
+      <div class="panel-body">
+        <div class="upload-shell">
+          <section class="upload-hero">
+            <h2>Upload ảnh 360 theo quy trình riêng</h2>
+            <p>
+              Chọn ảnh panorama, đặt tên phòng, gán tòa nhà/tầng nếu cần và tạo tiles ngay trong màn hình này.
+              Không cần đi qua các menu phụ khác.
+            </p>
+
+            <div class="upload-steps">
+              <div class="step-card">
+                <div class="step-badge">1</div>
+                <div>
+                  <strong>Chọn panorama</strong>
+                  <div style="font-size: 13px; color: rgba(232,236,255,0.72); margin-top: 4px;">Kéo thả hoặc bấm vào vùng upload.</div>
+                </div>
+              </div>
+              <div class="step-card">
+                <div class="step-badge">2</div>
+                <div>
+                  <strong>Nhập thông tin phòng</strong>
+                  <div style="font-size: 13px; color: rgba(232,236,255,0.72); margin-top: 4px;">Tên phòng, tòa nhà, tầng.</div>
+                </div>
+              </div>
+              <div class="step-card">
+                <div class="step-badge">3</div>
+                <div>
+                  <strong>Tạo tiles và hoàn tất</strong>
+                  <div style="font-size: 13px; color: rgba(232,236,255,0.72); margin-top: 4px;">Hệ thống tự tạo dữ liệu để vào Quản lý Phòng thêm hotspot.</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <div class="upload-area" id="uploadArea">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">Kéo thả nhiều ảnh vào đây</div>
+              <div class="upload-hint">hoặc bấm để chọn các file</div>
+              <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple>
+            </div>
+
+            <div id="selectedFilesList" class="selected-files-list"></div>
+
+            <div class="form-group">
+              <label for="roomBuilding">Tòa nhà (Gán cho tất cả phòng)</label>
+              <select id="roomBuilding">
+                <option value="">--- Không có (Phòng rời) ---</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="roomFloor">Tầng (Gán cho tất cả phòng)</label>
+              <select id="roomFloor"></select>
+            </div>
+
+            <button class="btn btn-primary" id="uploadBtn" disabled>📤 Upload & Generate Tiles</button>
+
+            <div class="progress-section" id="progressSection">
+              <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+              <div class="progress-text" id="progressText">Đang xử lý...</div>
+            </div>
+
+            <div class="console-output" id="consoleOutput"></div>
+
+            <button class="btn btn-secondary" id="resetBtn" style="display: none;">🔄 Upload các ảnh khác</button>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const roomBuilding = document.getElementById('roomBuilding');
+    const roomFloor = document.getElementById('roomFloor');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const progressSection = document.getElementById('progressSection');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const consoleOutput = document.getElementById('consoleOutput');
+
+    let selectedFiles = [];
+    let defaultFloorId = '1';
+
+    initFloors();
+    initBuildings();
+
+    // Handle upload area click
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    async function initBuildings() {
+      try {
+        const rawRes = await fetch('/api/admin/buildings');
+        const res = await rawRes.json();
+        if (res && res.success && res.buildings.length > 0) {
+          res.buildings.forEach(b => {
+             roomBuilding.innerHTML += `<option value="${b.id}">${b.name}</option>`;
+          });
+        }
+      } catch (err) {
+        console.error('Load buildings error', err);
+      }
+    }
+
+    async function initFloors() {
+      try {
+        const res = await fetch('/api/admin/minimap');
+        const data = await res.json();
+
+        const floors = Array.isArray(data?.minimap?.floors) ? data.minimap.floors : [];
+        roomFloor.innerHTML = '';
+
+        if (floors.length === 0) {
+          roomFloor.innerHTML = '<option value="1">Tầng 1</option>';
+          defaultFloorId = '1';
+          return;
+        }
+
+        floors.forEach(floor => {
+          const floorId = String(floor.id || 1);
+          const floorName = floor.name || `Tầng ${floorId}`;
+          roomFloor.innerHTML += `<option value="${floorId}">${floorName}</option>`;
+        });
+
+        defaultFloorId = String(floors[0].id || 1);
+        roomFloor.value = defaultFloorId;
+      } catch (err) {
+        console.error('Load minimap floors error', err);
+        roomFloor.innerHTML = '<option value="1">Tầng 1</option>';
+        defaultFloorId = '1';
+      }
+    }
+
+    // Handle drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragging');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragging');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragging');
+      const files = e.dataTransfer.files;
+      if (files.length) handleFilesSelect(files);
+    });
+
+    // Handle file input change
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFilesSelect(e.target.files);
+    });
+
+    function handleFilesSelect(files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) {
+          alert(`File ${file.name} không phải là ảnh.`);
+          continue;
+        }
+
+        // Clean name (e.g. Room_01 -> Room 01)
+        let cleanName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+        cleanName = cleanName.replace(/[-_]+/g, ' ').trim();
+        // Capitalize words
+        cleanName = cleanName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+        selectedFiles.push({
+          file: file,
+          name: cleanName,
+          status: 'pending',
+          error: null
+        });
+      }
+      renderSelectedFiles();
+    }
+
+    window.updateFileName = function(index, value) {
+      if (selectedFiles[index]) {
+        selectedFiles[index].name = value;
+      }
+    };
+
+    function renderSelectedFiles() {
+      const container = document.getElementById('selectedFilesList');
+      container.innerHTML = '';
+
+      if (selectedFiles.length === 0) {
+        uploadBtn.disabled = true;
+        return;
+      }
+
+      uploadBtn.disabled = false;
+
+      selectedFiles.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'file-card';
+        card.id = `file-card-${index}`;
+
+        // Preview thumbnail
+        const img = document.createElement('img');
+        img.className = 'file-card-preview';
+        img.src = '/images/logo-qi.png'; // Fallback
+        
+        // Read file for thumbnail
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(item.file);
+
+        // Details
+        const details = document.createElement('div');
+        details.className = 'file-card-details';
+
+        const meta = document.createElement('div');
+        meta.className = 'file-card-meta';
+        meta.innerHTML = `
+          <span class="file-card-name" title="${item.file.name}">${item.file.name}</span>
+          <span class="file-card-size">${(item.file.size / 1024 / 1024).toFixed(2)} MB</span>
+        `;
+        details.appendChild(meta);
+
+        // Input row
+        const inputRow = document.createElement('div');
+        inputRow.className = 'file-card-input-row';
+        inputRow.innerHTML = `
+          <label>Đặt tên:</label>
+          <input type="text" class="file-room-name" value="${item.name}" placeholder="Tên phòng..." oninput="updateFileName(${index}, this.value)">
+        `;
+        details.appendChild(inputRow);
+
+        // Status
+        const status = document.createElement('div');
+        status.className = `file-card-status ${item.status}`;
+        if (item.status === 'pending') status.textContent = 'Chờ upload';
+        else if (item.status === 'uploading') status.textContent = 'Đang xử lý...';
+        else if (item.status === 'success') status.textContent = 'Hoàn thành';
+        else if (item.status === 'error') status.textContent = item.error || 'Lỗi';
+
+        card.appendChild(img);
+        card.appendChild(details);
+        card.appendChild(status);
+
+        container.appendChild(card);
+      });
+    }
+
+    // Handle upload
+    uploadBtn.addEventListener('click', async () => {
+      if (selectedFiles.length === 0) {
+        alert('Vui lòng chọn ảnh');
+        return;
+      }
+
+      // Validate names
+      for (const item of selectedFiles) {
+        if (!item.name.trim()) {
+          alert(`Vui lòng nhập tên phòng cho file ${item.file.name}`);
+          return;
+        }
+      }
+
+      uploadBtn.disabled = true;
+      progressSection.classList.add('active');
+      consoleOutput.classList.add('active');
+      consoleOutput.innerHTML = `<pre class="info">⏳ Bắt đầu upload và xử lý ${selectedFiles.length} ảnh...</pre>`;
+
+      let totalSuccess = 0;
+      let totalFailed = 0;
+
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const item = selectedFiles[i];
+        item.status = 'uploading';
+        renderSelectedFiles();
+
+        const progressPercent = Math.round((i / selectedFiles.length) * 100);
+        progressFill.style.width = `${progressPercent}%`;
+        progressText.textContent = `Đang xử lý file ${i + 1}/${selectedFiles.length}: ${item.file.name}...`;
+
+        consoleOutput.innerHTML += `<pre class="info">⏳ [${i + 1}/${selectedFiles.length}] Đang upload & tạo tiles: ${item.name} (${item.file.name})...</pre>`;
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+
+        const formData = new FormData();
+        formData.append('panorama', item.file);
+        formData.append('name', item.name);
+        formData.append('floor', roomFloor.value);
+        if (roomBuilding.value) {
+          formData.append('buildingId', roomBuilding.value);
+        }
+
+        try {
+          const res = await fetch('/api/admin/upload-panorama', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!res.ok) {
+            throw new Error(`Upload failed: ${res.statusText}`);
+          }
+
+          const data = await res.json();
+
+          if (!data.success) {
+            throw new Error(data.error || 'Unknown error');
+          }
+
+          item.status = 'success';
+          totalSuccess++;
+          consoleOutput.innerHTML += `<pre class="success">✅ [${i + 1}/${selectedFiles.length}] Xử lý thành công phòng: ${item.name}</pre>`;
+        } catch (err) {
+          item.status = 'error';
+          item.error = err.message || 'Lỗi xử lý';
+          totalFailed++;
+          consoleOutput.innerHTML += `<pre class="error">❌ [${i + 1}/${selectedFiles.length}] Thất bại file ${item.file.name}: ${err.message}</pre>`;
+        }
+        
+        renderSelectedFiles();
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+      }
+
+      progressFill.style.width = '100%';
+      progressText.textContent = `Hoàn thành! Thành công: ${totalSuccess}, Thất bại: ${totalFailed}`;
+      consoleOutput.innerHTML += `<pre class="success">🎉 Đã hoàn thành toàn bộ danh sách upload! (${totalSuccess} thành công, ${totalFailed} thất bại)</pre>`;
+      consoleOutput.scrollTop = consoleOutput.scrollHeight;
+
+      resetBtn.style.display = 'block';
+      uploadBtn.style.display = 'none';
+    });
+
+    // Reset button
+    resetBtn.addEventListener('click', () => {
+      selectedFiles = [];
+      renderSelectedFiles();
+      consoleOutput.classList.remove('active');
+      progressSection.classList.remove('active');
+      uploadBtn.disabled = true;
+      uploadBtn.style.display = 'block';
+      resetBtn.style.display = 'none';
+      fileInput.value = '';
+    });
+  </script>
+</body>
+</html>
