@@ -407,7 +407,21 @@ export function createFixedMailHotspot(index, mailPoint) {
   el.type = "button";
   el.className = "mail-hotspot mail-fixed-hotspot";
   el.title = mailPoint.title || "Điểm gửi mail";
-  el.textContent = "✉️";
+  
+  const customIcon = window.customIcons && window.customIcons.mail;
+  if (customIcon) {
+    el.textContent = "";
+    const img = document.createElement("img");
+    img.src = customIcon;
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "contain";
+    img.draggable = false;
+    el.appendChild(img);
+  } else {
+    el.textContent = "✉️";
+  }
+
   el.style.left = `${Math.max(0, Math.min(1, Number(mailPoint.screenX))) * 100}%`;
   el.style.top = `${Math.max(0, Math.min(1, Number(mailPoint.screenY))) * 100}%`;
 
@@ -426,7 +440,20 @@ export function createPanoramaMailHotspot(container, index, mailPoint) {
   el.type = "button";
   el.className = "mail-hotspot";
   el.title = mailPoint.title || "Điểm gửi mail";
-  el.textContent = "✉️";
+
+  const customIcon = window.customIcons && window.customIcons.mail;
+  if (customIcon) {
+    el.textContent = "";
+    const img = document.createElement("img");
+    img.src = customIcon;
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "contain";
+    img.draggable = false;
+    el.appendChild(img);
+  } else {
+    el.textContent = "✉️";
+  }
 
   el.onclick = (event) => {
     event.stopPropagation();

@@ -3,12 +3,12 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(8, 12, 24, 0.72);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 14px 24px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.24);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 14px 75px 14px 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
 }
 
 .admin-header .header-content {
@@ -24,7 +24,7 @@
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  color: #f3f6ff;
+  color: #1a202c;
   font-size: 15px;
   font-weight: 700;
   flex-shrink: 0;
@@ -55,8 +55,8 @@
   font-size: 13px;
   font-weight: 600;
   transition: background 0.2s, transform 0.15s;
-  background: rgba(255, 255, 255, 0.06);
-  color: #dbe3ff;
+  background: rgba(0, 0, 0, 0.05);
+  color: #4a5568;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -66,23 +66,25 @@
 }
 
 .admin-header .nav-link:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.09);
   transform: translateY(-1px);
+  color: #1a202c;
 }
 
 .admin-header .nav-link.active {
-  background: #2b3278;
+  background: #2563eb;
   color: #fff;
 }
 
 .admin-header .nav-link--tour {
-  background: rgba(37, 99, 235, 0.22);
-  color: #fff;
+  background: rgba(37, 99, 235, 0.15);
+  color: #2563eb;
   flex-shrink: 0;
 }
 
 .admin-header .nav-link--tour:hover {
-  background: rgba(37, 99, 235, 0.38);
+  background: rgba(37, 99, 235, 0.25);
+  color: #1d4ed8;
 }
 
 .admin-header .admin-menu-mobile {
@@ -115,10 +117,10 @@
   top: calc(100% + 8px);
   right: 0;
   min-width: 220px;
-  background: rgba(14, 18, 32, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
   padding: 8px;
   display: none;
   z-index: 200;
@@ -131,7 +133,7 @@
 .admin-header .menu-item {
   display: block;
   padding: 10px 14px;
-  color: #dbe3ff;
+  color: #4a5568;
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
@@ -140,18 +142,19 @@
 }
 
 .admin-header .menu-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.05);
+  color: #1a202c;
 }
 
 .admin-header .menu-item.active {
-  background: rgba(37, 99, 235, 0.25);
-  color: #fff;
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
   font-weight: 600;
 }
 
 .admin-header .menu-item--tour {
   margin-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
   padding-top: 14px;
 }
 
@@ -166,3 +169,248 @@
     margin-left: auto;
   }
 }
+
+/* ===== SETTINGS PANEL FOR ICON CONFIGURATION (ADMIN VIEW) ===== */
+.admin-settings-panel {
+  position: fixed;
+  top: 0;
+  right: -380px;
+  width: 380px;
+  height: 100vh;
+  z-index: 1001; /* Must be higher than header z-index 100 */
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.15);
+  transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  color: #1a202c;
+  font-family: Arial, sans-serif;
+}
+
+.admin-settings-panel.open {
+  right: 0;
+}
+
+.admin-settings-panel .settings-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.admin-settings-panel .settings-panel-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a202c;
+  letter-spacing: 0.5px;
+}
+
+.admin-settings-panel .settings-panel-close {
+  background: transparent;
+  border: none;
+  font-size: 26px;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.admin-settings-panel .settings-panel-close:hover {
+  color: #1a202c;
+  transform: scale(1.1);
+}
+
+.admin-settings-panel .settings-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+}
+
+.admin-settings-panel .settings-panel-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-settings-panel .settings-panel-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.admin-settings-panel .settings-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.admin-settings-panel .settings-panel-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.admin-settings-panel .settings-panel-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748b;
+  margin: 0 0 20px 0;
+}
+
+.admin-settings-panel .settings-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-settings-panel .settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  padding: 12px 16px;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.admin-settings-panel .settings-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.admin-settings-panel .settings-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-settings-panel .settings-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.admin-settings-panel .settings-item-preview {
+  width: 38px;
+  height: 38px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  overflow: hidden;
+}
+
+.admin-settings-panel .settings-item-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.admin-settings-panel .settings-item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-settings-panel .settings-upload-btn {
+  cursor: pointer;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  border-radius: 6px;
+  transition: all 0.2s;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.admin-settings-panel .settings-upload-btn:hover {
+  background: rgba(37, 99, 235, 0.16);
+  border-color: rgba(37, 99, 235, 0.45);
+}
+
+.admin-settings-panel .settings-upload-btn input {
+  display: none;
+}
+
+.admin-settings-panel .settings-reset-btn {
+  cursor: pointer;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ff6b6b;
+  background: rgba(231, 76, 60, 0.08);
+  border: 1px solid rgba(231, 76, 60, 0.2);
+  border-radius: 6px;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.admin-settings-panel .settings-reset-btn:hover {
+  background: rgba(231, 76, 60, 0.18);
+  border-color: #ff6b6b;
+}
+
+@media (max-width: 500px) {
+  .admin-settings-panel {
+    width: 100vw;
+    right: -100vw;
+  }
+}
+
+/* Settings button styling */
+.admin-settings-nav-btn {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  cursor: pointer;
+  color: #4a5568;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  z-index: 10;
+}
+
+.admin-settings-nav-btn:hover {
+  background: rgba(0, 0, 0, 0.09);
+  color: #2563eb;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.admin-settings-nav-btn svg {
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.admin-settings-nav-btn:hover svg {
+  transform: rotate(45deg);
+}
+
+@media (max-width: 960px) {
+  .admin-settings-nav-btn {
+    display: none;
+  }
+  .admin-header {
+    padding: 14px 24px;
+  }
+}
+
+

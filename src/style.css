@@ -539,7 +539,9 @@ body.admin #pano>* {
   line-height: 2;
   padding: 0;
   text-align: center;
+  overflow: hidden;
 }
+
 
 .media-hotspot:hover {
   background: linear-gradient(135deg, #6a8a9d 0%, #567084 100%);

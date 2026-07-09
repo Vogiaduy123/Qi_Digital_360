@@ -7,6 +7,9 @@ let currentRoomId = null;
 let allRooms = [];
 let allBuildings = [];
 
+window.customIcons = {};
+
+
 import { degToRad, radToDeg, parseJsonResponse } from './core/utils.js';
 import { fetchRooms } from './core/api.js';
 import { initViewer, initZoomControl, getViewer } from './core/viewer.js';
@@ -28,7 +31,18 @@ function createNavArrow(hs) {
   const wrap = document.createElement("div");
   wrap.className = "hotspot-arrow";
 
-  if (hs && hs.iconUrl) {
+  const customIcon = window.customIcons && window.customIcons.nav_arrow;
+  if (customIcon) {
+    const img = document.createElement("img");
+    img.src = customIcon;
+    img.className = "hotspot-arrow-img";
+    img.alt = "";
+    img.draggable = false;
+    img.onerror = () => {
+      wrap.innerHTML = defaultChevronSVG();
+    };
+    wrap.appendChild(img);
+  } else if (hs && hs.iconUrl) {
     // Custom uploaded arrow image
     const img = document.createElement("img");
     img.src = hs.iconUrl;
@@ -36,7 +50,6 @@ function createNavArrow(hs) {
     img.alt = "";
     img.draggable = false;
     img.onerror = () => {
-      // Fallback to default SVG if image fails to load
       wrap.innerHTML = defaultChevronSVG();
     };
     wrap.appendChild(img);
@@ -190,6 +203,16 @@ async function initApp() {
       getPano: () => pano,
       addHotspots: addHotspots
     });
+
+    // Fetch custom icons config
+    try {
+      const res = await fetch("/api/custom-icons").then(r => r.json());
+      if (res && res.success) {
+        window.customIcons = res.config || {};
+      }
+    } catch (err) {
+      console.warn("⚠️ Cannot load custom icons config:", err);
+    }
   } catch (err) {
     console.error("LOAD ERROR:", err);
   }
@@ -225,6 +248,21 @@ try {
     // Update widget and camera panel
     updateSensorWidget();
     renderCameraPanel();
+  });
+
+  es.addEventListener("custom_icons", (e) => {
+    try {
+      const config = JSON.parse(e.data || "{}");
+      window.customIcons = config || {};
+      if (typeof updateSettingsPreviews === "function") {
+        updateSettingsPreviews();
+      }
+      if (currentRoomId) {
+        addHotspots(currentRoomId);
+      }
+    } catch (err) {
+      console.warn("⚠️ Error parsing custom_icons SSE event:", err);
+    }
   });
 
   // Handle clicks on polygon overlay
@@ -413,3 +451,4 @@ function update3DPolygons() {
   
   svg.innerHTML = hasPolygon ? pathsHTML : '';
 }
+

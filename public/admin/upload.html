@@ -16,12 +16,9 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(43, 50, 120, 0.22), transparent 30%),
-        radial-gradient(circle at bottom right, rgba(241, 166, 35, 0.14), transparent 26%),
-        linear-gradient(180deg, #0b1020 0%, #0f1428 100%);
+      background: #f7fafc;
       min-height: 100vh;
-      color: #e8ecff;
+      color: #1a202c;
     }
 
     .container {
@@ -31,13 +28,11 @@
     }
 
     .panel {
-      background: rgba(10, 14, 28, 0.78);
+      background: #ffffff;
       border-radius: 18px;
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(0, 0, 0, 0.08);
       overflow: hidden;
-      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.08);
     }
 
     .panel-header {
@@ -71,19 +66,19 @@
     .upload-hero {
       padding: 24px;
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.01));
     }
 
     .upload-hero h2 {
       font-size: 28px;
       line-height: 1.15;
       margin-bottom: 10px;
-      color: #f5f7ff;
+      color: #1a202c;
     }
 
     .upload-hero p {
-      color: rgba(232,236,255,0.72);
+      color: #4a5568;
       line-height: 1.6;
       font-size: 14px;
       margin-bottom: 18px;
@@ -101,9 +96,9 @@
       align-items: flex-start;
       padding: 14px 16px;
       border-radius: 12px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-      color: #dfe5ff;
+      background: rgba(0, 0, 0, 0.01);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      color: #4a5568;
     }
 
     .step-badge {
@@ -121,19 +116,19 @@
     }
 
     .upload-area {
-      border: 1.5px dashed rgba(255,255,255,0.18);
+      border: 1.5px dashed rgba(0, 0, 0, 0.18);
       border-radius: 16px;
       padding: 42px 24px;
       text-align: center;
       cursor: pointer;
       transition: all 0.3s ease;
-      background: rgba(255,255,255,0.04);
+      background: rgba(0, 0, 0, 0.02);
       margin-bottom: 20px;
     }
 
     .upload-area:hover {
-      border-color: rgba(255,255,255,0.34);
-      background: rgba(255,255,255,0.07);
+      border-color: rgba(0, 0, 0, 0.35);
+      background: rgba(0, 0, 0, 0.04);
     }
 
     .upload-area.dragging {
@@ -149,14 +144,14 @@
     }
 
     .upload-text {
-      color: #f3f6ff;
+      color: #1a202c;
       font-size: 16px;
       font-weight: 600;
       margin-bottom: 6px;
     }
 
     .upload-hint {
-      color: rgba(232,236,255,0.68);
+      color: #4a5568;
       font-size: 13px;
     }
 
@@ -168,12 +163,12 @@
       width: 100%;
       padding: 10px 12px;
       margin-bottom: 12px;
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid rgba(0, 0, 0, 0.15);
       border-radius: 6px;
       font-size: 13px;
       font-family: inherit;
-      background: rgba(255,255,255,0.06);
-      color: #f3f6ff;
+      background: #ffffff;
+      color: #1a202c;
       transition: all 0.2s ease;
     }
 
@@ -183,12 +178,12 @@
       outline: none;
       border-color: #7d8cff;
       box-shadow: 0 0 0 3px rgba(125, 140, 255, 0.12);
-      background: rgba(255,255,255,0.08);
+      background: rgba(0, 0, 0, 0.02);
     }
 
     select option {
-      background-color: #0f1428;
-      color: #f3f6ff;
+      background-color: #ffffff;
+      color: #1a202c;
     }
 
     input[type="file"] {
@@ -203,7 +198,7 @@
       display: block;
       margin-bottom: 6px;
       font-weight: 600;
-      color: rgba(232,236,255,0.82);
+      color: #4a5568;
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -216,7 +211,7 @@
       max-height: 320px;
       object-fit: cover;
       display: none;
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(0, 0, 0, 0.08);
     }
 
     .preview-image.active {
@@ -224,7 +219,7 @@
     }
 
     .file-info {
-      background: rgba(255,255,255,0.06);
+      background: rgba(0, 0, 0, 0.02);
       padding: 12px;
       border-radius: 6px;
       margin-bottom: 16px;
@@ -239,11 +234,11 @@
 
     .file-info p {
       margin-bottom: 4px;
-      color: rgba(232,236,255,0.75);
+      color: #4a5568;
     }
 
     .file-info strong {
-      color: #f3f6ff;
+      color: #1a202c;
     }
 
     .btn {
@@ -281,14 +276,14 @@
     }
 
     .btn-secondary {
-      background: rgba(255,255,255,0.06);
-      color: #dbe3ff;
-      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0, 0, 0, 0.05);
+      color: #4a5568;
+      border: 1px solid rgba(0, 0, 0, 0.1);
     }
 
     .btn-secondary:hover {
-      background: rgba(255,255,255,0.1);
-      border-color: rgba(255,255,255,0.18);
+      background: rgba(0, 0, 0, 0.08);
+      border-color: rgba(0, 0, 0, 0.15);
     }
 
     .progress-section {
@@ -303,7 +298,7 @@
     .progress-bar {
       width: 100%;
       height: 6px;
-      background: rgba(255,255,255,0.08);
+      background: rgba(0, 0, 0, 0.08);
       border-radius: 3px;
       overflow: hidden;
       margin-bottom: 10px;
@@ -318,7 +313,7 @@
 
     .progress-text {
       text-align: center;
-      color: rgba(232,236,255,0.72);
+      color: #4a5568;
       font-size: 12px;
     }
 
@@ -333,7 +328,7 @@
       max-height: 200px;
       overflow-y: auto;
       display: none;
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(0, 0, 0, 0.15);
     }
 
     .console-output.active {
@@ -363,8 +358,8 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(0, 0, 0, 0.08);
       border-radius: 8px;
       padding: 10px 14px;
       transition: all 0.2s ease;
@@ -375,7 +370,7 @@
       height: 50px;
       border-radius: 4px;
       object-fit: cover;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       flex-shrink: 0;
     }
 
@@ -397,7 +392,7 @@
     .file-card-name {
       font-size: 13px;
       font-weight: 600;
-      color: #e8ecff;
+      color: #1a202c;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -405,7 +400,7 @@
 
     .file-card-size {
       font-size: 11px;
-      color: rgba(232, 236, 255, 0.6);
+      color: #64748b;
       flex-shrink: 0;
     }
 
@@ -418,7 +413,7 @@
 
     .file-card-input-row label {
       font-size: 11px;
-      color: rgba(232, 236, 255, 0.7);
+      color: #4a5568;
       white-space: nowrap;
       font-weight: normal;
       text-transform: none;
@@ -437,21 +432,21 @@
       font-weight: 600;
       padding: 4px 8px;
       border-radius: 4px;
-      background: rgba(255, 255, 255, 0.08);
-      color: rgba(232, 236, 255, 0.8);
+      background: rgba(0, 0, 0, 0.05);
+      color: #4a5568;
       flex-shrink: 0;
       text-align: center;
       min-width: 85px;
     }
 
     .file-card-status.pending {
-      background: rgba(255, 255, 255, 0.08);
-      color: rgba(232, 236, 255, 0.8);
+      background: rgba(0, 0, 0, 0.05);
+      color: #4a5568;
     }
 
     .file-card-status.uploading {
       background: rgba(125, 140, 255, 0.15);
-      color: #a5b4fc;
+      color: #4f46e5;
       border: 1px solid rgba(125, 140, 255, 0.3);
     }
 

@@ -655,7 +655,31 @@ export function addSensorHotspots(roomId) {
 
     const iconEl = document.createElement("span");
     iconEl.className = "sensor-hotspot-icon";
-    iconEl.textContent = isCamera ? (isWebcam ? "💻" : "📹") : "🌡️";
+    
+    const customCameraIcon = window.customIcons && window.customIcons.camera;
+    const customSensorIcon = window.customIcons && window.customIcons.sensor;
+
+    if (isCamera && customCameraIcon) {
+      iconEl.textContent = "";
+      const img = document.createElement("img");
+      img.src = customCameraIcon;
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "contain";
+      img.draggable = false;
+      iconEl.appendChild(img);
+    } else if (!isCamera && customSensorIcon) {
+      iconEl.textContent = "";
+      const img = document.createElement("img");
+      img.src = customSensorIcon;
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "contain";
+      img.draggable = false;
+      iconEl.appendChild(img);
+    } else {
+      iconEl.textContent = isCamera ? (isWebcam ? "💻" : "📹") : "🌡️";
+    }
     el.appendChild(iconEl);
 
     const badgeEl = document.createElement("span");

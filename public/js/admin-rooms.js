@@ -33,6 +33,48 @@
     let activeDragMouseMoveHandler = null;
     let activeDragMouseUpHandler = null;
 
+    let customIcons = {};
+
+    async function loadCustomIcons() {
+      try {
+        const res = await fetch("/api/custom-icons").then(r => r.json());
+        if (res && res.success) {
+          customIcons = res.config || {};
+        }
+      } catch (e) {
+        console.warn("Cannot load custom icons:", e);
+      }
+    }
+
+    function applyCustomIconToHotspotElement(element, type) {
+      if (!element) return;
+      const key = type === 'nav' ? 'nav_arrow' : 'media_' + type;
+      const iconKey = (type === 'sensor' || type === 'camera') ? type : key;
+      const customIcon = customIcons && customIcons[iconKey];
+      if (customIcon) {
+        element.style.setProperty('background', 'none', 'important');
+        element.style.backgroundImage = `url(${customIcon})`;
+        element.style.setProperty('background-size', 'contain', 'important');
+        element.style.setProperty('background-position', 'center', 'important');
+        element.style.setProperty('background-repeat', 'no-repeat', 'important');
+        element.style.setProperty('border', 'none', 'important');
+        element.style.setProperty('box-shadow', 'none', 'important');
+      }
+    }
+
+    window.reloadAdminHotspots = async function() {
+      await loadCustomIcons();
+      if (selectedRoomId) {
+        loadPanoramaPreview();
+        const room = rooms.find(r => r.id === selectedRoomId);
+        if (room) {
+          renderMediaHotspots(room.mediaHotspots || []);
+          renderMailHotspots(room.mailHotspots || []);
+        }
+        renderSensors();
+      }
+    };
+
     function closeHotspotModal() {
       const modal = document.getElementById('hotspotModal');
       const form = document.getElementById('hotspotForm');
@@ -1011,6 +1053,9 @@
         banner.style.display = 'flex';
       }
 
+      roomsPanelCollapsed = true;
+      applyRoomsPanelState();
+
       // Wait for Pannellum to finish re-rendering hotspot DOM after camera rotation
       setTimeout(() => {
         const el = document.querySelector(`.pnlm-custom-nav-hotspot-${idx}`);
@@ -1138,6 +1183,9 @@
       movingHotspotIdx = null;
       isDraggingHotspot = false;
 
+      roomsPanelCollapsed = false;
+      applyRoomsPanelState();
+
       await saveMovedHotspot(idx);
     };
 
@@ -1175,7 +1223,6 @@
         alert('Lỗi: ' + error.message);
       }
     }
-
     function updateHotspotPositionInViewer(idx, pitch, yaw) {
       if (!panoramaViewer) return;
       if (!isDraggingHotspot) return; // Safety guard: only move during confirmed drag
@@ -1201,10 +1248,13 @@
         text: tooltipText,
         cssClass: `custom-hotspot pnlm-custom-nav-hotspot pnlm-custom-nav-hotspot-${idx}`,
         createTooltipFunc: function (div) {
-          const iconHtml = hotspot.iconUrl
-            ? `<img src="${hotspot.iconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">`
-            : '📍 ';
-          div.innerHTML = `<span style="background: ${hotspot.color || '#ff0000'}; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; white-space: nowrap;">${iconHtml}${tooltipText}</span>`;
+          let iconHtml = '📍 ';
+          if (hotspot.iconUrl) {
+            iconHtml = `<img src="${hotspot.iconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">`;
+          } else if (customIcons && customIcons.nav_arrow) {
+            iconHtml = `<img src="${customIcons.nav_arrow}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">`;
+          }
+          div.innerHTML = `<span style="background: #ffffff; color: #1f2937; border: 1px solid rgba(0,0,0,0.08); border-left: 4px solid ${hotspot.color || '#ff0000'}; padding: 8px 12px; border-radius: 6px; font-size: 12px; display: inline-flex; align-items: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">${iconHtml}${tooltipText}</span>`;
           
           const parent = div.parentElement;
           if (parent) {
@@ -1212,6 +1262,7 @@
             parent.classList.add('pnlm-custom-nav-hotspot');
             parent.classList.add('moving-active');
             parent.style.cursor = 'grab';
+            applyCustomIconToHotspotElement(parent, 'nav');
           }
         },
         clickHandlerFunc: function () {
@@ -1243,15 +1294,19 @@
         text: tooltipText,
         cssClass: `custom-hotspot pnlm-custom-nav-hotspot pnlm-custom-nav-hotspot-${idx}`,
         createTooltipFunc: function (div) {
-          const iconHtml = hotspot.iconUrl
-            ? `<img src="${hotspot.iconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">`
-            : '📍 ';
-          div.innerHTML = `<span style="background: ${hotspot.color || '#ff0000'}; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; white-space: nowrap;">${iconHtml}${tooltipText}</span>`;
+          let iconHtml = '📍 ';
+          if (hotspot.iconUrl) {
+            iconHtml = `<img src="${hotspot.iconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">`;
+          } else if (customIcons && customIcons.nav_arrow) {
+            iconHtml = `<img src="${customIcons.nav_arrow}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">`;
+          }
+          div.innerHTML = `<span style="background: #ffffff; color: #1f2937; border: 1px solid rgba(0,0,0,0.08); border-left: 4px solid ${hotspot.color || '#ff0000'}; padding: 8px 12px; border-radius: 6px; font-size: 12px; display: inline-flex; align-items: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">${iconHtml}${tooltipText}</span>`;
           
           const parent = div.parentElement;
           if (parent) {
             parent.setAttribute('data-hotspot-idx', idx);
             parent.classList.add('pnlm-custom-nav-hotspot');
+            applyCustomIconToHotspotElement(parent, 'nav');
           }
         },
         clickHandlerFunc: function () {
@@ -1284,6 +1339,9 @@
       if (banner) {
         banner.style.display = 'flex';
       }
+
+      roomsPanelCollapsed = true;
+      applyRoomsPanelState();
 
       // Wait for Pannellum to finish re-rendering hotspot DOM after camera rotation
       setTimeout(() => {
@@ -1412,6 +1470,9 @@
       movingMediaHotspotIdx = null;
       isDraggingMediaHotspot = false;
 
+      roomsPanelCollapsed = false;
+      applyRoomsPanelState();
+
       await saveMovedMediaHotspot(idx);
     };
 
@@ -1466,20 +1527,25 @@
         panoramaViewer.removeHotSpot(`media-${idx}`);
       } catch (e) {}
 
-      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊' };
-      const icon = icons[media.mediaType] || '📁';
+      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', web: '🌐', note: '📝', gallery: '📸' };
+      const defaultIcon = icons[media.mediaType] || '📁';
+      const customIconKey = 'media_' + media.mediaType;
+      const customIconUrl = customIcons && customIcons[customIconKey];
+      const iconHtml = customIconUrl 
+        ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">` 
+        : defaultIcon + ' ';
       const polyText = (media.mediaType === '3d' && media.highlightPolygon && media.highlightPolygon.length >= 3) ? ' [Vùng sáng]' : '';
-      const label = `${icon} ${media.title}${polyText}`;
+      const labelText = `${media.title}${polyText}`;
       
       panoramaViewer.addHotSpot({
         id: `media-${idx}`,
         pitch: pitch,
         yaw: yaw,
         type: 'info',
-        text: label,
+        text: labelText,
         cssClass: `custom-hotspot pnlm-custom-media-hotspot pnlm-custom-media-hotspot-${idx}`,
         createTooltipFunc: function (div) {
-          div.innerHTML = `<span style="background: #2196f3; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; white-space: nowrap;">${label}</span>`;
+          div.innerHTML = `<span style="background: #ffffff; color: #1f2937; border: 1px solid rgba(0,0,0,0.08); border-left: 4px solid #2196f3; padding: 8px 12px; border-radius: 6px; font-size: 12px; display: inline-flex; align-items: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">${iconHtml}${labelText}</span>`;
           
           const parent = div.parentElement;
           if (parent) {
@@ -1487,6 +1553,7 @@
             parent.classList.add('pnlm-custom-media-hotspot');
             parent.classList.add('moving-active');
             parent.style.cursor = 'grab';
+            applyCustomIconToHotspotElement(parent, media.mediaType);
           }
         },
         clickHandlerFunc: function () {
@@ -1507,25 +1574,31 @@
         panoramaViewer.removeHotSpot(`media-${idx}`);
       } catch (e) {}
 
-      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊' };
-      const icon = icons[media.mediaType] || '📁';
+      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', web: '🌐', note: '📝', gallery: '📸' };
+      const defaultIcon = icons[media.mediaType] || '📁';
+      const customIconKey = 'media_' + media.mediaType;
+      const customIconUrl = customIcons && customIcons[customIconKey];
+      const iconHtml = customIconUrl 
+        ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">` 
+        : defaultIcon + ' ';
       const polyText = (media.mediaType === '3d' && media.highlightPolygon && media.highlightPolygon.length >= 3) ? ' [Vùng sáng]' : '';
-      const label = `${icon} ${media.title}${polyText}`;
+      const labelText = `${media.title}${polyText}`;
       
       panoramaViewer.addHotSpot({
         id: `media-${idx}`,
         pitch: media.pitch,
         yaw: media.yaw,
         type: 'info',
-        text: label,
+        text: labelText,
         cssClass: `custom-hotspot pnlm-custom-media-hotspot pnlm-custom-media-hotspot-${idx}`,
         createTooltipFunc: function (div) {
-          div.innerHTML = `<span style="background: #2196f3; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; white-space: nowrap;">${label}</span>`;
+          div.innerHTML = `<span style="background: #ffffff; color: #1f2937; border: 1px solid rgba(0,0,0,0.08); border-left: 4px solid #2196f3; padding: 8px 12px; border-radius: 6px; font-size: 12px; display: inline-flex; align-items: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">${iconHtml}${labelText}</span>`;
           
           const parent = div.parentElement;
           if (parent) {
             parent.setAttribute('data-media-idx', idx);
             parent.classList.add('pnlm-custom-media-hotspot');
+            applyCustomIconToHotspotElement(parent, media.mediaType);
           }
         },
         clickHandlerFunc: function () {
@@ -1596,19 +1669,29 @@
 
         const statusText = isCamera ? (sensor.camera?.status || 'unknown') : 'online';
         const statusIcon = statusText === 'online' ? '🟢' : statusText === 'maintenance' ? '🟡' : '🔴';
-        const icon = isCamera ? (isWebcam ? '💻' : '📹') : '🌡️';
-        const label = `${icon} ${sensor.name || (isCamera ? 'Camera' : 'Cảm biến')} ${statusIcon}`;
         const bg = isCamera ? '#2196f3' : '#FF6B6B';
+
+        const customIconKey = isCamera ? 'camera' : 'sensor';
+        const customIconUrl = customIcons && customIcons[customIconKey];
+        const defaultIcon = isCamera ? (isWebcam ? '💻' : '📹') : '🌡️';
+        const iconHtml = customIconUrl
+          ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;">`
+          : defaultIcon + ' ';
+        const labelText = `${sensor.name || (isCamera ? 'Camera' : 'Cảm biến')} ${statusIcon}`;
 
         panoramaViewer.addHotSpot({
           id: hotspotId,
           pitch,
           yaw,
           type: 'info',
-          text: label,
+          text: labelText,
           cssClass: 'custom-hotspot',
           createTooltipFunc: function (div) {
-            div.innerHTML = `<span style="background: ${bg}; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; white-space: nowrap;">${label}</span>`;
+            div.innerHTML = `<span style="background: #ffffff; color: #1f2937; border: 1px solid rgba(0,0,0,0.08); border-left: 4px solid ${bg}; padding: 8px 12px; border-radius: 6px; font-size: 12px; display: inline-flex; align-items: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">${iconHtml}${labelText}</span>`;
+            const parent = div.parentElement;
+            if (parent) {
+              applyCustomIconToHotspotElement(parent, isCamera ? 'camera' : 'sensor');
+            }
           },
           clickHandlerFunc: function () {
             const index = roomSensors.findIndex(s => s.id === sensor.id);
@@ -1664,10 +1747,13 @@
               text: tooltipText,
               cssClass: `custom-hotspot pnlm-custom-nav-hotspot pnlm-custom-nav-hotspot-${idx}`,
               createTooltipFunc: function (div) {
-                const iconHtml = hotspot.iconUrl
-                  ? `<img src="${hotspot.iconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">`
-                  : '📍 ';
-                div.innerHTML = `<span style="background: ${hotspot.color || '#ff0000'}; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; white-space: nowrap;">${iconHtml}${tooltipText}</span>`;
+                let iconHtml = '📍 ';
+                if (hotspot.iconUrl) {
+                  iconHtml = `<img src="${hotspot.iconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">`;
+                } else if (customIcons && customIcons.nav_arrow) {
+                  iconHtml = `<img src="${customIcons.nav_arrow}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">`;
+                }
+                div.innerHTML = `<span style="background: #ffffff; color: #1f2937; border: 1px solid rgba(0,0,0,0.08); border-left: 4px solid ${hotspot.color || '#ff0000'}; padding: 8px 12px; border-radius: 6px; font-size: 12px; display: inline-flex; align-items: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">${iconHtml}${tooltipText}</span>`;
                 
                 const parent = div.parentElement;
                 if (parent) {
@@ -1677,6 +1763,7 @@
                     parent.classList.add('moving-active');
                     parent.style.cursor = 'grab';
                   }
+                  applyCustomIconToHotspotElement(parent, 'nav');
                 }
               },
               clickHandlerFunc: function () {
@@ -1697,20 +1784,25 @@
 
         if (room.mediaHotspots && room.mediaHotspots.length > 0) {
           room.mediaHotspots.forEach((media, idx) => {
-            const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊' };
-            const icon = icons[media.mediaType] || '📁';
+            const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', web: '🌐', note: '📝', gallery: '📸' };
+            const defaultIcon = icons[media.mediaType] || '📁';
+            const customIconKey = 'media_' + media.mediaType;
+            const customIconUrl = customIcons && customIcons[customIconKey];
+            const iconHtml = customIconUrl 
+              ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">` 
+              : defaultIcon + ' ';
             const polyText = (media.mediaType === '3d' && media.highlightPolygon && media.highlightPolygon.length >= 3) ? ' [Vùng sáng]' : '';
-            const label = `${icon} ${media.title}${polyText}`;
+            const labelText = `${media.title}${polyText}`;
 
             panoramaViewer.addHotSpot({
               id: `media-${idx}`,
               pitch: media.pitch,
               yaw: media.yaw,
               type: 'info',
-              text: label,
+              text: labelText,
               cssClass: `custom-hotspot pnlm-custom-media-hotspot pnlm-custom-media-hotspot-${idx}`,
               createTooltipFunc: function (div) {
-                div.innerHTML = `<span style="background: #2196f3; color: white; padding: 8px 12px; border-radius: 6px; font-size: 12px; white-space: nowrap;">${label}</span>`;
+                div.innerHTML = `<span style="background: #ffffff; color: #1f2937; border: 1px solid rgba(0,0,0,0.08); border-left: 4px solid #2196f3; padding: 8px 12px; border-radius: 6px; font-size: 12px; display: inline-flex; align-items: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">${iconHtml}${labelText}</span>`;
                 
                 const parent = div.parentElement;
                 if (parent) {
@@ -1720,6 +1812,7 @@
                     parent.classList.add('moving-active');
                     parent.style.cursor = 'grab';
                   }
+                  applyCustomIconToHotspotElement(parent, media.mediaType);
                 }
               },
               clickHandlerFunc: function () {
@@ -1728,7 +1821,7 @@
               }
             });
 
-            console.log(`Added media hotspot ${idx}: ${label}`);
+            console.log(`Added media hotspot ${idx}: ${labelText}`);
 
             if (media.mediaType === '3d' && media.highlightPolygon && media.highlightPolygon.length >= 3) {
                const anchors = [];
@@ -2595,19 +2688,28 @@
 
     function renderMediaHotspots(mediaHotspots) {
       const list = document.getElementById('mediaHotspotsList');
+      const countLabel = document.getElementById('mediaCountLabel');
+      if (countLabel) countLabel.textContent = `${(mediaHotspots || []).length} tư liệu`;
 
       if (!mediaHotspots || mediaHotspots.length === 0) {
         list.innerHTML = '<div class="empty-state"><p>Chưa có tư liệu</p></div>';
         return;
       }
 
-      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', facebook: '👍', web: '🌐', note: '!' };
+      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', facebook: '👍', web: '🌐', note: '📝', gallery: '📸' };
 
       list.innerHTML = mediaHotspots.map((media, idx) => {
         const polyText = (media.mediaType === '3d' && media.highlightPolygon && media.highlightPolygon.length >= 3) ? '<span style="font-size:11px;color:#111827;background:rgba(251,191,36,0.9);padding:2px 6px;border-radius:4px;margin-left:5px;display:inline-block;vertical-align:middle;">🔲 Có vùng sáng</span>' : '';
+        const defaultIcon = icons[media.mediaType] || '📁';
+        const customIconKey = 'media_' + media.mediaType;
+        const customIconUrl = customIcons && customIcons[customIconKey];
+        const iconHtml = customIconUrl 
+          ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;">` 
+          : defaultIcon + ' ';
+
         return `
         <div class="hotspot-item" style="background: rgba(22,26,36,0.94); border-left-color: #27ae60; border-color: rgba(39,174,96,0.25); box-shadow: 0 10px 30px rgba(0,0,0,0.18);">
-          <h5>${icons[media.mediaType] || '📁'} ${media.title}${polyText}</h5>
+          <h5 style="display: flex; align-items: center; gap: 4px;">${iconHtml}${media.title}${polyText}</h5>
           <div class="hotspot-info">
             <span>${media.description || ''}</span>
             <span><strong>Yaw:</strong> ${media.yaw?.toFixed(2) || '?'}° | <strong>Pitch:</strong> ${media.pitch?.toFixed(2) || '?'}°</span>
@@ -2935,9 +3037,15 @@
       }
 
       list.innerHTML = mailHotspots.map((mail, idx) => {
+        const defaultIcon = '✉️';
+        const customIconUrl = customIcons && customIcons.mail;
+        const iconHtml = customIconUrl 
+          ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;">` 
+          : defaultIcon + ' ';
+
         return `
         <div class="hotspot-item" style="background: rgba(251, 191, 36, 0.1); border-left-color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.2);">
-          <h5>✉️ ${mail.title}</h5>
+          <h5 style="display: flex; align-items: center; gap: 4px;">${iconHtml}${mail.title}</h5>
           <div class="hotspot-info">
             <span><strong>Người nhận:</strong> ${mail.recipient}</span>
             <span><strong>Tiêu đề:</strong> ${mail.subject || '(Trống)'}</span>
@@ -3229,6 +3337,8 @@
 
     function renderSensors() {
       const list = document.getElementById('sensorsList');
+      const countLabel = document.getElementById('sensorsCountLabel');
+      if (countLabel) countLabel.textContent = `${(roomSensors || []).length} thiết bị`;
 
       if (!roomSensors || roomSensors.length === 0) {
         list.innerHTML = '<div class="empty-state"><p>Chưa có cảm biến</p></div>';
@@ -3252,15 +3362,19 @@
           const statusLabel = statusLabels[sensor.camera?.status] || 'N/A';
 
           const isWebcam = sensor.camera?.streamUrl === 'webcam://0';
-          const cameraIcon = isWebcam ? '💻' : '📹';
+          const defaultIcon = isWebcam ? '💻' : '📹';
+          const customIconUrl = customIcons && customIcons.camera;
+          const iconHtml = customIconUrl 
+            ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;">` 
+            : defaultIcon + ' ';
           const cameraType = isWebcam ? 'Webcam Laptop' : 'Camera IP';
           const streamUrl = (sensor.camera?.streamUrl || '').trim();
           const streamFallback = `<div style="margin-top: 10px; color: #7f8c8d; font-size: 12px;">${isWebcam ? 'ℹ️ Webcam xem trực tiếp trong modal cấu hình' : streamUrl ? 'ℹ️ Camera này dùng WebRTC (WHEP), bấm "Xem trực tiếp" để kiểm tra' : 'ℹ️ Chưa cấu hình stream WebRTC cho camera này'}</div>`;
 
           return `
-            <div class="hotspot-item" style="background: #e3f2fd; border-left-color: #2196F3;">
-              <h5>${cameraIcon} ${sensor.name}</h5>
-              <div class="hotspot-info">
+            <div class="hotspot-item" style="background: rgba(33, 150, 243, 0.12); border: 1px solid rgba(33, 150, 243, 0.25); border-left: 4px solid #2196F3;">
+              <h5 style="display: flex; align-items: center; gap: 4px; color: #ffffff;">${iconHtml}${sensor.name}</h5>
+              <div class="hotspot-info" style="color: rgba(255, 255, 255, 0.72);">
                 <span><strong>Loại:</strong> ${cameraType}</span>
                 <span><strong>Trạng thái:</strong> ${statusIcon} ${statusLabel}</span>
                 <span><strong>Độ phân giải:</strong> ${sensor.camera?.resolution || 'N/A'}</span>
@@ -3276,10 +3390,16 @@
           `;
         } else {
           // Render environment sensor
+          const defaultIcon = '🌡️';
+          const customIconUrl = customIcons && customIcons.sensor;
+          const iconHtml = customIconUrl 
+            ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;">` 
+            : defaultIcon + ' ';
+
           return `
-            <div class="hotspot-item" style="background: #fff3e0; border-left-color: #FF6B6B;">
-              <h5>🌡️ ${sensor.name}</h5>
-              <div class="hotspot-info">
+            <div class="hotspot-item" style="background: rgba(255, 107, 107, 0.12); border: 1px solid rgba(255, 107, 107, 0.25); border-left: 4px solid #FF6B6B;">
+              <h5 style="display: flex; align-items: center; gap: 4px; color: #ffffff;">${iconHtml}${sensor.name}</h5>
+              <div class="hotspot-info" style="color: rgba(255, 255, 255, 0.72);">
                 <span><strong>Nhiệt độ:</strong> ${sensor.sensors?.temperature?.value || 0}°C</span>
                 <span><strong>Độ ẩm:</strong> ${sensor.sensors?.humidity?.value || 0}%</span>
                 <span><strong>PM2.5:</strong> ${sensor.sensors?.pm25?.value || 0} µg/m³</span>
@@ -3618,7 +3738,9 @@
 
     // Initialize
     applyRoomsPanelState();
-    loadRooms();
+    loadCustomIcons().then(() => {
+      loadRooms();
+    });
     loadApiConfig();
 
     // Load API config and start auto-refresh if enabled

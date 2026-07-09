@@ -662,6 +662,8 @@ export function createMediaHotspotElement(media, onClickHandler) {
   }
 
   let el;
+  const customIconKey = 'media_' + media.mediaType;
+  const hasCustomIcon = window.customIcons && window.customIcons[customIconKey];
 
   if (media.mediaType === "note") {
     el = document.createElement("div");
@@ -677,7 +679,7 @@ export function createMediaHotspotElement(media, onClickHandler) {
     iconWrap.className = "info-hotspot-icon-wrapper";
     const icon = document.createElement("img");
     icon.className = "info-hotspot-icon";
-    icon.src = "images/info.png";
+    icon.src = hasCustomIcon ? window.customIcons[customIconKey] : "images/info.png";
     icon.alt = "Info";
     iconWrap.appendChild(icon);
 
@@ -733,6 +735,23 @@ export function createMediaHotspotElement(media, onClickHandler) {
     ["mousedown", "pointerdown", "touchstart", "wheel"].forEach((eventName) => {
       content.addEventListener(eventName, (e) => e.stopPropagation(), { passive: false });
     });
+  } else if (hasCustomIcon) {
+    el = document.createElement("div");
+    el.className = `media-hotspot media-${media.mediaType}-hotspot`;
+    el.setAttribute("aria-label", media.title || "Tư liệu");
+    
+    const img = document.createElement("img");
+    img.src = window.customIcons[customIconKey];
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "contain";
+    img.draggable = false;
+    el.appendChild(img);
+
+    el.onclick = (e) => {
+      e.stopPropagation();
+      if (onClickHandler) onClickHandler(media);
+    };
   } else if (media.mediaType === "youtube") {
     const videoId = getYouTubeVideoId(media.mediaUrl);
     if (videoId) {

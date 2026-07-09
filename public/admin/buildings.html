@@ -16,11 +16,11 @@
     }
 
     .buildings-wrap .panel {
-      background: rgba(10, 14, 28, 0.78);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.08);
       border-radius: 18px;
       overflow: hidden;
-      box-shadow: 0 18px 60px rgba(0,0,0,0.34);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.08);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
     }
@@ -55,15 +55,15 @@
       gap: 8px;
       padding: 9px 12px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: #e8ecff;
+      background: rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      color: #4a5568;
       font-size: 12px;
       font-weight: 600;
     }
 
     .summary-chip strong {
-      color: #fff;
+      color: #1a202c;
     }
 
     .building-card {
@@ -72,16 +72,16 @@
       align-items: center;
       gap: 18px;
       padding: 18px 20px;
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(0,0,0,0.08);
       border-radius: 14px;
-      background: rgba(255,255,255,0.04);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.16);
+      background: rgba(0, 0, 0, 0.02);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.04);
       margin-bottom: 14px;
       transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
     }
 
     .building-card:hover {
-      box-shadow: 0 18px 42px rgba(0,0,0,0.24);
+      box-shadow: 0 18px 42px rgba(0,0,0,0.08);
       transform: translateY(-2px);
       border-color: rgba(125,140,255,0.26);
     }
@@ -93,13 +93,13 @@
     .building-card-name {
       font-weight: 700;
       font-size: 16px;
-      color: #f3f6ff;
+      color: #1a202c;
       margin-bottom: 6px;
       word-break: break-word;
     }
     .building-card-meta {
       font-size: 12px;
-      color: rgba(232,236,255,0.72);
+      color: #4a5568;
       line-height: 1.5;
     }
     .building-card-actions {
@@ -121,24 +121,24 @@
       flex: 1;
       min-width: 240px;
       padding: 12px 14px;
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid rgba(0,0,0,0.15);
       border-radius: 10px;
       font-size: 14px;
       font-family: inherit;
       transition: border-color 0.2s;
-      background: rgba(255,255,255,0.06);
-      color: #f3f6ff;
+      background: #ffffff;
+      color: #1a202c;
     }
 
     .add-bar input:focus {
       outline: none;
       border-color: #7d8cff;
       box-shadow: 0 0 0 3px rgba(125,140,255,0.12);
-      background: rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.02);
     }
 
     .add-bar input::placeholder {
-      color: rgba(232,236,255,0.5);
+      color: #718096;
     }
 
     .buildings-empty,
@@ -146,14 +146,14 @@
       text-align: center;
       padding: 34px 20px;
       border-radius: 14px;
-      background: rgba(255,255,255,0.04);
-      border: 1px dashed rgba(255,255,255,0.12);
-      color: rgba(232,236,255,0.8);
+      background: rgba(0,0,0,0.02);
+      border: 1px dashed rgba(0,0,0,0.12);
+      color: #4a5568;
     }
 
     .buildings-empty strong,
     .buildings-error strong {
-      color: #fff;
+      color: #1a202c;
       display: block;
       margin-bottom: 8px;
       font-size: 15px;

@@ -151,6 +151,20 @@ async function broadcastRooms() {
   }
 }
 
+// Phát cấu hình custom icons mới cho các client SSE đang kết nối.
+async function broadcastCustomIcons(config) {
+  const payload = JSON.stringify(config || await getCustomIcons());
+  const message = `event: custom_icons\ndata: ${payload}\n\n`;
+  for (const res of sseClients) {
+    try {
+      res.write(message);
+    } catch {
+      sseClients.delete(res);
+    }
+  }
+}
+
+
 // Ä á» c cáº¥u hĂ¬nh SMTP tá»« biáº¿n mĂ´i trÆ°á» ng.
 function getSmtpConfig() {
   const host = process.env.SMTP_HOST;
@@ -427,6 +441,10 @@ app.get("/events", async (req, res) => {
   // Send initial sensors snapshot
   const initialSensors = JSON.stringify(await getSensors());
   res.write(`event: sensors\ndata: ${initialSensors}\n\n`);
+
+  // Send initial custom icons snapshot
+  const initialCustomIcons = JSON.stringify(await getCustomIcons());
+  res.write(`event: custom_icons\ndata: ${initialCustomIcons}\n\n`);
 
   req.on("close", () => {
     sseClients.delete(res);
@@ -1080,13 +1098,150 @@ app.get("/api/real-data/pm25", async (req, res) => {
 // Helper: Calculate AQI status
 // Quy Ä‘á»•i PM2.5 sang má»©c AQI Ä‘á»ƒ hiá»ƒn thá»‹ tráº¡ng thĂ¡i.
 function calculateAQI(pm25) {
-  if (pm25 <= 12) return { level: "Tá»‘t", color: "#4CAF50" };
-  if (pm25 <= 35.4) return { level: "Cháº¥p nháº­n Ä‘Æ°á»£c", color: "#FFC107" };
-  if (pm25 <= 55.4) return { level: "Nháº¡y cáº£m", color: "#FF9800" };
-  if (pm25 <= 150.4) return { level: "KhĂ´ng tá»‘t", color: "#F44336" };
-  if (pm25 <= 250.4) return { level: "Xáº¥u", color: "#C62828" };
-  return { level: "Nguy hiá»ƒm", color: "#6D1B1B" };
+  if (pm25 <= 12) return { level: "Tốt", color: "#4CAF50" };
+  if (pm25 <= 35.4) return { level: "Chấp nhận được", color: "#FFC107" };
+  if (pm25 <= 55.4) return { level: "Nhạy cảm", color: "#FF9800" };
+  if (pm25 <= 150.4) return { level: "Không tốt", color: "#F44336" };
+  if (pm25 <= 250.4) return { level: "Xấu", color: "#C62828" };
+  return { level: "Nguy hiểm", color: "#6D1B1B" };
 }
+
+/* ===== CUSTOM HOTSPOT ICONS ===== */
+const LOCAL_CUSTOM_ICONS_FILE = path.join(__dirname, "data", "custom-icons.json");
+const CUSTOM_ICONS_DIR = path.join(UPLOADS_DIR, "custom_icons");
+
+if (!fs.existsSync(CUSTOM_ICONS_DIR)) {
+  fs.mkdirSync(CUSTOM_ICONS_DIR, { recursive: true });
+}
+
+const customIconsStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, CUSTOM_ICONS_DIR),
+  filename: (req, file, cb) => {
+    const iconKey = req.body.iconKey || "icon";
+    const ext = path.extname(file.originalname);
+    cb(null, `${iconKey}_${Date.now()}${ext}`);
+  }
+});
+
+const uploadCustomIcon = multer({
+  storage: customIconsStorage,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
+
+function getDefaultCustomIcons() {
+  return {
+    nav_arrow: "",
+    media_note: "",
+    media_image: "",
+    media_pdf: "",
+    media_video: "",
+    media_3d: "",
+    media_gallery: "",
+    media_youtube: "",
+    media_web: "",
+    mail: "",
+    sensor: "",
+    camera: ""
+  };
+}
+
+async function getCustomIcons() {
+  try {
+    const config = await db.getAppConfig('custom_icons');
+    if (config) return config;
+  } catch (err) {
+    console.warn("⚠️ Cannot fetch custom_icons from DB, falling back to local file:", err.message);
+  }
+  
+  try {
+    if (fs.existsSync(LOCAL_CUSTOM_ICONS_FILE)) {
+      const raw = fs.readFileSync(LOCAL_CUSTOM_ICONS_FILE, "utf8");
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.warn("⚠️ Cannot read local custom_icons file:", err.message);
+  }
+  
+  return getDefaultCustomIcons();
+}
+
+async function saveCustomIcons(config) {
+  try {
+    await db.saveAppConfig('custom_icons', config);
+  } catch (err) {
+    console.warn("⚠️ Cannot save custom_icons to DB, saving to local file:", err.message);
+  }
+  
+  try {
+    const dataDir = path.join(__dirname, "data");
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    fs.writeFileSync(LOCAL_CUSTOM_ICONS_FILE, JSON.stringify(config, null, 2), "utf8");
+  } catch (err) {
+    console.warn("⚠️ Cannot write local custom_icons file:", err.message);
+  }
+}
+
+// GET custom icons config
+app.get("/api/custom-icons", async (req, res) => {
+  try {
+    const config = await getCustomIcons();
+    res.json({ success: true, config });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST upload custom icon
+app.post("/api/custom-icons/upload", uploadCustomIcon.single("icon"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: "No file uploaded" });
+    }
+    const iconKey = req.body.iconKey;
+    if (!iconKey) {
+      return res.status(400).json({ success: false, error: "Missing iconKey" });
+    }
+    
+    let imageUrl = "/uploads/custom_icons/" + req.file.filename;
+    
+    // Check if Supabase storage is configured and accessible
+    if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY && !process.env.SUPABASE_URL.includes("your-project-id")) {
+      try {
+        const storage = require("./backend/storage");
+        const localPath = req.file.path;
+        const destPath = `custom_icons/${req.file.filename}`;
+        const cloudUrl = await storage.uploadFile(localPath, destPath);
+        imageUrl = cloudUrl;
+        
+        // Clean up local temp file after cloud upload
+        if (fs.existsSync(localPath)) {
+          fs.unlinkSync(localPath);
+        }
+      } catch (err) {
+        console.warn("⚠️ Failed to upload icon to Supabase storage, using local path:", err.message);
+      }
+    }
+    
+    res.json({ success: true, url: imageUrl });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST save custom icons config
+app.post("/api/custom-icons/save", async (req, res) => {
+  try {
+    const config = req.body;
+    await saveCustomIcons(config);
+    broadcastCustomIcons(config);
+    res.json({ success: true, message: "Custom icons config saved successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 /* ===== ADMIN ROUTES ===== */
 app.use("/api/admin", adminRoutes);

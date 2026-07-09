@@ -2,12 +2,12 @@
 
 :root {
   --dash-accent: #2563eb;
-  --dash-accent-glow: rgba(37, 99, 235, 0.35);
-  --dash-text: #e8eaf0;
-  --dash-text-muted: rgba(200, 205, 215, 0.62);
-  --dash-border: rgba(255, 255, 255, 0.08);
-  --dash-surface: rgba(10, 14, 28, 0.72);
-  --dash-surface-hover: rgba(16, 22, 42, 0.88);
+  --dash-accent-glow: rgba(37, 99, 235, 0.15);
+  --dash-text: #1a202c;
+  --dash-text-muted: #64748b;
+  --dash-border: rgba(0, 0, 0, 0.08);
+  --dash-surface: #ffffff;
+  --dash-surface-hover: #f8fafc;
 }
 
 * {
@@ -19,7 +19,7 @@
 html, body {
   height: 100%;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #0e1015;
+  background: #f7fafc;
   color: var(--dash-text);
   -webkit-font-smoothing: antialiased;
 }
@@ -27,8 +27,7 @@ html, body {
 .dash-bg {
   position: fixed;
   inset: 0;
-  background: url('/images/bg-admin.jpg') center/cover no-repeat, #1a1f2e;
-  filter: brightness(0.38) blur(2px);
+  background: #f7fafc;
   transform: scale(1.04);
   z-index: 0;
 }
@@ -38,9 +37,9 @@ html, body {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(37, 99, 235, 0.18), transparent 55%),
-    radial-gradient(ellipse 60% 50% at 90% 80%, rgba(99, 102, 241, 0.12), transparent 50%),
-    linear-gradient(180deg, rgba(8, 10, 16, 0.3) 0%, rgba(8, 10, 16, 0.75) 100%);
+    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(37, 99, 235, 0.06), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 90% 80%, rgba(99, 102, 241, 0.04), transparent 50%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.95) 100%);
 }
 
 .dash-page {
@@ -53,12 +52,13 @@ html, body {
 
 /* ===== HEADER ===== */
 .dash-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 32px;
+  padding: 20px 75px 20px 32px;
   border-bottom: 1px solid var(--dash-border);
-  background: rgba(8, 10, 18, 0.55);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -105,6 +105,11 @@ html, body {
 
 .dash-header--nav .admin-header .header-content {
   max-width: 1100px;
+}
+
+.dash-header--nav .admin-header {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .dash-header--nav .header-brand span {
@@ -161,7 +166,7 @@ html, body {
 }
 
 .dash-stat:hover {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(0, 0, 0, 0.14);
 }
 
 .dash-stat__icon {
@@ -243,8 +248,8 @@ html, body {
 .dash-card:hover {
   transform: translateY(-3px);
   background: var(--dash-surface-hover);
-  border-color: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  border-color: rgba(0, 0, 0, 0.14);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
 }
 
 .dash-card:hover::before {
@@ -321,7 +326,7 @@ html, body {
   font-size: 12px;
   color: var(--dash-text-muted);
   border-top: 1px solid var(--dash-border);
-  background: rgba(8, 10, 18, 0.45);
+  background: rgba(255, 255, 255, 0.6);
 }
 
 /* ===== RESPONSIVE ===== */
@@ -356,3 +361,10 @@ html, body {
     min-width: unset;
   }
 }
+
+@media (max-width: 960px) {
+  .dash-header {
+    padding: 20px 32px;
+  }
+}
+
