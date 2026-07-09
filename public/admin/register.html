@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng ký tài khoản — Virtual Tour Qi</title>
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="/js/auth-guard.js"></script>
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary-color: #6366f1;
+      --primary-hover: #4f46e5;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bg-circle-1 {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+      top: -10%;
+      left: -10%;
+      z-index: 1;
+    }
+
+    .bg-circle-2 {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+      bottom: -15%;
+      right: -10%;
+      z-index: 1;
+    }
+
+    .register-container {
+      width: 100%;
+      max-width: 460px;
+      padding: 20px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .register-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 40px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .logo-container {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .logo-container img {
+      max-height: 50px;
+      margin-bottom: 15px;
+    }
+
+    .logo-container h2 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 5px;
+      background: linear-gradient(135deg, #fff 0%, #c7d2fe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-container p {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .form-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      color: #fff;
+      padding: 10px 14px;
+      font-size: 15px;
+      transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25);
+      color: #fff;
+    }
+
+    .btn-register {
+      background: var(--primary-color);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 600;
+      padding: 12px;
+      font-size: 15px;
+      width: 100%;
+      margin-top: 15px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-register:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    }
+
+    .error-banner {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .login-link {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 15px;
+      transition: color 0.2s;
+    }
+
+    .login-link:hover {
+      color: #c7d2fe;
+    }
+
+    .footer-text {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-circle-1" aria-hidden="true"></div>
+  <div class="bg-circle-2" aria-hidden="true"></div>
+
+  <div class="register-container">
+    <div class="register-card">
+      <div class="logo-container">
+        <img src="/images/logo-qi.png" alt="Qi Logo" onerror="this.src='https://raw.githubusercontent.com/Vogiaduy123/Qi_Digital_360/main/public/images/logo-qi.png'">
+        <h2>Tạo tài khoản mới</h2>
+        <p>Đăng ký thành viên hệ thống Virtual Tour</p>
+      </div>
+
+      <div class="error-banner" id="errorBanner" role="alert">
+        <span>⚠️</span>
+        <span id="errorMessage">Đăng ký thất bại</span>
+      </div>
+
+      <form id="registerForm">
+        <div class="mb-3">
+          <label for="username" class="form-label">Tên đăng nhập (Username)</label>
+          <input type="text" class="form-control" id="username" required minlength="3" placeholder="Tối thiểu 3 ký tự">
+        </div>
+        <div class="mb-3">
+          <label for="displayName" class="form-label">Tên hiển thị (Display Name)</label>
+          <input type="text" class="form-control" id="displayName" required placeholder="Ví dụ: Người dùng mới">
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Mật khẩu</label>
+          <input type="password" class="form-control" id="password" required minlength="6" placeholder="Tối thiểu 6 ký tự">
+        </div>
+        <div class="mb-4">
+          <label for="confirmPassword" class="form-label">Xác nhận mật khẩu</label>
+          <input type="password" class="form-control" id="confirmPassword" required placeholder="Nhập lại mật khẩu">
+        </div>
+        <button type="submit" class="btn-register" id="registerBtn">Đăng ký ngay</button>
+      </form>
+
+      <div class="text-center">
+        <a href="/admin/login.html" class="login-link">Đã có tài khoản? Đăng nhập ngay</a>
+      </div>
+    </div>
+    
+    <div class="footer-text">
+      Qi Technologies · Virtual Tour Manager
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const usernameInput = document.getElementById('username');
+      const displayNameInput = document.getElementById('displayName');
+      const passwordInput = document.getElementById('password');
+      const confirmPasswordInput = document.getElementById('confirmPassword');
+      const registerBtn = document.getElementById('registerBtn');
+      const errorBanner = document.getElementById('errorBanner');
+      const errorMessage = document.getElementById('errorMessage');
+
+      const username = usernameInput.value.trim();
+      const displayName = displayNameInput.value.trim();
+      const password = passwordInput.value;
+      const confirmPassword = confirmPasswordInput.value;
+
+      errorBanner.style.display = 'none';
+
+      if (password !== confirmPassword) {
+        errorBanner.style.display = 'flex';
+        errorMessage.textContent = 'Mật khẩu xác nhận không khớp.';
+        return;
+      }
+
+      registerBtn.disabled = true;
+      registerBtn.textContent = 'Đang xử lý...';
+
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, displayName, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          alert('Đăng ký tài khoản thành công! Nhấn OK để đăng nhập.');
+          window.location.href = '/admin/login.html';
+        } else {
+          errorBanner.style.display = 'flex';
+          errorMessage.textContent = data.error || 'Có lỗi xảy ra khi tạo tài khoản.';
+          registerBtn.disabled = false;
+          registerBtn.textContent = 'Đăng ký ngay';
+        }
+      } catch (err) {
+        console.error('Register error:', err);
+        errorBanner.style.display = 'flex';
+        errorMessage.textContent = 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.';
+        registerBtn.disabled = false;
+        registerBtn.textContent = 'Đăng ký ngay';
+      }
+    });
+  </script>
+</body>
+</html>

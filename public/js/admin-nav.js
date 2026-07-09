@@ -1,11 +1,25 @@
-(function () {
+window.initializeAdminNav = function () {
+  if (window.adminNavInitialized) return;
+  window.adminNavInitialized = true;
+
   const NAV_ITEMS = [
     { href: '/admin/buildings.html', label: '🏢 Tòa nhà', paths: ['/admin/buildings'] },
     { href: '/admin/upload.html', label: '📤 Upload', paths: ['/admin/upload'] },
     { href: '/admin/rooms.html', label: '🏠 Phòng', paths: ['/admin/rooms'] },
     { href: '/admin/minimap.html', label: '🗺️ Minimap', paths: ['/admin/minimap'] },
-    { href: '/admin/tour.html', label: '⚡ Kịch bản', paths: ['/admin/tour'] }
+    { href: '/admin/tour.html', label: '⚡ Kịch bản', paths: ['/admin/tour'] },
+    { href: '/admin/users.html', label: '👥 Phân Quyền', paths: ['/admin/users'], role: 'admin' }
   ];
+
+  window.handleLogout = async function() {
+    if (!confirm('Bạn có chắc chắn muốn đăng xuất không?')) return;
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/admin/login.html';
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
 
   const mount = document.getElementById('adminHeaderMount');
   if (!mount) return;
@@ -17,15 +31,27 @@
     return item.paths.some((p) => path === p || path.startsWith(p + '/'));
   }
 
-  const navLinks = NAV_ITEMS.map((item) => {
+  // Lọc NAV_ITEMS theo phân quyền của user hiện tại
+  const userRole = window.currentUser ? window.currentUser.role : 'user';
+  const filteredItems = NAV_ITEMS.filter(item => {
+    if (item.role === 'admin') {
+      return userRole === 'admin';
+    }
+    return true;
+  });
+
+  const navLinks = filteredItems.map((item) => {
     const cls = isActive(item) ? 'nav-link active' : 'nav-link';
     return `<a href="${item.href}" class="${cls}">${item.label}</a>`;
   }).join('');
 
-  const menuItems = NAV_ITEMS.map((item) => {
+  const menuItems = filteredItems.map((item) => {
     const cls = isActive(item) ? 'menu-item active' : 'menu-item';
     return `<a href="${item.href}" class="${cls}">${item.label}</a>`;
   }).join('');
+
+  const isUserAdmin = userRole === 'admin';
+  const userDisplayName = window.currentUser ? (window.currentUser.displayName || window.currentUser.username) : '';
 
   mount.innerHTML = `
     <div class="header-content">
@@ -33,9 +59,14 @@
         <img src="/images/logo-qi.png" alt="Qi">
         <span>Qi Dashboard</span>
       </a>
+      ${!isDashboard ? `
       <nav class="header-nav" aria-label="Menu quản lý">${navLinks}</nav>
       <a href="/" class="nav-link nav-link--tour">👁️ Xem Tour</a>
-      ${isDashboard ? `
+      ` : `
+      <div style="flex: 1;"></div>
+      `}
+      
+      ${isDashboard && isUserAdmin ? `
       <button id="adminSettingsBtn" class="admin-settings-nav-btn" title="Cấu hình Icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"></circle>
@@ -43,6 +74,13 @@
         </svg>
       </button>
       ` : ''}
+
+      <div class="user-profile-nav" style="display:flex;align-items:center;gap:12px;margin-left:12px;padding-left:12px;border-left:1px solid rgba(255,255,255,0.15)">
+        <span id="userProfileBtn" style="font-size:13px;color:#dbe3ff;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;" title="Chỉnh sửa thông tin tài khoản">👤 <span style="text-decoration:underline;text-underline-offset:3px;">${userDisplayName}</span></span>
+        <button onclick="handleLogout()" class="btn btn-outline-danger btn-sm" style="padding:4px 10px;font-size:12px;border-radius:6px;border-color:rgba(220,53,69,0.5);color:#ff6b76;">Đăng xuất</button>
+      </div>
+
+      ${!isDashboard ? `
       <div class="admin-menu-mobile">
         <button class="menu-button" type="button" aria-expanded="false" aria-label="Menu">
           ☰ Menu <span class="menu-caret">▼</span>
@@ -50,13 +88,9 @@
         <div class="menu-dropdown">
           ${menuItems}
           <a href="/" class="menu-item menu-item--tour">👁️ Xem Tour</a>
-          ${isDashboard ? `
-          <button id="adminSettingsMobileBtn" class="menu-item menu-item--settings" style="background:none;border:none;width:100%;text-align:left;cursor:pointer;font-size:13px;color:#dbe3ff;display:flex;align-items:center;gap:6px;padding:10px 14px;">
-            <span>⚙️</span> Cấu hình Icon
-          </button>
-          ` : ''}
         </div>
       </div>
+      ` : ''}
     </div>
   `;
 
@@ -432,4 +466,113 @@
       }
     });
   }
-})();
+
+  // Tự động thêm Modal chỉnh sửa thông tin cá nhân vào trang nếu chưa có
+  if (!document.getElementById('userProfileModal')) {
+    const modalDiv = document.createElement('div');
+    modalDiv.innerHTML = `
+      <div class="modal fade" id="userProfileModal" tabindex="-1" aria-hidden="true" style="z-index: 2070;">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content" style="background:#1a202c;color:#fff;border:1px solid rgba(255,255,255,0.1);">
+            <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.1);">
+              <h5 class="modal-title">👤 Chỉnh sửa thông tin cá nhân</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="userProfileForm">
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label for="profileUsername" class="form-label text-muted">Tên đăng nhập</label>
+                  <input type="text" class="form-control" id="profileUsername" disabled style="background:#2d3748;color:#a0aec0;border-color:rgba(255,255,255,0.1);">
+                </div>
+                <div class="mb-3">
+                  <label for="profileDisplayName" class="form-label">Tên hiển thị</label>
+                  <input type="text" class="form-control" id="profileDisplayName" required style="background:#2d3748;color:#fff;border-color:rgba(255,255,255,0.1);">
+                </div>
+                <div class="mb-3">
+                  <label for="profilePassword" class="form-label">Mật khẩu mới (để trống nếu không đổi)</label>
+                  <input type="password" class="form-control" id="profilePassword" minlength="6" placeholder="Tối thiểu 6 ký tự" style="background:#2d3748;color:#fff;border-color:rgba(255,255,255,0.1);">
+                </div>
+                <div class="mb-3">
+                  <label for="profileConfirmPassword" class="form-label">Xác nhận mật khẩu mới</label>
+                  <input type="password" class="form-control" id="profileConfirmPassword" minlength="6" placeholder="Tối thiểu 6 ký tự" style="background:#2d3748;color:#fff;border-color:rgba(255,255,255,0.1);">
+                </div>
+              </div>
+              <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.1);">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modalDiv.firstElementChild);
+
+    // Xử lý sự kiện lưu thông tin
+    const profileForm = document.getElementById('userProfileForm');
+    if (profileForm) {
+      profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const displayName = document.getElementById('profileDisplayName').value.trim();
+        const password = document.getElementById('profilePassword').value;
+        const confirmPassword = document.getElementById('profileConfirmPassword').value;
+
+        if (password && password !== confirmPassword) {
+          alert('Mật khẩu xác nhận không trùng khớp!');
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/auth/me/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ displayName, password })
+          });
+          const data = await res.json();
+          if (data.success) {
+            alert('Cập nhật thông tin thành công!');
+            
+            window.currentUser.displayName = data.user.displayName;
+            
+            let modalEl = document.getElementById('userProfileModal');
+            let profileModal = bootstrap.Modal.getInstance(modalEl);
+            if (profileModal) {
+              profileModal.hide();
+            }
+
+            // Reset và vẽ lại Nav để đổi tên mới hiển thị
+            window.adminNavInitialized = false;
+            window.initializeAdminNav();
+          } else {
+            alert('Lỗi: ' + data.error);
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Có lỗi xảy ra khi cập nhật thông tin.');
+        }
+      });
+    }
+  }
+
+  // Đăng ký sự kiện mở modal khi click vào tên tài khoản
+  const profileBtn = document.getElementById('userProfileBtn');
+  if (profileBtn) {
+    profileBtn.onclick = () => {
+      document.getElementById('profileUsername').value = window.currentUser.username;
+      document.getElementById('profileDisplayName').value = window.currentUser.displayName || window.currentUser.username;
+      document.getElementById('profilePassword').value = '';
+      document.getElementById('profileConfirmPassword').value = '';
+
+      let modalEl = document.getElementById('userProfileModal');
+      let profileModal = bootstrap.Modal.getInstance(modalEl);
+      if (!profileModal) {
+        profileModal = new bootstrap.Modal(modalEl);
+      }
+      profileModal.show();
+    };
+  }
+};
+
+if (window.currentUser) {
+  window.initializeAdminNav();
+}

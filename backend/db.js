@@ -367,5 +367,76 @@ module.exports = {
       .from('app_configs')
       .upsert({ key, data });
     if (error) throw error;
+  },
+
+  // --- USERS & AUTH ---
+  async getUsers() {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (error) {
+      console.error('Error fetching users:', error);
+      return [];
+    }
+    return data;
+  },
+
+  async getUserByUsername(username) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username)
+      .limit(1);
+    if (error) throw error;
+    return data && data.length > 0 ? data[0] : null;
+  },
+
+  async createUser(user) {
+    const { data, error } = await supabase
+      .from('users')
+      .insert({
+        username: user.username,
+        password_hash: user.passwordHash,
+        role: user.role || 'user',
+        display_name: user.displayName || user.username
+      })
+      .select();
+    if (error) throw error;
+    return data && data.length > 0 ? data[0] : null;
+  },
+
+  async updateUser(id, updates) {
+    const mapped = {};
+    if (updates.username !== undefined) mapped.username = updates.username;
+    if (updates.passwordHash !== undefined) mapped.password_hash = updates.passwordHash;
+    if (updates.role !== undefined) mapped.role = updates.role;
+    if (updates.displayName !== undefined) mapped.display_name = updates.displayName;
+
+    const { data, error } = await supabase
+      .from('users')
+      .update(mapped)
+      .eq('id', Number(id))
+      .select();
+    if (error) throw error;
+    return data && data.length > 0 ? data[0] : null;
+  },
+
+  async deleteUser(id) {
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', Number(id));
+    if (error) throw error;
+  },
+
+  async updateLastLogin(id) {
+    const { error } = await supabase
+      .from('users')
+      .update({ last_login: new Date().toISOString() })
+      .eq('id', Number(id));
+    if (error) {
+      console.error('Failed to update last login for user:', id, error);
+    }
   }
 };

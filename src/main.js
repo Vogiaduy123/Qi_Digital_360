@@ -136,9 +136,150 @@ function filterRoomsByBuilding(buildingId) {
   }
 }
 
-/* ===== INITIAL LOAD ===== */
 async function initApp() {
   try {
+    // Kiểm tra quyền hạn và chuyển hướng (Redirect Gate)
+    try {
+      const meRes = await fetch('/api/auth/me').then(r => r.json());
+      if (meRes && meRes.success) {
+        window.currentUser = meRes.user;
+        const isManager = meRes.user.role === 'admin' || meRes.user.role === 'collaborator';
+        
+        // Hiện nút Dashboard nếu là quản trị/collab, ẩn đi nếu là user thường
+        const dashBtn = document.querySelector('.dashboard-btn');
+        if (dashBtn) dashBtn.style.display = isManager ? 'flex' : 'none';
+
+        const profileBtn = document.getElementById('userProfileTourBtn');
+        const logoutBtn = document.getElementById('tourLogoutBtn');
+        if (profileBtn) profileBtn.style.display = 'flex';
+        if (logoutBtn) logoutBtn.style.display = 'flex';
+      } else {
+        // Chưa đăng nhập thì chuyển về trang login
+        window.location.href = '/admin/login.html';
+        return;
+      }
+    } catch (err) {
+      // Lỗi kết nối hoặc lỗi bất kỳ đưa về login
+      window.location.href = '/admin/login.html';
+      return;
+    }
+
+    // Đăng ký sự kiện Đăng xuất trên giao diện xem Tour
+    const tourLogoutBtn = document.getElementById('tourLogoutBtn');
+    if (tourLogoutBtn) {
+      tourLogoutBtn.addEventListener('click', async () => {
+        try {
+          const res = await fetch('/api/auth/logout', { method: 'POST' }).then(r => r.json());
+          if (res.success) {
+            alert('Đăng xuất thành công!');
+            window.location.href = '/admin/login.html';
+          }
+        } catch {
+          alert('Lỗi kết nối khi đăng xuất');
+        }
+      });
+    }
+
+    // Tạo Modal chỉnh sửa thông tin cá nhân trên trang xem Tour nếu chưa có
+    if (!document.getElementById('userProfileModal')) {
+      const modalDiv = document.createElement('div');
+      modalDiv.innerHTML = `
+        <div class="modal fade" id="userProfileModal" tabindex="-1" aria-hidden="true" style="z-index: 2070;">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background:#1a202c;color:#fff;border:1px solid rgba(255,255,255,0.1);">
+              <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                <h5 class="modal-title">👤 Chỉnh sửa thông tin cá nhân</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <form id="userProfileForm">
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="profileUsername" class="form-label text-muted">Tên đăng nhập</label>
+                    <input type="text" class="form-control" id="profileUsername" disabled style="background:#2d3748;color:#a0aec0;border-color:rgba(255,255,255,0.1);">
+                  </div>
+                  <div class="mb-3">
+                    <label for="profileDisplayName" class="form-label">Tên hiển thị</label>
+                    <input type="text" class="form-control" id="profileDisplayName" required style="background:#2d3748;color:#fff;border-color:rgba(255,255,255,0.1);">
+                  </div>
+                  <div class="mb-3">
+                    <label for="profilePassword" class="form-label">Mật khẩu mới (để trống nếu không đổi)</label>
+                    <input type="password" class="form-control" id="profilePassword" minlength="6" placeholder="Tối thiểu 6 ký tự" style="background:#2d3748;color:#fff;border-color:rgba(255,255,255,0.1);">
+                  </div>
+                  <div class="mb-3">
+                    <label for="profileConfirmPassword" class="form-label">Xác nhận mật khẩu mới</label>
+                    <input type="password" class="form-control" id="profileConfirmPassword" minlength="6" placeholder="Tối thiểu 6 ký tự" style="background:#2d3748;color:#fff;border-color:rgba(255,255,255,0.1);">
+                  </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.1);">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                  <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modalDiv.firstElementChild);
+
+      // Xử lý submit lưu thông tin
+      const profileForm = document.getElementById('userProfileForm');
+      if (profileForm) {
+        profileForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const displayName = document.getElementById('profileDisplayName').value.trim();
+          const password = document.getElementById('profilePassword').value;
+          const confirmPassword = document.getElementById('profileConfirmPassword').value;
+
+          if (password && password !== confirmPassword) {
+            alert('Mật khẩu xác nhận không trùng khớp!');
+            return;
+          }
+
+          try {
+            const res = await fetch('/api/auth/me/profile', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ displayName, password })
+            });
+            const data = await res.json();
+            if (data.success) {
+              alert('Cập nhật thông tin thành công!');
+              window.currentUser.displayName = data.user.displayName;
+              
+              let modalEl = document.getElementById('userProfileModal');
+              let profileModal = bootstrap.Modal.getInstance(modalEl);
+              if (profileModal) {
+                profileModal.hide();
+              }
+            } else {
+              alert('Lỗi: ' + data.error);
+            }
+          } catch (err) {
+            console.error(err);
+            alert('Có lỗi xảy ra khi cập nhật thông tin.');
+          }
+        });
+      }
+    }
+
+    // Đăng ký sự kiện mở modal khi click vào nút 👤
+    const userProfileTourBtn = document.getElementById('userProfileTourBtn');
+    if (userProfileTourBtn) {
+      userProfileTourBtn.addEventListener('click', () => {
+        document.getElementById('profileUsername').value = window.currentUser.username;
+        document.getElementById('profileDisplayName').value = window.currentUser.displayName || window.currentUser.username;
+        document.getElementById('profilePassword').value = '';
+        document.getElementById('profileConfirmPassword').value = '';
+
+        let modalEl = document.getElementById('userProfileModal');
+        let profileModal = bootstrap.Modal.getInstance(modalEl);
+        if (!profileModal) {
+          profileModal = new bootstrap.Modal(modalEl);
+        }
+        profileModal.show();
+      });
+    }
+
     initViewer(pano, {
       getCurrentRoomId: () => currentRoomId,
       getScene: (id) => getScenes()[id]

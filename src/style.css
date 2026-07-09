@@ -1125,6 +1125,58 @@ body.admin #pano>* {
   transform: scale(0.95);
 }
 
+.tour-profile-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #fff;
+  background: rgba(99, 102, 241, 0.25);
+  border: 1px solid rgba(99, 102, 241, 0.5);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tour-profile-btn:hover {
+  background: rgba(99, 102, 241, 0.45);
+  border-color: rgba(99, 102, 241, 0.8);
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+}
+.tour-profile-btn:active {
+  transform: scale(0.95);
+}
+
+.tour-logout-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #fff;
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tour-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.45);
+  border-color: rgba(239, 68, 68, 0.8);
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+.tour-logout-btn:active {
+  transform: scale(0.95);
+}
+
 #pano.mail-drop-target {
   outline: 2px dashed rgba(154, 199, 255, 0.9);
   outline-offset: -8px;

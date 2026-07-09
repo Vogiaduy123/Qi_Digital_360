@@ -158,7 +158,7 @@
   padding-top: 14px;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1200px) {
   .admin-header .header-nav,
   .admin-header .nav-link--tour {
     display: none;
@@ -404,7 +404,7 @@
   transform: rotate(45deg);
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1200px) {
   .admin-settings-nav-btn {
     display: none;
   }

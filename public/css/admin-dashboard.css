@@ -286,6 +286,9 @@ html, body {
 .dash-card--view { --card-accent: #06b6d4; }
 .dash-card--view .dash-card__icon { background: rgba(6, 182, 212, 0.18); }
 
+.dash-card--users { --card-accent: #6366f1; }
+.dash-card--users .dash-card__icon { background: rgba(99, 102, 241, 0.18); }
+
 .dash-card__body {
   flex: 1;
   min-width: 0;

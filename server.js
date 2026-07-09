@@ -7,7 +7,9 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const nodemailer = require("nodemailer");
+const cookieParser = require("cookie-parser");
 const db = require("./backend/db");
+const { authMiddleware, requireRole, hashPassword, comparePassword, signToken } = require("./backend/auth");
 
 // Import admin routes
 const adminRoutes = require("./backend/admin-api");
@@ -371,6 +373,7 @@ function buildVirtualTourMailContent({ pageUrl, summary, notes }) {
 }
 
 /* ===== MIDDLEWARE ===== */
+app.use(cookieParser());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -473,7 +476,7 @@ app.get("/api/rooms", async (req, res) => {
 });
 
 // UPDATE HOTSPOT
-app.put("/api/rooms/:id/hotspots", async (req, res) => {
+app.put("/api/rooms/:id/hotspots", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const roomId = Number(req.params.id);
   const { yaw, pitch, target, rotation, color } = req.body;
 
@@ -503,7 +506,7 @@ app.put("/api/rooms/:id/hotspots", async (req, res) => {
 });
 
 // DELETE HOTSPOT
-app.delete("/api/rooms/:id/hotspots/:index", async (req, res) => {
+app.delete("/api/rooms/:id/hotspots/:index", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const roomId = Number(req.params.id);
   const index = Number(req.params.index);
 
@@ -526,7 +529,7 @@ app.delete("/api/rooms/:id/hotspots/:index", async (req, res) => {
 });
 
 // UPDATE HOTSPOT (edit existing)
-app.patch("/api/rooms/:id/hotspots/:index", async (req, res) => {
+app.patch("/api/rooms/:id/hotspots/:index", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const roomId = Number(req.params.id);
   const index = Number(req.params.index);
   const { yaw, pitch, target, rotation, color } = req.body;
@@ -557,7 +560,7 @@ app.patch("/api/rooms/:id/hotspots/:index", async (req, res) => {
 });
 
 // GET MAIL HOTSPOTS
-app.get("/api/rooms/:id/mail-hotspots", async (req, res) => {
+app.get("/api/rooms/:id/mail-hotspots", authMiddleware, async (req, res) => {
   const roomId = Number(req.params.id);
   try {
     const room = await db.getRoomById(roomId);
@@ -569,7 +572,7 @@ app.get("/api/rooms/:id/mail-hotspots", async (req, res) => {
 });
 
 // ADD MAIL HOTSPOT
-app.post("/api/rooms/:id/mail-hotspots", async (req, res) => {
+app.post("/api/rooms/:id/mail-hotspots", authMiddleware, async (req, res) => {
   const roomId = Number(req.params.id);
   const { yaw, pitch, screenX, screenY, title, recipient, subject, body } = req.body;
 
@@ -605,7 +608,7 @@ app.post("/api/rooms/:id/mail-hotspots", async (req, res) => {
 });
 
 // UPDATE MAIL HOTSPOT
-app.patch("/api/rooms/:id/mail-hotspots/:index", async (req, res) => {
+app.patch("/api/rooms/:id/mail-hotspots/:index", authMiddleware, async (req, res) => {
   const roomId = Number(req.params.id);
   const index = Number(req.params.index);
   const { yaw, pitch, screenX, screenY, title, recipient, subject, body } = req.body;
@@ -640,7 +643,7 @@ app.patch("/api/rooms/:id/mail-hotspots/:index", async (req, res) => {
 });
 
 // DELETE MAIL HOTSPOT
-app.delete("/api/rooms/:id/mail-hotspots/:index", async (req, res) => {
+app.delete("/api/rooms/:id/mail-hotspots/:index", authMiddleware, async (req, res) => {
   const roomId = Number(req.params.id);
   const index = Number(req.params.index);
 
@@ -663,7 +666,7 @@ app.delete("/api/rooms/:id/mail-hotspots/:index", async (req, res) => {
 });
 
 // SEND MAIL
-app.post("/api/mail/send", async (req, res) => {
+app.post("/api/mail/send", authMiddleware, async (req, res) => {
   try {
     const { to, subject, body, pageUrl, summary, notes, format } = req.body;
 
@@ -760,7 +763,7 @@ app.post("/api/mail/send", async (req, res) => {
 
 
 // ADD ROOM
-app.post("/api/rooms", upload.single("image"), async (req, res) => {
+app.post("/api/rooms", authMiddleware, requireRole("admin", "collaborator"), upload.single("image"), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, error: "No image uploaded" });
   }
@@ -900,7 +903,7 @@ app.post("/api/config/api", async (req, res) => {
 
 /* ===== ROOM-SPECIFIC API CONFIG ===== */
 // Get room API config
-app.get("/api/rooms/:roomId/api-config", (req, res) => {
+app.get("/api/rooms/:roomId/api-config", authMiddleware, requireRole("admin", "collaborator"), (req, res) => {
   const roomId = req.params.roomId;
   const configFile = path.join(ROOM_API_CONFIGS_DIR, `${roomId}.json`);
   try {
@@ -915,7 +918,7 @@ app.get("/api/rooms/:roomId/api-config", (req, res) => {
 });
 
 // Save room API config
-app.post("/api/rooms/:roomId/api-config", (req, res) => {
+app.post("/api/rooms/:roomId/api-config", authMiddleware, requireRole("admin", "collaborator"), (req, res) => {
   const roomId = req.params.roomId;
   const configFile = path.join(ROOM_API_CONFIGS_DIR, `${roomId}.json`);
   try {
@@ -1193,8 +1196,8 @@ app.get("/api/custom-icons", async (req, res) => {
   }
 });
 
-// POST upload custom icon
-app.post("/api/custom-icons/upload", uploadCustomIcon.single("icon"), async (req, res) => {
+// POST upload custom icon (Protected: Admin only)
+app.post("/api/custom-icons/upload", authMiddleware, requireRole("admin"), uploadCustomIcon.single("icon"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: "No file uploaded" });
@@ -1230,8 +1233,8 @@ app.post("/api/custom-icons/upload", uploadCustomIcon.single("icon"), async (req
   }
 });
 
-// POST save custom icons config
-app.post("/api/custom-icons/save", async (req, res) => {
+// POST save custom icons config (Protected: Admin only)
+app.post("/api/custom-icons/save", authMiddleware, requireRole("admin"), async (req, res) => {
   try {
     const config = req.body;
     await saveCustomIcons(config);
@@ -1242,9 +1245,162 @@ app.post("/api/custom-icons/save", async (req, res) => {
   }
 });
 
+/* ===== AUTHENTICATION ROUTES ===== */
+app.get("/api/auth/setup-status", async (req, res) => {
+  try {
+    const users = await db.getUsers();
+    res.json({ success: true, isSetup: users.length > 0 });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/auth/setup", async (req, res) => {
+  try {
+    const users = await db.getUsers();
+    if (users.length > 0) {
+      return res.status(400).json({ success: false, error: "Setup already completed" });
+    }
+
+    const { username, password, displayName } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, error: "Username and password are required" });
+    }
+
+    const passwordHash = hashPassword(password);
+    const adminUser = await db.createUser({
+      username,
+      passwordHash,
+      role: "admin",
+      displayName: displayName || username
+    });
+
+    res.json({ success: true, message: "Admin user created successfully", user: { username: adminUser.username, role: adminUser.role } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { username, password, displayName } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, error: "Username and password are required" });
+    }
+
+    const existing = await db.getUserByUsername(username);
+    if (existing) {
+      return res.status(400).json({ success: false, error: "Username already exists" });
+    }
+
+    const passwordHash = hashPassword(password);
+    const newUser = await db.createUser({
+      username,
+      passwordHash,
+      role: "user",
+      displayName: displayName || username
+    });
+
+    res.json({ success: true, message: "User registered successfully", user: { username: newUser.username, role: newUser.role } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, error: "Username and password are required" });
+    }
+
+    const user = await db.getUserByUsername(username);
+    if (!user || !comparePassword(password, user.password_hash)) {
+      return res.status(401).json({ success: false, error: "Invalid username or password" });
+    }
+
+    // Update last login
+    await db.updateLastLogin(user.id);
+
+    // Create token
+    const token = signToken({
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      displayName: user.display_name
+    });
+
+    // Set cookie
+    res.cookie("vt_token", token, {
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: "strict",
+      secure: false // Set to true if using HTTPS in prod
+    });
+
+    res.json({
+      success: true,
+      user: {
+        username: user.username,
+        role: user.role,
+        displayName: user.display_name
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/auth/logout", (req, res) => {
+  res.clearCookie("vt_token");
+  res.json({ success: true, message: "Logged out successfully" });
+});
+
+app.get("/api/auth/me", authMiddleware, (req, res) => {
+  res.json({ success: true, user: req.user });
+});
+
+app.post("/api/auth/me/profile", authMiddleware, async (req, res) => {
+  try {
+    const { displayName, password } = req.body;
+    const userId = req.user.id;
+
+    const updates = {};
+    if (displayName) {
+      updates.displayName = displayName.trim();
+    }
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({ success: false, error: "Mật khẩu phải chứa ít nhất 6 ký tự" });
+      }
+      updates.passwordHash = hashPassword(password);
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ success: false, error: "Không có thông tin thay đổi nào" });
+    }
+
+    const updatedUser = await db.updateUser(userId, updates);
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, error: "Không tìm thấy người dùng" });
+    }
+
+    res.json({
+      success: true,
+      message: "Cập nhật tài khoản thành công",
+      user: {
+        username: updatedUser.username,
+        role: updatedUser.role,
+        displayName: updatedUser.display_name
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 /* ===== ADMIN ROUTES ===== */
-app.use("/api/admin", adminRoutes);
+app.use("/api/admin", authMiddleware, adminRoutes);
 
 /* ===== START ===== */
 app.listen(PORT, () => {

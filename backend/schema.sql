@@ -95,6 +95,17 @@ CREATE TABLE IF NOT EXISTS app_configs (
     data JSONB NOT NULL
 );
 
+-- 10. Bảng users (Quản lý tài khoản và phân quyền)
+CREATE TABLE IF NOT EXISTS users (
+    id BIGSERIAL PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'user', -- 'admin', 'collaborator', 'user'
+    display_name TEXT,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    last_login TIMESTAMPTZ
+);
+
 -- Hướng dẫn sau khi chạy SQL:
 -- 1. Vào mục "Storage" trên Supabase Dashboard.
 -- 2. Tạo một bucket mới tên là "virtual-tour".

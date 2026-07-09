@@ -11,9 +11,13 @@ const os = require("os");
 const { generateCubeTiles } = require("../generate-tiles");
 const db = require("./db");
 const storage = require("./storage");
+const { requireRole, hashPassword } = require("./auth");
 
 const BUCKET_NAME = 'virtual-tour';
 const router = express.Router();
+
+// Tất cả các tuyến quản trị trong router này đều yêu cầu vai trò admin hoặc collaborator
+router.use(requireRole("admin", "collaborator"));
 
 const DEFAULT_UPLOADS_DIR = path.join(__dirname, "../uploads");
 const RAW_UPLOAD_DIR = String(process.env.UPLOAD_DIR || "").trim();
@@ -857,8 +861,8 @@ router.post("/tour-scenario", async (req, res) => {
 
 /* ===== API CONFIG (ADMIN) ===== */
 
-// GET API config
-router.get("/api-config", async (req, res) => {
+// GET API config (Protected: Admin only)
+router.get("/api-config", requireRole("admin"), async (req, res) => {
   try {
     const config = await db.getAppConfig('api_config');
     res.json({ success: true, config: config || {} });
@@ -867,12 +871,101 @@ router.get("/api-config", async (req, res) => {
   }
 });
 
-// SAVE API config
-router.post("/api-config", async (req, res) => {
+// SAVE API config (Protected: Admin only)
+router.post("/api-config", requireRole("admin"), async (req, res) => {
   const config = req.body;
   try {
     await db.saveAppConfig('api_config', config);
     res.json({ success: true, message: "API Configuration saved successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* ===== USER MANAGEMENT (Protected: Admin only) ===== */
+router.get("/users", requireRole("admin"), async (req, res) => {
+  try {
+    const users = await db.getUsers();
+    // Exclude password hash from response
+    const safeUsers = users.map(u => ({
+      id: u.id,
+      username: u.username,
+      role: u.role,
+      displayName: u.display_name,
+      created_at: u.created_at,
+      last_login: u.last_login
+    }));
+    res.json({ success: true, users: safeUsers });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/users", requireRole("admin"), async (req, res) => {
+  try {
+    const { username, password, role, displayName } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, error: "Username and password are required" });
+    }
+
+    const existing = await db.getUserByUsername(username);
+    if (existing) {
+      return res.status(400).json({ success: false, error: "Username already exists" });
+    }
+
+    const passwordHash = hashPassword(password);
+    const newUser = await db.createUser({
+      username,
+      passwordHash,
+      role: role || "user",
+      displayName: displayName || username
+    });
+
+    res.json({ success: true, user: { id: newUser.id, username: newUser.username, role: newUser.role } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.patch("/users/:id", requireRole("admin"), async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    const { password, role, displayName } = req.body;
+
+    // Prevent changing role of the logged in admin themselves
+    if (req.user.id === userId && role && role !== req.user.role) {
+      return res.status(400).json({ success: false, error: "Cannot change your own role" });
+    }
+
+    const updates = {};
+    if (password) {
+      updates.passwordHash = hashPassword(password);
+    }
+    if (role) {
+      updates.role = role;
+    }
+    if (displayName) {
+      updates.displayName = displayName;
+    }
+
+    await db.updateUser(userId, updates);
+    res.json({ success: true, message: "User updated successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete("/users/:id", requireRole("admin"), async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+
+    // Prevent deleting self
+    if (req.user.id === userId) {
+      return res.status(400).json({ success: false, error: "Cannot delete your own account" });
+    }
+
+    await db.deleteUser(userId);
+    res.json({ success: true, message: "User deleted successfully" });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
