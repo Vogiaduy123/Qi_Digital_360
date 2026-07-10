@@ -71,10 +71,16 @@
       font-size: 24px;
       font-weight: 800;
       letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .buildings-wrap .panel-title .gradient-text {
       background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
     }
 
     .buildings-wrap .panel-subtitle {
@@ -498,7 +504,7 @@
   <div class="buildings-wrap">
     <div class="panel">
       <div class="panel-header">
-        <div class="panel-title">🏢 Quản lý Tòa Nhà / Phân khu</div>
+        <div class="panel-title">🏢 <span class="gradient-text">Quản lý Tòa Nhà / Phân khu</span></div>
         <div class="panel-subtitle">Tạo và gán các phòng theo từng tòa nhà hoặc phân khu</div>
       </div>
       <div class="panel-body">
