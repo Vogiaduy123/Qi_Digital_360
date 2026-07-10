@@ -14,3 +14,14 @@ backend/raw/
 .gemini/
 .agents/
 .vscode/
+
+# AI agent config (chỉ dùng local)
+.agent/
+
+# Runtime data (lưu trên Supabase, không cần commit)
+data/
+
+# Script tạm và kế hoạch phát triển
+scratch/
+docs/plans/
+scripts/
