@@ -111,7 +111,7 @@ async function getSensors() {
   }
 }
 
-// Tráº£ vá»  cáº¥u hĂ¬nh API máº·c Ä‘á»‹nh dĂ¹ng khi chÆ°a cĂ³ file cáº¥u hĂ¬nh.
+// Trả về cấu hình API mặc định dùng khi chưa có file cấu hình.
 function getDefaultApiConfig() {
   return {
     weatherApi: {
@@ -332,9 +332,9 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
-// Dá»±ng ná»™i dung email (HTML + plain text) cho ghi chĂº virtual tour.
+// Dựng nội dung email (HTML + plain text) cho ghi chú virtual tour.
 function buildVirtualTourMailContent({ pageUrl, summary, notes }) {
-  const safeSummary = summary && String(summary).trim() ? String(summary).trim() : "(KhĂ´ng cĂ³)";
+  const safeSummary = summary && String(summary).trim() ? String(summary).trim() : "(Không có)";
   const safePageUrl = pageUrl && String(pageUrl).trim() ? String(pageUrl).trim() : "";
   const safeNotes = Array.isArray(notes) ? notes : [];
 
@@ -346,7 +346,7 @@ function buildVirtualTourMailContent({ pageUrl, summary, notes }) {
   const notesHtml = safeNotes.length
     ? safeNotes
       .map((note) => {
-          const roomName = escapeHtml(note?.roomName || "KhĂ´ng xĂ¡c Ä‘á»‹nh");
+          const roomName = escapeHtml(note?.roomName || "Không xác định");
           const content = escapeHtml(note?.content || "");
           const yaw = escapeHtml(formatCoord(note?.yaw));
           const pitch = escapeHtml(formatCoord(note?.pitch));
@@ -354,22 +354,22 @@ function buildVirtualTourMailContent({ pageUrl, summary, notes }) {
 
           return `
             <li style="margin-bottom: 10px;">
-              <div><strong>PhĂ²ng:</strong> ${roomName}</div>
-              <div><strong>Ná»™i dung:</strong> ${content || "(Trá»‘ng)"}</div>
-              <div><strong>Tá» a Ä‘á»™:</strong> yaw=${yaw}, pitch=${pitch}</div>
-              <div><strong>Thá» i gian:</strong> ${time}</div>
+              <div><strong>Phòng:</strong> ${roomName}</div>
+              <div><strong>Nội dung:</strong> ${content || "(Trống)"}</div>
+              <div><strong>Tọa độ:</strong> yaw=${yaw}, pitch=${pitch}</div>
+              <div><strong>Thời gian:</strong> ${time}</div>
             </li>
           `;
         })
         .join("")
-    : '<li>KhĂ´ng cĂ³ ghi chĂº.</li>';
+    : '<li>Không có ghi chú.</li>';
 
   const html = `
     <div style="font-family: Arial, sans-serif; color: #222; line-height: 1.5;">
-      <h2 style="margin-bottom: 18px;">GHI CHĂš Tá»ª VIRTUAL TOUR</h2>
+      <h2 style="margin-bottom: 18px;">GHI CHÚ TỪ VIRTUAL TOUR</h2>
       ${safePageUrl ? `<p><strong>Trang:</strong> <a href="${escapeHtml(safePageUrl)}">${escapeHtml(safePageUrl)}</a></p>` : ""}
-      <p><strong>Ná»™i dung tá»•ng quĂ¡t:</strong><br>${escapeHtml(safeSummary)}</p>
-      <div style="margin-top: 12px;"><strong>Danh sĂ¡ch ghi chĂº:</strong></div>
+      <p><strong>Nội dung tổng quát:</strong><br>${escapeHtml(safeSummary)}</p>
+      <div style="margin-top: 12px;"><strong>Danh sách ghi chú:</strong></div>
       <ol style="padding-left: 18px; margin-top: 8px;">${notesHtml}</ol>
     </div>
   `;
@@ -377,17 +377,17 @@ function buildVirtualTourMailContent({ pageUrl, summary, notes }) {
   const notesText = safeNotes.length
     ? safeNotes
         .map((note, index) => {
-          const roomName = note?.roomName || "KhĂ´ng xĂ¡c Ä‘á»‹nh";
-          const content = note?.content || "(Trá»‘ng)";
+          const roomName = note?.roomName || "Không xác định";
+          const content = note?.content || "(Trống)";
           const yaw = formatCoord(note?.yaw);
           const pitch = formatCoord(note?.pitch);
           const time = note?.time || new Date().toISOString();
-          return `${index + 1}. PhĂ²ng: ${roomName}\n   Ná»™i dung: ${content}\n   -Tá» a Ä‘á»™: yaw=${yaw}, pitch=${pitch}\n   -Thá» i gian: ${time}`;
+          return `${index + 1}. Phòng: ${roomName}\n   Nội dung: ${content}\n   -Tọa độ: yaw=${yaw}, pitch=${pitch}\n   -Thời gian: ${time}`;
         })
         .join("\n\n")
-    : "1. KhĂ´ng cĂ³ ghi chĂº.";
+    : "1. Không có ghi chú.";
 
-  const text = `GHI CHĂš Tá»ª VIRTUAL TOUR\n\n${safePageUrl ? `Trang: ${safePageUrl}\n\n` : ""}Ná»™i dung tá»•ng quĂ¡t:\n${safeSummary}\n\nDanh sĂ¡ch ghi chĂº:\n${notesText}`;
+  const text = `GHI CHÚ TỪ VIRTUAL TOUR\n\n${safePageUrl ? `Trang: ${safePageUrl}\n\n` : ""}Nội dung tổng quát:\n${safeSummary}\n\nDanh sách ghi chú:\n${notesText}`;
 
   return { html, text };
 }
@@ -1010,12 +1010,12 @@ async function getCombinedData(config) {
       temp = Math.round(weatherData.main.temp * 10) / 10;
       humidity = Math.round(weatherData.main.humidity);
       weather = weatherData.weather?.[0]?.description || weather;
-      console.log(`âœ… Weather API OK: ${temp}Â°C | Äá»™ áº©m: ${humidity}%`);
+      console.log(`✅ Weather API OK: ${temp}°C | Độ ẩm: ${humidity}%`);
     } else {
-      console.log("â ï¸ Weather API khĂ´ng tráº£ vá» dá»¯ liá»‡u Ä‘Ăºng");
+      console.log("⚠️ Weather API không trả về dữ liệu đúng");
     }
   } catch (e) {
-    console.log("âŒ Weather API lá»—i:", e.message);
+    console.log("❌ Weather API lỗi:", e.message);
   }
   
   let pm25Value = 25 + Math.random() * 20;
@@ -1027,25 +1027,25 @@ async function getCombinedData(config) {
     const pm25Response = await fetch(pm25Url);
     const pm25Data = await pm25Response.json();
     
-    console.log("đŸ“¡ WAQI Full Response:", pm25Data.status, "PM2.5:", pm25Data.data?.iaqi?.pm25?.v, "AQI:", pm25Data.data?.aqi);
+    console.log("📡 WAQI Full Response:", pm25Data.status, "PM2.5:", pm25Data.data?.iaqi?.pm25?.v, "AQI:", pm25Data.data?.aqi);
     
     if (pm25Data.status === "ok" && pm25Data.data?.iaqi?.pm25?.v && typeof pm25Data.data.iaqi.pm25.v === "number") {
       pm25Value = pm25Data.data.iaqi.pm25.v;
       pmSource = "Real (WAQI PM2.5)";
-      console.log("âœ… PM2.5 API OK:", pm25Value + " Âµg/mÂ³");
+      console.log("✅ PM2.5 API OK:", pm25Value + " µg/m³");
     } else if (pm25Data.status === "ok" && pm25Data.data?.aqi && typeof pm25Data.data.aqi === "number" && pm25Data.data.aqi > 0) {
       pm25Value = pm25Data.data.aqi;
       pmSource = "Real (WAQI AQI)";
-      console.log("âœ… AQI API OK:", pm25Value);
+      console.log("✅ AQI API OK:", pm25Value);
     } else {
-      console.log("â ï¸ WAQI khĂ´ng cĂ³ dá»¯ liá»‡u há»£p lá»‡, dĂ¹ng simulated");
+      console.log("⚠️ WAQI không có dữ liệu hợp lệ, dùng simulated");
     }
   } catch (e) {
-    console.log("â ï¸ PM2.5 API lá»—i:", e.message);
+    console.log("⚠️ PM2.5 API lỗi:", e.message);
   }
   
   const locationName = `Lat: ${weatherApi.params.lat}, Lon: ${weatherApi.params.lon}`;
-  console.log(`đŸ“ ${locationName} - Nhiá»‡t Ä‘á»™: ${temp}Â°C | Äá»™ áº©m: ${humidity}% | PM2.5: ${Math.round(pm25Value * 10)/10} (${pmSource})`);
+  console.log(`📊 ${locationName} - Nhiệt độ: ${temp}°C | Độ ẩm: ${humidity}% | PM2.5: ${Math.round(pm25Value * 10)/10} (${pmSource})`);
   
   return {
     temperature: temp,
