@@ -43,3 +43,40 @@ Hệ thống được thiết kế theo kiến trúc Client-Server hiện đại
 *   **Sharp Image Processor:** Thư viện xử lý hình ảnh tốc độ cao dùng để xây dựng kim tự tháp ảnh (Tile Pyramid) đa phân giải từ ảnh panorama gốc, tối ưu hóa tốc độ tải trang trên các thiết bị băng thông yếu.
 *   **Server-Sent Events (SSE):** Giao thức kết nối một chiều liên tục giúp Server chủ động gửi cập nhật thay đổi dữ liệu cấu hình phòng/cảm biến tới toàn bộ các Client đang mở, giúp đồng bộ hóa dữ liệu tức thì.
 *   **MediaMTX (WebRTC/WHEP Gateway):** Máy chủ trung gian nhận luồng RTSP từ camera an ninh và chuyển đổi sang giao thức WebRTC (WHEP) giúp hiển thị live video trên trình duyệt với độ trễ cực thấp (dưới 1 giây).
+
+---
+
+## PHẦN 3: CÁC TÍNH NĂNG NỔI BẬT DÀNH CHO NGƯỜI DÙNG CUỐI (USER VIEW)
+
+Giao diện người dùng cuối mang tính thẩm mỹ cao, hỗ trợ điều hướng không gian trực quan cùng các công cụ tương tác phong phú:
+
+### 3.1. Trải nghiệm Panorama 360 độ chuyên nghiệp
+*   **Hiển thị sắc nét:** Hệ thống tự động chia nhỏ bức ảnh panorama lớn thành các mảnh nhỏ (tiles) tương ứng với nhiều cấp độ phóng to/thu nhỏ (FOV). Khi người dùng thu phóng, chỉ các mảnh ảnh tương ứng mới được tải, giúp tối ưu hóa hiệu năng và tốc độ hiển thị.
+*   **Di chuyển mượt mà:** Khách tham quan có thể xoay, thu phóng hình ảnh tự do bằng chuột, bàn phím hoặc cảm ứng. Điểm nóng chuyển cảnh (Navigation Hotspots) cho phép di chuyển giữa các phòng một cách mượt mà và trực quan.
+
+### 3.2. Bản đồ nhỏ radar đa tầng (Minimap)
+*   **Hỗ trợ đa tầng (Multi-floor):** Bản đồ hỗ trợ hiển thị danh sách tầng của tòa nhà/phân khu. Khi chuyển đổi tầng, hình ảnh bản đồ tương ứng sẽ được cập nhật.
+*   **Chỉ hướng radar trực quan:** Trên bản đồ có một biểu tượng chấm tròn định vị đại diện cho góc đứng của khách tham quan trong phòng, đi kèm một hình nón radar (Radar Cone) thể hiện góc nhìn và hướng camera hiện tại. Khi người dùng xoay camera 360 độ, cone radar này tự động quay tương ứng.
+*   **Tương tác kéo/zoom:** Người dùng có thể di chuyển (pan) và phóng to/thu nhỏ (zoom) bản đồ nhỏ trực tiếp trên màn hình, giúp dễ dàng theo dõi vị trí tổng thể trong các không gian rộng lớn.
+
+### 3.3. Điểm nóng Đa phương tiện (Media Hotspots)
+Hệ thống cho phép gắn trực tiếp các nội dung đa phương tiện lên không gian 360 độ:
+*   **Ghi chú (Note):** Hiển thị văn bản mô tả thông tin cơ bản.
+*   **Hình ảnh & Bộ sưu tập (Image/Gallery):** Trình diễn ảnh đơn lẻ hoặc album ảnh động.
+*   **Tài liệu PDF:** Nhúng trực tiếp tài liệu kỹ thuật, hướng dẫn sử dụng dưới dạng PDF để người dùng đọc ngay trên màn hình.
+*   **Video:** Phát video hướng dẫn hoặc giới thiệu không gian.
+*   **Mô hình 3D:** Tích hợp bộ xem mô hình 3D tương tác. Khách tham quan có thể dùng chuột để xoay 3D, thu phóng vật thể (ví dụ: máy móc thiết bị, nội thất) một cách sống động.
+*   **YouTube & Trang web nhúng (Web Embed):** Hiển thị các video từ YouTube hoặc các trang web bên ngoài trực tiếp trong khung xem.
+*   **Tô sáng vùng (Highlight Polygon):** Hiển thị các đa giác tô màu bán trong suốt bao quanh một vật thể hoặc vùng không gian (ví dụ: cửa ra vào, bảng điều khiển). Khi người dùng rê chuột vào, vùng này sẽ nổi bật lên để hướng sự chú ý.
+
+### 3.4. Điểm nóng gửi Email tự động (Mail Hotspots)
+*   **Gửi liên hệ trực quan:** Thay vì mở ứng dụng email độc lập của hệ điều hành, người dùng có thể nhấp trực tiếp vào biểu tượng Mail Hotspot trong không gian 360 độ. Một panel soạn thảo Mail Composer sẽ trượt ra từ góc màn hình.
+*   **Bảo mật thông tin:** Địa chỉ email người nhận (ví dụ: email bộ phận kỹ thuật, CSKH) được ẩn hoàn toàn ở phía client để chống tình trạng thu thập email tự động của các spam bot. Quá trình gửi email được thực hiện an toàn qua API Backend.
+
+### 3.5. Tour tham quan tự động (Auto-tour)
+*   **Trình chiếu rảnh tay:** Tính năng cho phép kích hoạt kịch bản tham quan tự động. Hệ thống sẽ tự động xoay camera quét toàn cảnh phòng, sau đó tự động chuyển cảnh sang phòng tiếp theo theo một chuỗi thiết lập sẵn.
+*   **Điều khiển linh hoạt:** Người dùng có thể nhấn tạm dừng (pause), tiếp tục (resume), hoặc dừng hẳn (stop) tour bất kỳ lúc nào để tự do khám phá và quay lại tour sau.
+
+### 3.6. Giám sát Cảm biến IoT & Live Camera (WebRTC)
+*   **Giám sát môi trường thời gian thực:** Hiển thị trực quan các chỉ số cảm biến môi trường (Nhiệt độ, Độ ẩm, CO2, bụi mịn PM2.5, chỉ số an toàn khói) trực tiếp tại vị trí đặt thiết bị trong không gian 360 độ.
+*   **Live Stream Camera cực mượt:** Khi nhấp vào cảm biến camera, một cửa sổ popup hiện đại sẽ trình chiếu trực tiếp hình ảnh từ camera giám sát thông qua giao thức WebRTC độ trễ dưới 1 giây, cung cấp góc nhìn giám sát trực quan tức thời.
