@@ -80,3 +80,30 @@ Hệ thống cho phép gắn trực tiếp các nội dung đa phương tiện l
 ### 3.6. Giám sát Cảm biến IoT & Live Camera (WebRTC)
 *   **Giám sát môi trường thời gian thực:** Hiển thị trực quan các chỉ số cảm biến môi trường (Nhiệt độ, Độ ẩm, CO2, bụi mịn PM2.5, chỉ số an toàn khói) trực tiếp tại vị trí đặt thiết bị trong không gian 360 độ.
 *   **Live Stream Camera cực mượt:** Khi nhấp vào cảm biến camera, một cửa sổ popup hiện đại sẽ trình chiếu trực tiếp hình ảnh từ camera giám sát thông qua giao thức WebRTC độ trễ dưới 1 giây, cung cấp góc nhìn giám sát trực quan tức thời.
+
+---
+
+## PHẦN 4: HỆ THỐNG QUẢN TRỊ (ADMIN DASHBOARD)
+
+Hệ thống quản trị cung cấp giải pháp không cần code (no-code / low-code) giúp người vận hành dễ dàng cập nhật thông tin và chỉnh sửa tour:
+
+### 4.1. Xác thực bảo mật & Phân quyền
+*   **Trang đăng nhập bảo mật:** Tất cả các tính năng quản trị được bảo vệ sau trang đăng nhập (`/admin/login.html`). Hệ thống sử dụng cơ chế xác thực session-based lưu trữ cookie an toàn.
+*   **Bảo vệ API Admin:** Toàn bộ các API nghiệp vụ thay đổi dữ liệu cấu hình tại `/api/admin/*` đều được kiểm tra quyền truy cập thông qua middleware backend. Nếu chưa đăng nhập hoặc session hết hạn, yêu cầu sẽ bị từ chối với mã lỗi HTTP 401 Unauthorized.
+
+### 4.2. Quy trình tải ảnh Panorama & Cắt gạch (Tile Generation)
+*   **Xử lý ảnh tự động:** Admin chỉ cần đặt tên phòng, chọn tầng và tải lên file ảnh panorama 360 độ định dạng phẳng (equirectangular projection).
+*   **Tạo Tile Pyramid:** Backend tự động chạy tiến trình xử lý ảnh sử dụng thư viện `sharp` (`generate-tiles.js`) để cắt ảnh panorama thành một cấu trúc thư mục gạch đa cấp độ phân giải (`backend/tiles/<room-name>/<roomId>/{z}/{y}/{x}.jpg`). Cấu trúc này giúp frontend chỉ tải các mảnh ảnh cần thiết tùy thuộc vào mức độ phóng to của người dùng.
+
+### 4.3. Quản lý Phân khu & Tòa nhà (Buildings Dashboard)
+*   **Gom nhóm phòng trực quan:** Hỗ trợ tạo, sửa, xóa các tòa nhà hoặc phân khu (ví dụ: Nhà xưởng A, Văn phòng B). Các phòng sau khi upload sẽ được gán vào phân khu tương ứng để tổ chức dữ liệu khoa học.
+*   **Giao diện cao cấp:** Giao diện quản lý phân khu được thiết kế đồng bộ với các hiệu ứng chuyển động, dải màu gradient sang trọng, cùng các hộp thoại xác nhận (custom modal) thiết kế riêng thay thế cho các hộp thoại `prompt` và `confirm` mặc định của trình duyệt.
+
+### 4.4. Trình biên tập tương tác trực quan (Visual Hotspot Editors)
+Admin có thể cấu hình trực tiếp tất cả các loại hotspot trên giao diện trực quan:
+*   **Navigation Hotspots:** Admin nhấp đúp vào vị trí bất kỳ trên màn hình 360 độ để tạo điểm chuyển cảnh, kéo thả điều chỉnh vị trí, chọn phòng đích và nhấn lưu. Tọa độ yaw/pitch được tự động tính toán và lưu trữ.
+*   **Mail Hotspots:** Kéo thả để định vị điểm nóng gửi email, nhập tiêu đề, mô tả và cấu hình thông tin mail trực tiếp.
+*   **Media Hotspots & Polygon Editor:** Admin có thể đính kèm tài liệu, ảnh, 3D model cho điểm nóng. Đặc biệt, hệ thống hỗ trợ trình biên tập vùng đa giác (Polygon Drawing Tool) cho phép admin vẽ các điểm nối liên tục trên màn hình để tạo ra vùng highlight bao quanh vật thể.
+*   **Minimap Editor:** Tải ảnh sơ đồ mặt bằng (minimap), kéo thả định vị các chấm định vị phòng tương ứng lên bản đồ.
+*   **Sensors & Camera Config:** Liên kết các điểm cảm biến IoT và cấu hình WHEP URL của Camera WebRTC cho từng vị trí phòng tương ứng.
+
