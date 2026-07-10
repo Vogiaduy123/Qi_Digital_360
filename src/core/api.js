@@ -6,9 +6,10 @@ export async function fetchRooms() {
 }
 
 export async function fetchMinimap() {
-  const res = await fetch("/api/admin/minimap");
+  const res = await fetch("/api/minimap");
   return parseJsonResponse(res);
 }
+
 
 export async function fetchSensors() {
   const res = await fetch("/api/sensors");

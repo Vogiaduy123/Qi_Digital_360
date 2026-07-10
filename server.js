@@ -9,7 +9,7 @@ const os = require("os");
 const nodemailer = require("nodemailer");
 const cookieParser = require("cookie-parser");
 const db = require("./backend/db");
-const { authMiddleware, requireRole, hashPassword, comparePassword, signToken } = require("./backend/auth");
+const { authMiddleware, requireRole, hashPassword, comparePassword, signToken, verifyToken } = require("./backend/auth");
 const { getNotifications, createNotification } = require("./backend/notifications");
 
 // Import admin routes
@@ -83,6 +83,18 @@ async function broadcastNotifications() {
   }
 }
 global.broadcastNotifications = broadcastNotifications;
+
+// Che giấu email người nhận để tránh lộ thông tin cá nhân
+function obfuscateEmail(email) {
+  if (!email || typeof email !== 'string') return '';
+  const parts = email.split('@');
+  if (parts.length !== 2) return '***@***.***';
+  const [local, domain] = parts;
+  if (local.length <= 2) {
+    return `${local[0] || '*'}***@${domain}`;
+  }
+  return `${local.substring(0, 2)}***${local.slice(-1)}@${domain}`;
+}
 
 // Đọc danh sách phòng từ Supabase DB (async wrapper).
 async function getRooms() {
@@ -500,7 +512,36 @@ app.get("/test", (req, res) => {
 // GET ROOMS
 app.get("/api/rooms", async (req, res) => {
   const rooms = await getRooms();
-  res.json(rooms);
+  
+  // Kiểm tra token để xác định vai trò người dùng (không bắt buộc)
+  let token = null;
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+    token = req.headers.authorization.split(" ")[1];
+  } else if (req.cookies && req.cookies.vt_token) {
+    token = req.cookies.vt_token;
+  }
+  
+  let isManager = false;
+  if (token) {
+    const decoded = verifyToken(token);
+    if (decoded && (decoded.role === 'admin' || decoded.role === 'collaborator')) {
+      isManager = true;
+    }
+  }
+  
+  // Nếu không phải là quản trị/cộng tác viên, ẩn/che giấu email người nhận trong mailHotspots
+  const safeRooms = rooms.map(room => {
+    if (!room.mailHotspots || room.mailHotspots.length === 0) return room;
+    return {
+      ...room,
+      mailHotspots: room.mailHotspots.map(h => ({
+        ...h,
+        recipient: isManager ? h.recipient : obfuscateEmail(h.recipient)
+      }))
+    };
+  });
+  
+  res.json(safeRooms);
 });
 
 // GET NOTIFICATIONS (Protected)
@@ -613,14 +654,22 @@ app.get("/api/rooms/:id/mail-hotspots", authMiddleware, async (req, res) => {
   try {
     const room = await db.getRoomById(roomId);
     if (!room) return res.status(404).json({ success: false, error: "Room not found" });
-    res.json({ success: true, mailHotspots: room.mailHotspots || [] });
+
+    // Kiểm tra vai trò
+    const isManager = req.user.role === "admin" || req.user.role === "collaborator";
+    const mailHotspots = (room.mailHotspots || []).map(h => ({
+      ...h,
+      recipient: isManager ? h.recipient : obfuscateEmail(h.recipient)
+    }));
+
+    res.json({ success: true, mailHotspots });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
 // ADD MAIL HOTSPOT
-app.post("/api/rooms/:id/mail-hotspots", authMiddleware, async (req, res) => {
+app.post("/api/rooms/:id/mail-hotspots", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const roomId = Number(req.params.id);
   const { yaw, pitch, screenX, screenY, title, recipient, subject, body } = req.body;
 
@@ -664,7 +713,7 @@ app.post("/api/rooms/:id/mail-hotspots", authMiddleware, async (req, res) => {
 });
 
 // UPDATE MAIL HOTSPOT
-app.patch("/api/rooms/:id/mail-hotspots/:index", authMiddleware, async (req, res) => {
+app.patch("/api/rooms/:id/mail-hotspots/:index", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const roomId = Number(req.params.id);
   const index = Number(req.params.index);
   const { yaw, pitch, screenX, screenY, title, recipient, subject, body } = req.body;
@@ -699,7 +748,7 @@ app.patch("/api/rooms/:id/mail-hotspots/:index", authMiddleware, async (req, res
 });
 
 // DELETE MAIL HOTSPOT
-app.delete("/api/rooms/:id/mail-hotspots/:index", authMiddleware, async (req, res) => {
+app.delete("/api/rooms/:id/mail-hotspots/:index", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const roomId = Number(req.params.id);
   const index = Number(req.params.index);
 
@@ -724,7 +773,28 @@ app.delete("/api/rooms/:id/mail-hotspots/:index", authMiddleware, async (req, re
 // SEND MAIL
 app.post("/api/mail/send", authMiddleware, async (req, res) => {
   try {
-    const { to, subject, body, pageUrl, summary, notes, format } = req.body;
+    let { to, subject, body, pageUrl, summary, notes, format, roomId, hotspotIndex } = req.body;
+
+    // Nếu người dùng có role là "user" (không phải admin hay collaborator)
+    // thì bắt buộc phải kiểm soát địa chỉ nhận email để tránh Spam
+    if (req.user.role === 'user') {
+      if (roomId === undefined || roomId === null || hotspotIndex === undefined || hotspotIndex === null) {
+        return res.status(400).json({ success: false, error: "Thiếu thông tin phòng và vị trí điểm mail để xác minh địa chỉ nhận." });
+      }
+
+      const room = await db.getRoomById(roomId);
+      if (!room || !room.mailHotspots) {
+        return res.status(400).json({ success: false, error: "Không tìm thấy phòng hoặc danh sách điểm mail." });
+      }
+
+      const hotspot = room.mailHotspots[Number(hotspotIndex)];
+      if (!hotspot || !hotspot.recipient) {
+        return res.status(400).json({ success: false, error: "Điểm mail không tồn tại hoặc chưa cấu hình email nhận." });
+      }
+
+      // Chỉ gửi về email gốc đã được lưu an toàn trên cơ sở dữ liệu
+      to = hotspot.recipient;
+    }
 
     if (!to) {
       return res.status(400).json({ success: false, error: "Missing recipient (to)" });
@@ -878,7 +948,7 @@ app.get("/api/sensors/:id", async (req, res) => {
   res.json({ success: true, sensor });
 });
 
-app.put("/api/sensors/:id", async (req, res) => {
+app.put("/api/sensors/:id", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const sensorId = Number(req.params.id);
   const { name, position, sensors: envSensors, type, camera } = req.body;
 
@@ -905,7 +975,7 @@ app.put("/api/sensors/:id", async (req, res) => {
   }
 });
 
-app.post("/api/sensors", async (req, res) => {
+app.post("/api/sensors", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const { name, roomId, position, sensors, type, camera } = req.body;
   if (!name || !roomId) return res.status(400).json({ success: false, error: "Missing required fields" });
 
@@ -927,7 +997,7 @@ app.post("/api/sensors", async (req, res) => {
   }
 });
 
-app.delete("/api/sensors/:id", async (req, res) => {
+app.delete("/api/sensors/:id", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const sensorId = Number(req.params.id);
   try {
     await db.deleteSensor(sensorId);
@@ -939,7 +1009,7 @@ app.delete("/api/sensors/:id", async (req, res) => {
 });
 
 /* ===== API CONFIG MANAGEMENT ===== */
-app.get("/api/config/api", async (req, res) => {
+app.get("/api/config/api", authMiddleware, requireRole("admin"), async (req, res) => {
   try {
     const config = await getApiConfig();
     res.json({ success: true, config });
@@ -948,7 +1018,7 @@ app.get("/api/config/api", async (req, res) => {
   }
 });
 
-app.post("/api/config/api", async (req, res) => {
+app.post("/api/config/api", authMiddleware, requireRole("admin"), async (req, res) => {
   try {
     await saveApiConfig(req.body);
     res.json({ success: true, message: "Config saved successfully" });

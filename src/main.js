@@ -177,6 +177,12 @@ async function initApp() {
         const dashBtn = document.querySelector('.dashboard-btn');
         if (dashBtn) dashBtn.style.display = isManager ? 'flex' : 'none';
 
+        // Hiện/ẩn công cụ kéo thả điểm mail dựa vào quyền
+        const mailDragBtn = document.getElementById('mailDragIcon');
+        if (mailDragBtn) {
+          mailDragBtn.style.display = isManager ? 'block' : 'none';
+        }
+
         const profileBtn = document.getElementById('userProfileTourBtn');
         const logoutBtn = document.getElementById('tourLogoutBtn');
         if (profileBtn) profileBtn.style.display = 'flex';

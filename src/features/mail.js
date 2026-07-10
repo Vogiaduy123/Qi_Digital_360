@@ -160,22 +160,69 @@ export function openMailComposer(index = -1, mailPoint = null) {
   activeMailHotspotIndex = index;
   const editing = index >= 0;
 
+  const isManager = window.currentUser && (window.currentUser.role === 'admin' || window.currentUser.role === 'collaborator');
+
   if (mailComposerTitle) {
-    mailComposerTitle.textContent = editing ? "✉️ Chỉnh sửa điểm mail" : "✉️ Tạo điểm mail mới";
+    if (isManager) {
+      mailComposerTitle.textContent = editing ? "✉️ Chỉnh sửa điểm mail" : "✉️ Tạo điểm mail mới";
+    } else {
+      mailComposerTitle.textContent = "✉️ Gửi phản hồi hỗ trợ";
+    }
   }
 
   const selectedPoint = mailPoint || (editing ? getCurrentMailHotspots()[index] : null) || {};
 
-  if (mailPointTitle) mailPointTitle.value = selectedPoint.title || "";
+  if (mailPointTitle) {
+    mailPointTitle.value = selectedPoint.title || "";
+    mailPointTitle.disabled = !isManager;
+  }
   if (mailRecipientInput) mailRecipientInput.value = selectedPoint.recipient || "";
   if (mailSubjectInput) mailSubjectInput.value = selectedPoint.subject || "";
   if (mailBodyInput) mailBodyInput.value = selectedPoint.body || "";
 
+  // Ẩn/hiện thông tin chọn email nhận dựa trên vai trò người dùng
+  const labelSelect = document.querySelector('label[for="mailRecipientSelect"]');
+  const labelInput = document.querySelector('label[for="mailRecipientInput"]');
+  
+  if (labelSelect) labelSelect.style.display = isManager ? "block" : "none";
+  if (mailRecipientSelect) mailRecipientSelect.style.display = isManager ? "block" : "none";
+  if (labelInput) labelInput.style.display = isManager ? "block" : "none";
+  if (mailRecipientInput) mailRecipientInput.style.display = isManager ? "block" : "none";
+
+  let mailRecipientInfo = document.getElementById("mailRecipientInfo");
+  if (!mailRecipientInfo && mailPointTitle) {
+    mailRecipientInfo = document.createElement("div");
+    mailRecipientInfo.id = "mailRecipientInfo";
+    mailRecipientInfo.className = "mail-recipient-info";
+    mailRecipientInfo.style.margin = "8px 0";
+    mailRecipientInfo.style.fontSize = "13px";
+    mailRecipientInfo.style.fontWeight = "bold";
+    mailRecipientInfo.style.color = "#444";
+    mailPointTitle.parentNode.insertBefore(mailRecipientInfo, mailPointTitle.nextSibling);
+  }
+
+  if (mailRecipientInfo) {
+    if (isManager) {
+      mailRecipientInfo.style.display = "none";
+    } else {
+      mailRecipientInfo.style.display = "block";
+      mailRecipientInfo.textContent = `Người nhận: ${selectedPoint.title || "Bộ phận hỗ trợ"} (Email đã được bảo mật)`;
+    }
+  }
+
   refreshRecipientOptions(selectedPoint.recipient || "");
-  setMailComposerStatus(editing ? "Bạn có thể chỉnh sửa hoặc gửi mail ngay." : "Nhập thông tin rồi nhấn Lưu để tạo điểm mail.");
+  
+  setMailComposerStatus(isManager 
+    ? (editing ? "Bạn có thể chỉnh sửa hoặc gửi mail ngay." : "Nhập thông tin rồi nhấn Lưu để tạo điểm mail.")
+    : "Nhập nội dung phản hồi rồi nhấn Gửi."
+  );
+
+  if (mailSaveBtn) {
+    mailSaveBtn.style.display = isManager ? "inline-block" : "none";
+  }
 
   if (mailDeleteBtn) {
-    mailDeleteBtn.style.display = editing ? "inline-block" : "none";
+    mailDeleteBtn.style.display = (isManager && editing) ? "inline-block" : "none";
   }
 
   mailComposerPanel.classList.remove("hidden");
@@ -641,6 +688,8 @@ async function sendMailFromComposer() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         to,
+        roomId: currentRoomId,
+        hotspotIndex: activeMailHotspotIndex,
         subject: subject || "GHI CHÚ TỪ VIRTUAL TOUR",
         body,
         pageUrl: window.location.href,
