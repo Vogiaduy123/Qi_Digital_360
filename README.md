@@ -33,10 +33,11 @@ Dự án **Virtual Tour 360 (Qi Digital 360)** là giải pháp công nghệ s�
 ### 2.1. Tổng quan Kiến trúc
 Hệ thống được thiết kế theo kiến trúc Client-Server hiện đại, chia làm 2 phần chính và được kết nối thời gian thực:
 *   **Frontend Client:** Chạy bằng Vanilla JavaScript (ES Module) và được đóng gói bởi Vite. Frontend tải dữ liệu cấu hình từ API và render giao diện 360 trực quan.
-*   **Backend Express API Server:** Chạy bằng Node.js Express 5. Server chịu trách nhiệm quản lý lưu trữ dữ liệu JSON, xử lý các tệp tin đa phương tiện và thực hiện cắt nhỏ hình ảnh panorama.
+*   **Backend Express API Server:** Chạy bằng Node.js Express 5. Server chịu trách nhiệm quản lý kết nối và lưu trữ cơ sở dữ liệu trên Supabase PostgreSQL, xử lý các tệp tin đa phương tiện và thực hiện cắt nhỏ hình ảnh panorama.
 *   **Real-time & Live Streaming Layer:** Bao gồm kênh kết nối Server-Sent Events (SSE) để phát thông báo đồng bộ dữ liệu và WebRTC Gateway (MediaMTX) để truyền trực tiếp luồng camera RTSP.
 
 ### 2.2. Công nghệ cốt lõi
+*   **Supabase PostgreSQL & SDK:** Cơ sở dữ liệu đám mây chính dùng để lưu trữ thông tin phòng, hotspots di chuyển, media hotspots, mail hotspots, thiết bị IoT/camera, và tài khoản người dùng.
 *   **Marzipano (v0.10.2):** Thư viện JavaScript mã nguồn mở hiệu năng cao của Google dùng để render không gian 360 độ bằng WebGL. Hỗ trợ chia cấp độ thu phóng hình ảnh giúp hiển thị mượt mà.
 *   **Google `<model-viewer>` (v3.4.0):** Thư viện hiển thị vật thể 3D trực quan trên nền tảng web, hỗ trợ các định dạng tiêu chuẩn như `.glb` / `.gltf` kèm khả năng xoay, zoom và xem dưới dạng AR.
 *   **Express 5 (Backend Framework):** Framework web cho Node.js hỗ trợ định tuyến nhanh chóng, quản lý session đăng nhập và cung cấp RESTful API bảo mật.
@@ -122,6 +123,13 @@ Tạo tệp `.env` tại thư mục gốc của dự án với các cấu hình 
 PORT=3000
 UPLOAD_DIR=./uploads
 
+# Cấu hình kết nối Supabase
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_KEY=your-supabase-service-role-key
+
+# JWT Secret để mã hóa session admin
+JWT_SECRET=your-super-secret-key-change-this
+
 # Cấu hình dịch vụ email (SMTP / Resend / Brevo / SendGrid)
 MAIL_PROVIDER=resend
 MAIL_FROM=no-reply@yourdomain.com
@@ -178,8 +186,8 @@ Hệ thống được thiết kế với các quy chuẩn bảo mật và tối 
 
 ### 6.2. Ẩn thông tin nhạy cảm của Mail Hotspot
 *   Để bảo vệ hòm thư của khách hàng khỏi các bot quét email rác (spam bots), hệ thống không lưu địa chỉ email thực tế trên mã nguồn frontend client.
-*   Mỗi mail hotspot chỉ lưu trữ một định danh chỉ mục. Khi người dùng gửi mail, frontend chỉ truyền chỉ mục này kèm nội dung thư lên API `/api/send-mail`, backend Express sẽ tự động phân giải chỉ mục này ra email thật từ file cấu hình bảo mật `data/rooms.json` và thực hiện gửi mail trực tiếp ở phía server.
+*   Mỗi mail hotspot chỉ lưu trữ một định danh chỉ mục. Khi người dùng gửi mail, frontend chỉ truyền chỉ mục này kèm nội dung thư lên API `/api/send-mail`, backend Express sẽ tự động phân giải chỉ mục này ra email thật từ cơ sở dữ liệu bảo mật (bảng `mail_hotspots` trên Supabase) và thực hiện gửi mail trực tiếp ở phía server.
 
 ### 6.3. Tối ưu hóa lưu trữ và Tài nguyên hệ thống
-*   Hệ thống lưu trữ toàn bộ dữ liệu cấu hình phòng, cảm biến và kịch bản dưới dạng tệp tin JSON tĩnh trong thư mục `data/`. Điều này giúp hệ thống phản hồi cực nhanh mà không phụ thuộc vào cơ sở dữ liệu cồng kềnh.
+*   Hệ thống lưu trữ toàn bộ dữ liệu cấu hình phòng, cảm biến, tòa nhà và kịch bản trên cơ sở dữ liệu đám mây Supabase PostgreSQL, đồng thời sử dụng cơ chế lưu cache/local file như một giải pháp dự phòng giúp hệ thống phản hồi cực nhanh mà không phụ thuộc vào cơ sở dữ liệu cồng kềnh.
 *   Việc áp dụng tiến trình cắt nhỏ hình ảnh panorama (Sharp Tile Pyramid) giải quyết triệt để bài toán tải trang chậm đối với ảnh panorama độ phân giải cực cao (dung lượng lớn từ 10MB - 50MB), giúp thiết bị di động có cấu hình yếu cũng có thể trải nghiệm mượt mà.
