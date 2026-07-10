@@ -1,5 +1,21 @@
 [
   {
+    "id": 1783654809212,
+    "type": "building_delete",
+    "title": "Xóa phân khu",
+    "message": "Admin@123 đã xóa phân khu 'test'",
+    "createdAt": "2026-07-10T03:40:09.212Z",
+    "createdBy": "Admin@123"
+  },
+  {
+    "id": 1783654795136,
+    "type": "building_add",
+    "title": "Thêm phân khu",
+    "message": "Admin@123 đã thêm phân khu mới 'test'",
+    "createdAt": "2026-07-10T03:39:55.136Z",
+    "createdBy": "Admin@123"
+  },
+  {
     "id": 1783653184915,
     "type": "room_delete",
     "title": "Xóa phòng",

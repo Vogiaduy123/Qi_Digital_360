@@ -13,82 +13,190 @@
   <link rel="stylesheet" href="/css/admin-header.css">
   <link rel="stylesheet" href="/css/admin-rooms.css">
   <style>
-    /* ===== BUILDINGS PAGE SPECIFIC ===== */
+    /* ===== BUILDINGS PAGE PREMIUM STYLE ===== */
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --success: #10b981;
+      --success-hover: #059669;
+      --info: #06b6d4;
+      --info-hover: #0891b2;
+      --danger: #f43f5e;
+      --danger-hover: #e11d48;
+      --bg-page: #f8fafc;
+      --text-dark: #0f172a;
+      --text-muted: #64748b;
+      --card-bg: #ffffff;
+      --border-color: rgba(0, 0, 0, 0.06);
+    }
+
+    body {
+      background-color: var(--bg-page);
+    }
+
     .buildings-wrap {
-      max-width: 1180px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 24px 20px 40px;
+      padding: 32px 24px 48px;
     }
 
     .buildings-wrap .panel {
-      background: #ffffff;
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 18px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
       overflow: hidden;
-      box-shadow: 0 18px 60px rgba(0,0,0,0.08);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 20px 40px -10px rgba(0, 0, 0, 0.03);
+      transition: all 0.3s ease;
     }
 
     .buildings-wrap .panel-header {
-      padding: 24px 28px;
-      background: linear-gradient(135deg, rgba(43,50,120,0.96), rgba(18,22,45,0.96));
-      color: #fff;
+      padding: 32px 36px 24px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      position: relative;
+    }
+
+    .buildings-wrap .panel-header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 36px;
+      right: 36px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--primary), var(--info), transparent);
+      opacity: 0.8;
     }
 
     .buildings-wrap .panel-title {
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 6px;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
     }
 
     .buildings-wrap .panel-subtitle {
-      color: rgba(232,236,255,0.8);
-      font-size: 13px;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    .buildings-wrap .panel-body {
+      padding: 32px 36px 36px;
     }
 
     .buildings-summary {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin: 18px 0 20px;
+      gap: 12px;
+      margin-bottom: 24px;
     }
 
     .summary-chip {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 9px 12px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.03);
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      color: #4a5568;
-      font-size: 12px;
-      font-weight: 600;
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .summary-chip:hover {
+      transform: translateY(-1px);
+      background: #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
     }
 
     .summary-chip strong {
-      color: #1a202c;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .add-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 28px;
+      align-items: stretch;
+    }
+
+    .add-bar input {
+      flex: 1;
+      min-width: 280px;
+      padding: 14px 18px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 500;
+      font-family: inherit;
+      transition: all 0.25s ease;
+      background: #ffffff;
+      color: var(--text-dark);
+    }
+
+    .add-bar input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+      background: #ffffff;
+    }
+
+    .add-bar input::placeholder {
+      color: #94a3b8;
+    }
+
+    .add-bar button {
+      background: linear-gradient(135deg, var(--success) 0%, var(--success-hover) 100%) !important;
+      color: white !important;
+      border: none !important;
+      font-weight: 600 !important;
+      font-size: 14px !important;
+      border-radius: 14px !important;
+      padding: 0 24px !important;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3) !important;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .add-bar button:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
+      filter: brightness(1.05);
+    }
+
+    .add-bar button:active {
+      transform: translateY(0) !important;
     }
 
     .building-card {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 18px;
-      padding: 18px 20px;
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 14px;
-      background: rgba(0, 0, 0, 0.02);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.04);
-      margin-bottom: 14px;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      gap: 20px;
+      padding: 22px 28px;
+      border: 1px solid var(--border-color);
+      border-left: 5px solid var(--primary);
+      border-radius: 16px;
+      background: #ffffff;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01), 0 2px 4px -1px rgba(0, 0, 0, 0.006);
+      margin-bottom: 16px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .building-card:hover {
-      box-shadow: 0 18px 42px rgba(0,0,0,0.08);
-      transform: translateY(-2px);
-      border-color: rgba(125,140,255,0.26);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+      transform: translateY(-3px) scale(1.005);
+      border-color: rgba(79, 70, 229, 0.2);
+      background: #fafafa;
     }
 
     .building-card-info {
@@ -97,90 +205,114 @@
 
     .building-card-name {
       font-weight: 700;
-      font-size: 16px;
-      color: #1a202c;
+      font-size: 18px;
+      color: var(--text-dark);
       margin-bottom: 6px;
-      word-break: break-word;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+
     .building-card-meta {
-      font-size: 12px;
-      color: #4a5568;
-      line-height: 1.5;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
     }
+
     .building-card-actions {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
       justify-content: flex-end;
       align-items: center;
     }
 
-    .add-bar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-    }
-
-    .add-bar input {
-      flex: 1;
-      min-width: 240px;
-      padding: 12px 14px;
-      border: 1px solid rgba(0,0,0,0.15);
+    /* Existing button styles override for building page */
+    .buildings-wrap .btn-small {
+      border: none;
+      font-weight: 600;
+      font-size: 13px;
       border-radius: 10px;
-      font-size: 14px;
-      font-family: inherit;
-      transition: border-color 0.2s;
-      background: #ffffff;
-      color: #1a202c;
+      padding: 10px 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      margin: 0;
     }
 
-    .add-bar input:focus {
-      outline: none;
-      border-color: #7d8cff;
-      box-shadow: 0 0 0 3px rgba(125,140,255,0.12);
-      background: rgba(0,0,0,0.02);
+    .buildings-wrap .btn-success {
+      background: #eff6ff !important;
+      color: #2563eb !important;
+      border: 1px solid rgba(37, 99, 235, 0.15) !important;
+    }
+    .buildings-wrap .btn-success:hover {
+      background: #2563eb !important;
+      color: white !important;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;
     }
 
-    .add-bar input::placeholder {
-      color: #718096;
+    .buildings-wrap .btn-edit {
+      background: #f0fdf4 !important;
+      color: #16a34a !important;
+      border: 1px solid rgba(22, 163, 74, 0.15) !important;
+    }
+    .buildings-wrap .btn-edit:hover {
+      background: #16a34a !important;
+      color: white !important;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2) !important;
+    }
+
+    .buildings-wrap .btn-danger {
+      background: #fff1f2 !important;
+      color: #e11d48 !important;
+      border: 1px solid rgba(225, 29, 72, 0.15) !important;
+    }
+    .buildings-wrap .btn-danger:hover {
+      background: #e11d48 !important;
+      color: white !important;
+      box-shadow: 0 4px 12px rgba(225, 29, 72, 0.2) !important;
     }
 
     .buildings-empty,
     .buildings-error {
       text-align: center;
-      padding: 34px 20px;
-      border-radius: 14px;
-      background: rgba(0,0,0,0.02);
-      border: 1px dashed rgba(0,0,0,0.12);
-      color: #4a5568;
+      padding: 48px 24px;
+      border-radius: 18px;
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      color: var(--text-muted);
     }
 
     .buildings-empty strong,
     .buildings-error strong {
-      color: #1a202c;
+      color: var(--text-dark);
       display: block;
-      margin-bottom: 8px;
-      font-size: 15px;
+      margin-bottom: 10px;
+      font-size: 16px;
+      font-weight: 700;
     }
 
     .buildings-error {
       border-style: solid;
-      border-color: rgba(255,138,138,0.28);
-      background: rgba(255,138,138,0.08);
+      border-color: rgba(244, 63, 94, 0.2);
+      background: rgba(244, 63, 94, 0.03);
+      color: var(--danger);
     }
 
     /* ===== ASSIGN MODAL ===== */
     .assign-modal-box {
       background: white;
-      border-radius: 12px;
-      width: 540px;
+      border-radius: 20px;
+      width: 500px;
       max-width: 95vw;
       max-height: 85vh;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-      animation: slideUp 0.25s ease;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
     }
 
     @keyframes slideUp {
@@ -189,123 +321,172 @@
     }
 
     .assign-modal-head {
-      padding: 18px 24px;
-      border-bottom: 1px solid #e1e8ed;
+      padding: 20px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #2B3278;
-      border-radius: 12px 12px 0 0;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+      color: white;
     }
 
     .assign-modal-head h3 {
       margin: 0;
-      font-size: 16px;
+      font-size: 18px;
       color: white;
-      font-weight: 600;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .assign-close-btn {
-      background: rgba(255,255,255,0.2);
+      background: rgba(255, 255, 255, 0.15);
       border: none;
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      font-size: 18px;
+      font-size: 20px;
       cursor: pointer;
       color: white;
-      line-height: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.2s;
+      transition: all 0.2s ease;
     }
-    .assign-close-btn:hover { background: rgba(255,255,255,0.35); }
+    .assign-close-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg);
+    }
 
     .assign-modal-body {
-      padding: 16px 20px;
+      padding: 24px;
       overflow-y: auto;
       flex: 1;
+      background: #f8fafc;
     }
 
     .assign-modal-foot {
-      padding: 14px 20px;
-      border-top: 1px solid #e1e8ed;
+      padding: 18px 24px;
+      border-top: 1px solid #e2e8f0;
       display: flex;
-      gap: 10px;
+      gap: 12px;
+      background: #ffffff;
+    }
+
+    .assign-modal-foot button {
+      flex: 1;
+      padding: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .assign-modal-foot .btn-save {
+      background: var(--primary) !important;
+      color: white !important;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3) !important;
+    }
+    .assign-modal-foot .btn-save:hover {
+      background: var(--primary-hover) !important;
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    .assign-modal-foot .btn-cancel {
+      background: #f1f5f9 !important;
+      color: #475569 !important;
+      border: 1px solid #cbd5e1 !important;
+    }
+    .assign-modal-foot .btn-cancel:hover {
+      background: #e2e8f0 !important;
     }
 
     .select-all-bar {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 10px 12px;
-      border-bottom: 1px solid #e1e8ed;
-      margin-bottom: 10px;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
 
     .select-all-bar label {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      color: #2B3278;
+      color: #334155;
     }
 
     .count-badge {
       margin-left: auto;
-      background: #e3f2fd;
-      color: #1565c0;
+      background: #e0f2fe;
+      color: #0284c7;
       font-size: 12px;
       font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 12px;
+      padding: 4px 12px;
+      border-radius: 999px;
     }
 
     .room-check-item {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 10px 12px;
-      border-radius: 8px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: white;
+      border: 1px solid #e2e8f0;
       cursor: pointer;
-      transition: background 0.15s;
-      margin-bottom: 4px;
+      transition: all 0.2s ease;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.01);
     }
 
-    .room-check-item:hover { background: #f0f4f8; }
+    .room-check-item:hover {
+      border-color: var(--primary);
+      background: #f5f3ff;
+      transform: translateX(4px);
+    }
 
     .room-check-item input[type=checkbox] {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       cursor: pointer;
-      accent-color: #2B3278;
+      accent-color: var(--primary);
       flex-shrink: 0;
     }
 
-    .room-check-label { flex: 1; }
+    .room-check-label { flex: 1; min-width: 0; }
     .room-check-name {
       font-weight: 600;
       font-size: 14px;
-      color: #2B3278;
+      color: var(--text-dark);
     }
     .room-check-info {
       font-size: 12px;
-      color: #7f8c8d;
-      margin-top: 3px;
+      color: var(--text-muted);
+      margin-top: 4px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .mini-badge {
-      font-size: 11px;
-      font-weight: 600;
+      font-size: 10px;
+      font-weight: 700;
       padding: 2px 8px;
-      border-radius: 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .mini-badge-green  { background: #e8f5e9; color: #27ae60; }
-    .mini-badge-orange { background: #fdebd0; color: #e67e22; }
-    .mini-badge-gray   { background: #ecf0f1; color: #7f8c8d; }
+    .mini-badge-green  { background: #dcfce7; color: #15803d; }
+    .mini-badge-orange { background: #ffedd5; color: #c2410c; }
+    .mini-badge-gray   { background: #f1f5f9; color: #475569; }
   </style>
 </head>
 <body>
@@ -328,7 +509,7 @@
 
         <div class="add-bar">
           <input type="text" id="newBuildingName" placeholder="Tên tòa nhà mới (VD: Tòa A, Sài Gòn Pearl...)">
-          <button class="btn btn-success btn-small" onclick="addBuilding()" style="white-space:nowrap;margin:0;padding:10px 16px;font-size:13px">
+          <button onclick="addBuilding()">
             ➕ Thêm Tòa Nhà
           </button>
         </div>
@@ -355,8 +536,8 @@
         <div id="roomCheckList"></div>
       </div>
       <div class="assign-modal-foot">
-        <button class="btn btn-primary" style="flex:1;margin:0" onclick="saveAssignment()">💾 Lưu thay đổi</button>
-        <button class="btn" style="flex:1;margin:0;background:#ecf0f1;color:#2B3278" onclick="closeAssignModal()">Hủy</button>
+        <button class="btn-save" onclick="saveAssignment()">💾 Lưu thay đổi</button>
+        <button class="btn-cancel" onclick="closeAssignModal()">Hủy</button>
       </div>
     </div>
   </div>
