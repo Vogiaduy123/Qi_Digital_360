@@ -15,6 +15,7 @@ window.initializeAdminNav = function () {
     if (!confirm('Bạn có chắc chắn muốn đăng xuất không?')) return;
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
+      sessionStorage.removeItem('vt_token');
       window.location.href = '/admin/login.html';
     } catch (err) {
       console.error('Logout error:', err);
@@ -75,8 +76,29 @@ window.initializeAdminNav = function () {
       </button>
       ` : ''}
 
-      <div class="user-profile-nav" style="display:flex;align-items:center;gap:12px;margin-left:12px;padding-left:12px;border-left:1px solid rgba(255,255,255,0.15)">
-        <span id="userProfileBtn" style="font-size:13px;color:#dbe3ff;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;" title="Chỉnh sửa thông tin tài khoản">👤 <span style="text-decoration:underline;text-underline-offset:3px;">${userDisplayName}</span></span>
+      <div class="user-profile-nav" style="display:flex;align-items:center;gap:16px;margin-left:12px;padding-left:12px;border-left:1px solid rgba(0,0,0,0.08)">
+        
+        <!-- Notification Bell Container -->
+        <div id="adminNotificationBell" class="position-relative" style="cursor:pointer;padding:4px;display:flex;align-items:center;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a5568" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span id="adminNotificationBadge" class="position-absolute bg-danger border border-light rounded-circle" style="top: 2px; right: 2px; width: 8px; height: 8px; display: none;"></span>
+          
+          <!-- Dropdown Card -->
+          <div id="adminNotificationDropdown" style="display:none; position:absolute; right:-80px; top:36px; width:320px; background:#ffffff; border:1px solid rgba(0,0,0,0.08); border-radius:12px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); z-index:2200; color:#1e293b; font-family:system-ui,-apple-system,sans-serif;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid rgba(0,0,0,0.06); font-weight:600; font-size:13px;">
+              <span>🔔 Thông báo thay đổi</span>
+              <button id="adminMarkAllReadBtn" style="background:none; border:none; color:#2563eb; font-size:11px; padding:0; cursor:pointer;">Đánh dấu đã đọc</button>
+            </div>
+            <div id="adminNotificationList" style="max-height:280px; overflow-y:auto; font-size:12px; line-height:1.4;">
+              <div style="padding:20px; text-align:center; color:#64748b;">Đang tải thông báo...</div>
+            </div>
+          </div>
+        </div>
+
+        <span id="userProfileBtn" style="font-size:13px;color:#4a5568;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;" title="Chỉnh sửa thông tin tài khoản">👤 <span style="text-decoration:underline;text-underline-offset:3px;">${userDisplayName}</span></span>
         <button onclick="handleLogout()" class="btn btn-outline-danger btn-sm" style="padding:4px 10px;font-size:12px;border-radius:6px;border-color:rgba(220,53,69,0.5);color:#ff6b76;">Đăng xuất</button>
       </div>
 
@@ -472,32 +494,118 @@ window.initializeAdminNav = function () {
     const modalDiv = document.createElement('div');
     modalDiv.innerHTML = `
       <div class="modal fade" id="userProfileModal" tabindex="-1" aria-hidden="true" style="z-index: 2070;">
+        <style>
+          #userProfileModal .modal-content {
+            background: #ffffff !important;
+            border: 1px solid rgba(0, 0, 0, 0.08) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+            color: #0f172a !important;
+            overflow: hidden;
+          }
+          #userProfileModal .modal-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+            padding: 20px 24px !important;
+          }
+          #userProfileModal .modal-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: #0f172a !important;
+          }
+          #userProfileModal .modal-body {
+            padding: 24px !important;
+          }
+          #userProfileModal .modal-footer {
+            border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+            padding: 16px 24px !important;
+          }
+          #userProfileModal .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #334155 !important;
+            margin-bottom: 6px;
+          }
+          #userProfileModal .form-label-muted {
+            color: #64748b !important;
+          }
+          #userProfileModal .form-control {
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #0f172a !important;
+            border-radius: 8px !important;
+            padding: 10px 14px !important;
+            transition: all 0.2s ease;
+          }
+          #userProfileModal .form-control:focus {
+            background: #ffffff !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+          }
+          #userProfileModal .form-control:disabled {
+            background: #f1f5f9 !important;
+            border-color: #e2e8f0 !important;
+            color: #64748b !important;
+            cursor: not-allowed;
+            opacity: 1;
+          }
+          #userProfileModal .btn-close {
+            filter: none !important;
+          }
+          #userProfileModal .btn-secondary {
+            background: #f1f5f9 !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #334155 !important;
+            border-radius: 8px !important;
+            padding: 10px 20px !important;
+            font-weight: 500;
+            transition: all 0.2s;
+          }
+          #userProfileModal .btn-secondary:hover {
+            background: #e2e8f0 !important;
+            color: #0f172a !important;
+          }
+          #userProfileModal .btn-primary {
+            background: #3b82f6 !important;
+            border: none !important;
+            color: #fff !important;
+            border-radius: 8px !important;
+            padding: 10px 24px !important;
+            font-weight: 500;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.05) !important;
+            transition: all 0.2s;
+          }
+          #userProfileModal .btn-primary:hover {
+            background: #2563eb !important;
+            box-shadow: 0 4px 12px -1px rgba(37, 99, 235, 0.2), 0 2px 6px -1px rgba(37, 99, 235, 0.1) !important;
+          }
+        </style>
         <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content" style="background:#1a202c;color:#fff;border:1px solid rgba(255,255,255,0.1);">
-            <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.1);">
+          <div class="modal-content">
+            <div class="modal-header">
               <h5 class="modal-title">👤 Chỉnh sửa thông tin cá nhân</h5>
-              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="userProfileForm">
               <div class="modal-body">
                 <div class="mb-3">
-                  <label for="profileUsername" class="form-label text-muted">Tên đăng nhập</label>
-                  <input type="text" class="form-control" id="profileUsername" disabled style="background:#2d3748;color:#a0aec0;border-color:rgba(255,255,255,0.1);">
+                  <label for="profileUsername" class="form-label form-label-muted">Tên đăng nhập</label>
+                  <input type="text" class="form-control" id="profileUsername" disabled>
                 </div>
                 <div class="mb-3">
                   <label for="profileDisplayName" class="form-label">Tên hiển thị</label>
-                  <input type="text" class="form-control" id="profileDisplayName" required style="background:#2d3748;color:#fff;border-color:rgba(255,255,255,0.1);">
+                  <input type="text" class="form-control" id="profileDisplayName" required>
                 </div>
                 <div class="mb-3">
                   <label for="profilePassword" class="form-label">Mật khẩu mới (để trống nếu không đổi)</label>
-                  <input type="password" class="form-control" id="profilePassword" minlength="6" placeholder="Tối thiểu 6 ký tự" style="background:#2d3748;color:#fff;border-color:rgba(255,255,255,0.1);">
+                  <input type="password" class="form-control" id="profilePassword" minlength="6" placeholder="Tối thiểu 6 ký tự">
                 </div>
                 <div class="mb-3">
                   <label for="profileConfirmPassword" class="form-label">Xác nhận mật khẩu mới</label>
-                  <input type="password" class="form-control" id="profileConfirmPassword" minlength="6" placeholder="Tối thiểu 6 ký tự" style="background:#2d3748;color:#fff;border-color:rgba(255,255,255,0.1);">
+                  <input type="password" class="form-control" id="profileConfirmPassword" minlength="6" placeholder="Tối thiểu 6 ký tự">
                 </div>
               </div>
-              <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.1);">
+              <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                 <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
               </div>
@@ -571,7 +679,171 @@ window.initializeAdminNav = function () {
       profileModal.show();
     };
   }
+
+  // Khởi tạo chuông thông báo
+  initializeNotificationBell();
 };
+
+function initializeNotificationBell() {
+  const bell = document.getElementById('adminNotificationBell');
+  const dropdown = document.getElementById('adminNotificationDropdown');
+  const badge = document.getElementById('adminNotificationBadge');
+  const listContainer = document.getElementById('adminNotificationList');
+  const markReadBtn = document.getElementById('adminMarkAllReadBtn');
+
+  if (!bell || !dropdown) return;
+
+  let notificationsList = [];
+
+  // Toggle dropdown
+  bell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (dropdown.style.display === 'none') {
+      dropdown.style.display = 'block';
+      renderNotifications();
+      markAllAsReadLocally();
+    } else {
+      dropdown.style.display = 'none';
+    }
+  });
+
+  // Close dropdown on click outside
+  document.addEventListener('click', (e) => {
+    if (!bell.contains(e.target)) {
+      dropdown.style.display = 'none';
+    }
+  });
+
+  // Fetch initial notifications
+  async function fetchNotifications() {
+    try {
+      const res = await fetch('/api/notifications');
+      const data = await res.json();
+      if (data.success) {
+        notificationsList = data.notifications || [];
+        updateBadge();
+        if (dropdown.style.display === 'block') {
+          renderNotifications();
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  }
+
+  // Get max notification ID from list
+  function getMaxNotifId() {
+    if (notificationsList.length === 0) return 0;
+    return Math.max(...notificationsList.map(n => n.id));
+  }
+
+  // Update unread badge
+  function updateBadge() {
+    if (!badge) return;
+    const lastReadId = Number(localStorage.getItem('vt_last_read_notif_id') || 0);
+    const hasUnread = notificationsList.some(n => n.id > lastReadId);
+    badge.style.display = hasUnread ? 'block' : 'none';
+  }
+
+  // Mark all as read locally
+  function markAllAsReadLocally() {
+    const maxId = getMaxNotifId();
+    if (maxId > 0) {
+      localStorage.setItem('vt_last_read_notif_id', maxId);
+      updateBadge();
+    }
+  }
+
+  // Render notifications to HTML
+  function renderNotifications() {
+    if (!listContainer) return;
+    if (notificationsList.length === 0) {
+      listContainer.innerHTML = `<div style="padding:24px; text-align:center; color:#64748b;">Không có thông báo mới</div>`;
+      return;
+    }
+
+    const typeEmoji = {
+      room_add: '🏠',
+      room_delete: '🗑️',
+      hotspot_add: '📍',
+      media_add: '📂',
+      mail_add: '✉️',
+      building_add: '🏢',
+      building_delete: '🗑️'
+    };
+
+    listContainer.innerHTML = notificationsList.map(n => {
+      const emoji = typeEmoji[n.type] || '🔔';
+      const timeStr = formatRelativeTime(n.createdAt);
+      return `
+        <div style="padding:12px 16px; border-bottom:1px solid rgba(0,0,0,0.04); display:flex; gap:12px; align-items:flex-start; transition:background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.02)'" onmouseout="this.style.background='none'">
+          <span style="font-size:18px; margin-top:2px;">${emoji}</span>
+          <div style="flex:1;">
+            <div style="font-weight:600; font-size:13px; color:#1e293b;">${n.title}</div>
+            <div style="font-size:12px; color:#475569; margin-top:2px;">${n.message}</div>
+            <div style="font-size:11px; color:#94a3b8; margin-top:4px; display:flex; justify-content:space-between;">
+              <span>bởi @${n.createdBy}</span>
+              <span>${timeStr}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Format relative time in Vietnamese
+  function formatRelativeTime(isoStr) {
+    if (!isoStr) return '';
+    const date = new Date(isoStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+
+    if (diffSec < 60) return 'Vừa xong';
+    if (diffMin < 60) return `${diffMin} phút trước`;
+    if (diffHr < 24) return `${diffHr} giờ trước`;
+    if (diffDay < 7) return `${diffDay} ngày trước`;
+    
+    return date.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Listen to SSE updates
+  let sseSource = window.adminSseSource;
+  if (!sseSource) {
+    sseSource = new EventSource('/events');
+    window.adminSseSource = sseSource;
+  }
+
+  sseSource.addEventListener('notifications', (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      if (Array.isArray(data)) {
+        notificationsList = data;
+        updateBadge();
+        if (dropdown.style.display === 'block') {
+          renderNotifications();
+          markAllAsReadLocally();
+        }
+      }
+    } catch (err) {
+      console.error('Error parsing SSE notifications:', err);
+    }
+  });
+
+  // Handle Mark All Read button
+  if (markReadBtn) {
+    markReadBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      markAllAsReadLocally();
+    });
+  }
+
+  // Initial fetch
+  fetchNotifications();
+}
 
 if (window.currentUser) {
   window.initializeAdminNav();

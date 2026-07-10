@@ -30,13 +30,13 @@ function verifyToken(token) {
 function authMiddleware(req, res, next) {
   let token = null;
 
-  // 1. Check cookies
-  if (req.cookies && req.cookies.vt_token) {
-    token = req.cookies.vt_token;
-  } 
-  // 2. Check Authorization header
-  else if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+  // 1. Check Authorization header first
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
     token = req.headers.authorization.split(" ")[1];
+  } 
+  // 2. Check cookies as fallback
+  else if (req.cookies && req.cookies.vt_token) {
+    token = req.cookies.vt_token;
   }
 
   if (!token) {

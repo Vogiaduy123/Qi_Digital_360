@@ -221,7 +221,7 @@ body {
   color: #fff;
 }
 
-.rooms-panel .form-group select option {
+.rooms-panel select option {
   background: #1a1f2e;
   color: #fff;
 }

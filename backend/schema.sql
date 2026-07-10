@@ -106,6 +106,16 @@ CREATE TABLE IF NOT EXISTS users (
     last_login TIMESTAMPTZ
 );
 
+-- 11. Bảng notifications (Thông báo thay đổi thời gian thực)
+CREATE TABLE IF NOT EXISTS notifications (
+    id BIGINT PRIMARY KEY,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    created_by TEXT
+);
+
 -- Hướng dẫn sau khi chạy SQL:
 -- 1. Vào mục "Storage" trên Supabase Dashboard.
 -- 2. Tạo một bucket mới tên là "virtual-tour".

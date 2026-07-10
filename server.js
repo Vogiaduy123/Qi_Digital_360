@@ -10,6 +10,7 @@ const nodemailer = require("nodemailer");
 const cookieParser = require("cookie-parser");
 const db = require("./backend/db");
 const { authMiddleware, requireRole, hashPassword, comparePassword, signToken } = require("./backend/auth");
+const { getNotifications, createNotification } = require("./backend/notifications");
 
 // Import admin routes
 const adminRoutes = require("./backend/admin-api");
@@ -64,6 +65,24 @@ if (!fs.existsSync(ROOM_API_CONFIGS_DIR)) {
 
 /* ===== SSE CLIENTS ===== */
 const sseClients = new Set();
+
+// Phát dữ liệu thông báo mới cho các client SSE đang kết nối.
+async function broadcastNotifications() {
+  try {
+    const payload = JSON.stringify(await getNotifications());
+    const message = `event: notifications\ndata: ${payload}\n\n`;
+    for (const res of sseClients) {
+      try {
+        res.write(message);
+      } catch {
+        sseClients.delete(res);
+      }
+    }
+  } catch (err) {
+    console.error('Error broadcasting notifications:', err);
+  }
+}
+global.broadcastNotifications = broadcastNotifications;
 
 // Đọc danh sách phòng từ Supabase DB (async wrapper).
 async function getRooms() {
@@ -152,6 +171,7 @@ async function broadcastRooms() {
     }
   }
 }
+global.broadcastRooms = broadcastRooms;
 
 // Phát cấu hình custom icons mới cho các client SSE đang kết nối.
 async function broadcastCustomIcons(config) {
@@ -449,6 +469,14 @@ app.get("/events", async (req, res) => {
   const initialCustomIcons = JSON.stringify(await getCustomIcons());
   res.write(`event: custom_icons\ndata: ${initialCustomIcons}\n\n`);
 
+  // Send initial notifications snapshot
+  try {
+    const initialNotifications = JSON.stringify(await getNotifications());
+    res.write(`event: notifications\ndata: ${initialNotifications}\n\n`);
+  } catch (err) {
+    console.error("Error sending initial notifications to SSE client:", err);
+  }
+
   req.on("close", () => {
     sseClients.delete(res);
   });
@@ -475,6 +503,16 @@ app.get("/api/rooms", async (req, res) => {
   res.json(rooms);
 });
 
+// GET NOTIFICATIONS (Protected)
+app.get("/api/notifications", authMiddleware, async (req, res) => {
+  try {
+    const list = await getNotifications();
+    res.json({ success: true, notifications: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // UPDATE HOTSPOT
 app.put("/api/rooms/:id/hotspots", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const roomId = Number(req.params.id);
@@ -496,6 +534,16 @@ app.put("/api/rooms/:id/hotspots", authMiddleware, requireRole("admin", "collabo
       color: color || null
     });
     if (error) throw error;
+
+    const user = req.user?.username || 'Collaborator';
+    const targetRoom = await db.getRoomById(target);
+    const targetRoomName = targetRoom ? targetRoom.name : target;
+    await createNotification(
+      'hotspot_add',
+      'Thêm liên kết phòng',
+      `${user} đã thêm điểm di chuyển từ '${room.name}' đến '${targetRoomName}'`,
+      user
+    );
 
     await broadcastRooms();
     const updatedRoom = await db.getRoomById(roomId);
@@ -598,6 +646,14 @@ app.post("/api/rooms/:id/mail-hotspots", authMiddleware, async (req, res) => {
       screen_y: hasScreenCoords ? Math.max(0, Math.min(1, Number(screenY))) : null,
     });
     if (error) throw error;
+
+    const user = req.user?.username || 'Collaborator';
+    await createNotification(
+      'mail_add',
+      'Thêm điểm phản hồi email',
+      `${user} đã thêm điểm gửi email '${title || 'Gửi mail'}' tại phòng '${room.name}'`,
+      user
+    );
 
     await broadcastRooms();
     const updatedRoom = await db.getRoomById(roomId);
@@ -1309,7 +1365,7 @@ app.post("/api/auth/register", async (req, res) => {
 
 app.post("/api/auth/login", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, rememberMe } = req.body;
     if (!username || !password) {
       return res.status(400).json({ success: false, error: "Username and password are required" });
     }
@@ -1330,16 +1386,25 @@ app.post("/api/auth/login", async (req, res) => {
       displayName: user.display_name
     });
 
-    // Set cookie
-    res.cookie("vt_token", token, {
+    // Set cookie options
+    const cookieOptions = {
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: "strict",
-      secure: false // Set to true if using HTTPS in prod
-    });
+      secure: false, // Set to true if using HTTPS in prod
+      path: "/"
+    };
+
+    if (rememberMe) {
+      cookieOptions.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+    } else {
+      cookieOptions.maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    }
+
+    res.cookie("vt_token", token, cookieOptions);
 
     res.json({
       success: true,
+      token: token,
       user: {
         username: user.username,
         role: user.role,
@@ -1352,11 +1417,12 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 app.post("/api/auth/logout", (req, res) => {
-  res.clearCookie("vt_token");
+  res.clearCookie("vt_token", { path: "/" });
   res.json({ success: true, message: "Logged out successfully" });
 });
 
 app.get("/api/auth/me", authMiddleware, (req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.json({ success: true, user: req.user });
 });
 

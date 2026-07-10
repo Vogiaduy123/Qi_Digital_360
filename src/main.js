@@ -1,3 +1,31 @@
+// Intercept all fetch requests to add Authorization header from sessionStorage
+(() => {
+  const originalFetch = window.fetch;
+  window.fetch = function (url, options = {}) {
+    const token = sessionStorage.getItem('vt_token');
+    console.log(`[Tour View Fetch] Requesting: ${url}, Token in sessionStorage: ${token ? token.slice(0, 15) + '...' : 'none'}`);
+    if (token) {
+      options.headers = options.headers || {};
+      if (options.headers instanceof Headers) {
+        if (!options.headers.has('Authorization')) {
+          options.headers.set('Authorization', `Bearer ${token}`);
+        }
+      } else if (Array.isArray(options.headers)) {
+        const hasAuth = options.headers.some(([k]) => k.toLowerCase() === 'authorization');
+        if (!hasAuth) {
+          options.headers.push(['Authorization', `Bearer ${token}`]);
+        }
+      } else {
+        const keys = Object.keys(options.headers).map(k => k.toLowerCase());
+        if (!keys.includes('authorization')) {
+          options.headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+    }
+    return originalFetch(url, options);
+  };
+})();
+
 const pano = document.getElementById("pano");
 const roomSelect = document.getElementById("roomSelect");
 const buildingSelect = document.getElementById("buildingSelect");
@@ -171,6 +199,7 @@ async function initApp() {
         try {
           const res = await fetch('/api/auth/logout', { method: 'POST' }).then(r => r.json());
           if (res.success) {
+            sessionStorage.removeItem('vt_token');
             alert('Đăng xuất thành công!');
             window.location.href = '/admin/login.html';
           }
@@ -185,32 +214,118 @@ async function initApp() {
       const modalDiv = document.createElement('div');
       modalDiv.innerHTML = `
         <div class="modal fade" id="userProfileModal" tabindex="-1" aria-hidden="true" style="z-index: 2070;">
+          <style>
+            #userProfileModal .modal-content {
+              background: #ffffff !important;
+              border: 1px solid rgba(0, 0, 0, 0.08) !important;
+              border-radius: 16px !important;
+              box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+              color: #0f172a !important;
+              overflow: hidden;
+            }
+            #userProfileModal .modal-header {
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+              padding: 20px 24px !important;
+            }
+            #userProfileModal .modal-title {
+              font-size: 1.15rem;
+              font-weight: 600;
+              letter-spacing: -0.025em;
+              color: #0f172a !important;
+            }
+            #userProfileModal .modal-body {
+              padding: 24px !important;
+            }
+            #userProfileModal .modal-footer {
+              border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+              padding: 16px 24px !important;
+            }
+            #userProfileModal .form-label {
+              font-size: 0.875rem;
+              font-weight: 500;
+              color: #334155 !important;
+              margin-bottom: 6px;
+            }
+            #userProfileModal .form-label-muted {
+              color: #64748b !important;
+            }
+            #userProfileModal .form-control {
+              background: #ffffff !important;
+              border: 1px solid #cbd5e1 !important;
+              color: #0f172a !important;
+              border-radius: 8px !important;
+              padding: 10px 14px !important;
+              transition: all 0.2s ease;
+            }
+            #userProfileModal .form-control:focus {
+              background: #ffffff !important;
+              border-color: #3b82f6 !important;
+              box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+            }
+            #userProfileModal .form-control:disabled {
+              background: #f1f5f9 !important;
+              border-color: #e2e8f0 !important;
+              color: #64748b !important;
+              cursor: not-allowed;
+              opacity: 1;
+            }
+            #userProfileModal .btn-close {
+              filter: none !important;
+            }
+            #userProfileModal .btn-secondary {
+              background: #f1f5f9 !important;
+              border: 1px solid #cbd5e1 !important;
+              color: #334155 !important;
+              border-radius: 8px !important;
+              padding: 10px 20px !important;
+              font-weight: 500;
+              transition: all 0.2s;
+            }
+            #userProfileModal .btn-secondary:hover {
+              background: #e2e8f0 !important;
+              color: #0f172a !important;
+            }
+            #userProfileModal .btn-primary {
+              background: #3b82f6 !important;
+              border: none !important;
+              color: #fff !important;
+              border-radius: 8px !important;
+              padding: 10px 24px !important;
+              font-weight: 500;
+              box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.05) !important;
+              transition: all 0.2s;
+            }
+            #userProfileModal .btn-primary:hover {
+              background: #2563eb !important;
+              box-shadow: 0 4px 12px -1px rgba(37, 99, 235, 0.2), 0 2px 6px -1px rgba(37, 99, 235, 0.1) !important;
+            }
+          </style>
           <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background:#1a202c;color:#fff;border:1px solid rgba(255,255,255,0.1);">
-              <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.1);">
+            <div class="modal-content">
+              <div class="modal-header">
                 <h5 class="modal-title">👤 Chỉnh sửa thông tin cá nhân</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <form id="userProfileForm">
                 <div class="modal-body">
                   <div class="mb-3">
-                    <label for="profileUsername" class="form-label text-muted">Tên đăng nhập</label>
-                    <input type="text" class="form-control" id="profileUsername" disabled style="background:#2d3748;color:#a0aec0;border-color:rgba(255,255,255,0.1);">
+                    <label for="profileUsername" class="form-label form-label-muted">Tên đăng nhập</label>
+                    <input type="text" class="form-control" id="profileUsername" disabled>
                   </div>
                   <div class="mb-3">
                     <label for="profileDisplayName" class="form-label">Tên hiển thị</label>
-                    <input type="text" class="form-control" id="profileDisplayName" required style="background:#2d3748;color:#fff;border-color:rgba(255,255,255,0.1);">
+                    <input type="text" class="form-control" id="profileDisplayName" required>
                   </div>
                   <div class="mb-3">
                     <label for="profilePassword" class="form-label">Mật khẩu mới (để trống nếu không đổi)</label>
-                    <input type="password" class="form-control" id="profilePassword" minlength="6" placeholder="Tối thiểu 6 ký tự" style="background:#2d3748;color:#fff;border-color:rgba(255,255,255,0.1);">
+                    <input type="password" class="form-control" id="profilePassword" minlength="6" placeholder="Tối thiểu 6 ký tự">
                   </div>
                   <div class="mb-3">
                     <label for="profileConfirmPassword" class="form-label">Xác nhận mật khẩu mới</label>
-                    <input type="password" class="form-control" id="profileConfirmPassword" minlength="6" placeholder="Tối thiểu 6 ký tự" style="background:#2d3748;color:#fff;border-color:rgba(255,255,255,0.1);">
+                    <input type="password" class="form-control" id="profileConfirmPassword" minlength="6" placeholder="Tối thiểu 6 ký tự">
                   </div>
                 </div>
-                <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.1);">
+                <div class="modal-footer">
                   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                   <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
                 </div>
@@ -364,6 +479,18 @@ initApp();
 /* ===== SUBSCRIBE TO SSE ===== */
 try {
   const es = new EventSource("/events");
+  es.addEventListener("notifications", (e) => {
+    try {
+      const data = JSON.parse(e.data || "[]");
+      window.lastReceivedNotifications = data;
+      if (typeof window.handleTourNotificationEvent === "function") {
+        window.handleTourNotificationEvent(e);
+      }
+    } catch (err) {
+      console.warn("⚠️ Error parsing notifications SSE event:", err);
+    }
+  });
+
   es.addEventListener("rooms", (e) => {
     const rooms = JSON.parse(e.data || "[]");
     if (!rooms || rooms.length === 0) return;
@@ -592,4 +719,6 @@ function update3DPolygons() {
   
   svg.innerHTML = hasPolygon ? pathsHTML : '';
 }
+
+
 

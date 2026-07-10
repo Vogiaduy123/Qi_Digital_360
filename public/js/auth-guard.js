@@ -1,3 +1,31 @@
+// Intercept all fetch requests to add Authorization header from sessionStorage
+(() => {
+  const originalFetch = window.fetch;
+  window.fetch = function (url, options = {}) {
+    const token = sessionStorage.getItem('vt_token');
+    console.log(`[Auth Guard Fetch] Requesting: ${url}, Token in sessionStorage: ${token ? token.slice(0, 15) + '...' : 'none'}`);
+    if (token) {
+      options.headers = options.headers || {};
+      if (options.headers instanceof Headers) {
+        if (!options.headers.has('Authorization')) {
+          options.headers.set('Authorization', `Bearer ${token}`);
+        }
+      } else if (Array.isArray(options.headers)) {
+        const hasAuth = options.headers.some(([k]) => k.toLowerCase() === 'authorization');
+        if (!hasAuth) {
+          options.headers.push(['Authorization', `Bearer ${token}`]);
+        }
+      } else {
+        const keys = Object.keys(options.headers).map(k => k.toLowerCase());
+        if (!keys.includes('authorization')) {
+          options.headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+    }
+    return originalFetch(url, options);
+  };
+})();
+
 (async function() {
   // Tạm thời ẩn body để tránh nhấp nháy giao diện khi đang kiểm tra quyền
   const style = document.createElement('style');
@@ -43,11 +71,13 @@
     // 2. Xác thực phiên đăng nhập hiện tại
     const meRes = await fetch('/api/auth/me');
     if (!meRes.ok) {
+      console.warn('[Auth Guard] /api/auth/me failed with status:', meRes.status);
       window.location.href = '/admin/login.html';
       return;
     }
 
     const meData = await meRes.json();
+    console.log('[Auth Guard] User from server:', meData.user ? meData.user.username : 'none', 'Role:', meData.user ? meData.user.role : 'none');
     if (!meData.success || !meData.user) {
       window.location.href = '/admin/login.html';
       return;

@@ -12,6 +12,7 @@ const { generateCubeTiles } = require("../generate-tiles");
 const db = require("./db");
 const storage = require("./storage");
 const { requireRole, hashPassword } = require("./auth");
+const { createNotification } = require("./notifications");
 
 const BUCKET_NAME = 'virtual-tour';
 const router = express.Router();
@@ -266,6 +267,18 @@ router.post("/upload-panorama", uploadPanorama.single("panorama"), async (req, r
       console.log("💾 Room saved to Supabase Database");
       await syncRoomToLocalJson(room.id);
 
+      const user = req.user?.username || 'Admin';
+      await createNotification(
+        'room_add',
+        'Thêm phòng mới',
+        `${user} đã tải lên ảnh panorama và tạo phòng mới '${roomNameInput}'`,
+        user
+      ).catch(err => console.error("Error creating upload room notification:", err));
+
+      if (global.broadcastRooms) {
+        await global.broadcastRooms().catch(err => console.error("Error broadcasting rooms:", err));
+      }
+
       res.json({
         success: true,
         rawPath: rawPath,
@@ -497,8 +510,21 @@ router.delete("/rooms/:roomId", async (req, res) => {
       }
     }
 
-    console.log(`🗑️ Room ${roomId} and all cloud files deleted.`);
+     console.log(`🗑️ Room ${roomId} and all cloud files deleted.`);
     await syncRoomToLocalJson(roomId);
+
+    const user = req.user?.username || 'Admin';
+    await createNotification(
+      'room_delete',
+      'Xóa phòng',
+      `${user} đã xóa phòng '${room.name}'`,
+      user
+    ).catch(err => console.error("Error creating delete room notification:", err));
+
+    if (global.broadcastRooms) {
+      await global.broadcastRooms().catch(err => console.error("Error broadcasting rooms:", err));
+    }
+
     res.json({ success: true, message: "Room deleted successfully" });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -578,6 +604,29 @@ router.post("/rooms/:roomId/media-hotspots", async (req, res) => {
     if (error) throw error;
 
     await syncRoomToLocalJson(roomId);
+
+    const user = req.user?.username || 'Admin';
+    const typeLabel = {
+      note: 'Ghi chú',
+      image: 'Hình ảnh',
+      pdf: 'PDF',
+      video: 'Video',
+      '3d': 'Model 3D',
+      gallery: 'Bộ sưu tập',
+      youtube: 'Youtube',
+      web: 'Trang web'
+    }[mediaType] || mediaType;
+
+    await createNotification(
+      'media_add',
+      'Thêm điểm tư liệu',
+      `${user} đã thêm điểm tư liệu dạng ${typeLabel} với tiêu đề '${title}' tại phòng '${room.name}'`,
+      user
+    ).catch(err => console.error("Error creating media hotspot notification:", err));
+
+    if (global.broadcastRooms) {
+      await global.broadcastRooms().catch(err => console.error("Error broadcasting rooms:", err));
+    }
 
     const updatedRoom = await db.getRoomById(roomId);
     res.json({ success: true, mediaHotspots: updatedRoom.mediaHotspots });
@@ -818,6 +867,15 @@ router.post("/buildings", async (req, res) => {
 
   try {
     await db.insertBuilding(newB);
+
+    const user = req.user?.username || 'Admin';
+    await createNotification(
+      'building_add',
+      'Thêm phân khu',
+      `${user} đã thêm phân khu mới '${newB.name}'`,
+      user
+    ).catch(err => console.error("Error creating building notification:", err));
+
     res.json({ success: true, building: newB });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -829,7 +887,20 @@ router.delete("/buildings/:id", async (req, res) => {
   const bldgId = req.params.id;
 
   try {
+    const buildings = await db.getBuildings();
+    const bldg = buildings.find(b => b.id === bldgId);
+    const bldgName = bldg ? bldg.name : bldgId;
+
     await db.deleteBuilding(bldgId);
+
+    const user = req.user?.username || 'Admin';
+    await createNotification(
+      'building_delete',
+      'Xóa phân khu',
+      `${user} đã xóa phân khu '${bldgName}'`,
+      user
+    ).catch(err => console.error("Error creating delete building notification:", err));
+
     res.json({ success: true, message: "Building deleted successfully" });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
