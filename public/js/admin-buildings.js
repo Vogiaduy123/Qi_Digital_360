@@ -120,46 +120,115 @@ async function addBuilding() {
   }
 }
 
-// ===== EDIT BUILDING =====
-async function editBuilding(id, currentName) {
-  const newName = prompt(`Đổi tên tòa nhà "${currentName}" thành:`, currentName);
-  if (!newName || newName.trim() === "" || newName.trim() === currentName) return;
-  if (!confirm(`Xác nhận đổi tên từ "${currentName}" → "${newName.trim()}"?\nSẽ cập nhật thư mục lưu trữ của các phòng liên quan.`)) return;
+// ===== RENAME BUILDING MODAL =====
+let currentRenameBuildingId = null;
 
-  try {
-    const res = await fetch(`/api/admin/buildings/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newName.trim() })
-    }).then(r => r.json());
-
-    if (res && res.success) {
-      await refreshData();
-    } else {
-      alert(res.error || "Sửa thất bại.");
-    }
-  } catch (err) {
-    alert("Lỗi khi cập nhật tên tòa nhà.");
+function openRenameModal(id, currentName) {
+  currentRenameBuildingId = id;
+  const input = document.getElementById('renameBuildingInput');
+  input.value = currentName;
+  
+  // Show warning if there are rooms assigned
+  const roomCount = allRooms.filter(r => r.buildingId === id).length;
+  const warningEl = document.getElementById('renameModalWarning');
+  if (warningEl) {
+    warningEl.style.display = roomCount > 0 ? 'block' : 'none';
   }
+  
+  const modal = document.getElementById('renameModal');
+  if (modal) modal.classList.add('active');
+  input.focus();
+  input.select();
+  
+  // Set up save button handler
+  const saveBtn = document.getElementById('btnSaveRename');
+  saveBtn.onclick = async () => {
+    const newName = input.value.trim();
+    if (!newName) return alert("Vui lòng nhập tên tòa nhà!");
+    if (newName === currentName) {
+      closeRenameModal();
+      return;
+    }
+    
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Đang xử lý...";
+    try {
+      const res = await fetch(`/api/admin/buildings/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName })
+      }).then(r => r.json());
+
+      if (res && res.success) {
+        closeRenameModal();
+        await refreshData();
+      } else {
+        alert(res.error || "Sửa thất bại.");
+      }
+    } catch (err) {
+      alert("Lỗi khi cập nhật tên tòa nhà.");
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = "💾 Lưu thay đổi";
+    }
+  };
+}
+
+function closeRenameModal() {
+  const modal = document.getElementById('renameModal');
+  if (modal) modal.classList.remove('active');
+  currentRenameBuildingId = null;
+}
+
+// ===== CONFIRM DELETE MODAL =====
+let currentDeleteBuildingId = null;
+
+function openConfirmDeleteModal(id, name) {
+  currentDeleteBuildingId = id;
+  const titleEl = document.getElementById('deleteConfirmTitle');
+  if (titleEl) titleEl.textContent = `Xóa Tòa nhà "${name}"?`;
+  
+  const modal = document.getElementById('confirmDeleteModal');
+  if (modal) modal.classList.add('active');
+  
+  const confirmBtn = document.getElementById('btnConfirmDelete');
+  confirmBtn.onclick = async () => {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "Đang xóa...";
+    try {
+      const res = await fetch(`/api/admin/buildings/${id}`, {
+        method: "DELETE"
+      }).then(r => r.json());
+
+      if (res && res.success) {
+        closeConfirmDeleteModal();
+        await refreshData();
+      } else {
+        alert(res.error || "Xóa thất bại.");
+      }
+    } catch (err) {
+      alert("Lỗi khi xóa tòa nhà.");
+    } finally {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = "Xóa";
+    }
+  };
+}
+
+function closeConfirmDeleteModal() {
+  const modal = document.getElementById('confirmDeleteModal');
+  if (modal) modal.classList.remove('active');
+  currentDeleteBuildingId = null;
+}
+
+// ===== EDIT BUILDING =====
+function editBuilding(id, currentName) {
+  openRenameModal(id, currentName);
 }
 
 // ===== DELETE BUILDING =====
-async function deleteBuilding(id, name) {
-  if (!confirm(`⚠️ Xóa Tòa nhà "${name}"?\n- Các phòng thuộc tòa nhà này sẽ trở thành "Phòng rời".\n- File trên server vẫn giữ nguyên.`)) return;
-
-  try {
-    const res = await fetch(`/api/admin/buildings/${id}`, {
-      method: "DELETE"
-    }).then(r => r.json());
-
-    if (res && res.success) {
-      await refreshData();
-    } else {
-      alert(res.error || "Xóa thất bại.");
-    }
-  } catch (err) {
-    alert("Lỗi khi xóa tòa nhà.");
-  }
+function deleteBuilding(id, name) {
+  openConfirmDeleteModal(id, name);
 }
 
 // ===== ASSIGN ROOMS MODAL =====

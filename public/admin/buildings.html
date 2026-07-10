@@ -548,6 +548,50 @@
     </div>
   </div>
 
+  <!-- ===== MODAL: ĐỔI TÊN TÒA NHÀ ===== -->
+  <div class="modal" id="renameModal">
+    <div class="assign-modal-box">
+      <div class="assign-modal-head">
+        <h3>✏️ Đổi tên Tòa nhà</h3>
+        <button class="assign-close-btn" onclick="closeRenameModal()">×</button>
+      </div>
+      <div class="assign-modal-body" style="background:#ffffff; padding:24px;">
+        <div class="form-group" style="margin-bottom:0">
+          <label for="renameBuildingInput" style="font-weight:600; font-size:13px; color:#334155; margin-bottom:8px; display:block;">Tên tòa nhà mới:</label>
+          <input type="text" id="renameBuildingInput" class="form-control" style="width:100%; padding:12px; border:1.5px solid #cbd5e1; border-radius:12px; font-size:14px; background:#ffffff; color:#0f172a;" placeholder="Nhập tên mới...">
+          <div id="renameModalWarning" style="color:var(--danger); font-size:12px; margin-top:8px; font-weight:500; display:none;">
+            ⚠️ Việc đổi tên sẽ cập nhật thư mục lưu trữ của các phòng liên quan.
+          </div>
+        </div>
+      </div>
+      <div class="assign-modal-foot">
+        <button id="btnSaveRename" class="btn-save">💾 Lưu thay đổi</button>
+        <button class="btn-cancel" onclick="closeRenameModal()">Hủy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: XÁC NHẬN XÓA TÒA NHÀ ===== -->
+  <div class="modal" id="confirmDeleteModal">
+    <div class="assign-modal-box" style="width: 440px;">
+      <div class="assign-modal-head" style="background:linear-gradient(135deg, #be123c 0%, #9f1239 100%)">
+        <h3>⚠️ Xác nhận xóa</h3>
+        <button class="assign-close-btn" onclick="closeConfirmDeleteModal()">×</button>
+      </div>
+      <div class="assign-modal-body" style="background:#ffffff; padding:24px; text-align:center;">
+        <div style="font-size:36px; margin-bottom:12px;">🗑️</div>
+        <h4 id="deleteConfirmTitle" style="font-weight:700; font-size:16px; color:#0f172a; margin-bottom:8px;">Xóa tòa nhà?</h4>
+        <p id="deleteConfirmMessage" style="font-size:13px; color:#64748b; line-height:1.5; margin:0;">
+          Các phòng thuộc tòa nhà này sẽ trở thành phòng rời. File trên server vẫn giữ nguyên.
+        </p>
+      </div>
+      <div class="assign-modal-foot">
+        <button id="btnConfirmDelete" class="btn-save" style="background:var(--danger) !important; box-shadow:0 4px 14px rgba(244,63,94,0.3) !important;">Xóa</button>
+        <button class="btn-cancel" onclick="closeConfirmDeleteModal()">Hủy</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/admin-buildings.js"></script>
 </body>
 </html>
