@@ -107,3 +107,81 @@ Admin có thể cấu hình trực tiếp tất cả các loại hotspot trên g
 *   **Minimap Editor:** Tải ảnh sơ đồ mặt bằng (minimap), kéo thả định vị các chấm định vị phòng tương ứng lên bản đồ.
 *   **Sensors & Camera Config:** Liên kết các điểm cảm biến IoT và cấu hình WHEP URL của Camera WebRTC cho từng vị trí phòng tương ứng.
 
+---
+
+## PHẦN 5: HƯỚNG DẪN CÀI ĐẶT & TRIỂN KHAI (DEPLOYMENT GUIDE)
+
+### 5.1. Yêu cầu hệ thống
+*   **Node.js:** Phiên bản 20 LTS (tối thiểu 18+).
+*   **Hệ điều hành:** Hỗ trợ Windows, Linux, macOS.
+*   **Công cụ build:** Trên Windows, để biên dịch thư viện `sharp` phục vụ cắt ảnh, yêu cầu cài đặt *Microsoft Visual C++ Build Tools*.
+
+### 5.2. Cấu hình tệp tin môi trường (`.env`)
+Tạo tệp `.env` tại thư mục gốc của dự án với các cấu hình cơ bản sau:
+```env
+PORT=3000
+UPLOAD_DIR=./uploads
+
+# Cấu hình dịch vụ email (SMTP / Resend / Brevo / SendGrid)
+MAIL_PROVIDER=resend
+MAIL_FROM=no-reply@yourdomain.com
+RESEND_API_KEY=re_your_api_key
+```
+
+### 5.3. Khởi chạy ở môi trường phát triển (Local Development)
+1.  **Cài đặt dependencies:**
+    ```bash
+    npm install
+    ```
+2.  **Khởi động các dịch vụ (Vite + Express):**
+    ```bash
+    npm run dev
+    ```
+    *   Hệ thống sẽ chạy đồng thời Vite Dev Server tại cổng `5173` và Express Server tại cổng `3000`.
+    *   Vite được cấu hình proxy tất cả các request bắt đầu bằng `/api`, `/events`, `/uploads` về cổng `3000`.
+    *   **Truy cập:**
+        *   Màn hình người dùng (User View): `http://localhost:5173/`
+        *   Màn hình quản trị (Admin Dashboard): `http://localhost:3000/admin.html`
+
+### 5.4. Khởi chạy WebRTC Gateway (MediaMTX)
+Để xem camera trực tiếp trong môi trường local:
+1.  Bật cửa sổ PowerShell tại thư mục gốc dự án.
+2.  Khởi chạy script:
+    ```powershell
+    ./start-webrtc-gateway.ps1
+    ```
+    *   Script sẽ tự động khởi động máy chủ MediaMTX (ưu tiên sử dụng Docker, nếu không có Docker sẽ chạy binary cục bộ).
+    *   Máy chủ WebRTC Gateway sẽ hoạt động tại cổng `8554` (RTSP), `8889` (WHEP/WebRTC API) và `8888` (HLS).
+
+### 5.5. Triển khai trên môi trường Production
+Hệ thống hỗ trợ triển khai độc lập (split deploy) cực kỳ tối ưu:
+*   **Backend API (Ví dụ trên Render):**
+    *   Chạy lệnh khởi động: `npm start` (phục vụ thư mục build frontend tĩnh và API).
+    *   Cấu hình một **Persistent Disk** và gán biến môi trường `UPLOAD_DIR` trỏ vào đĩa này (ví dụ `/var/data/uploads`) để bảo toàn các tệp tin panorama và ảnh media của khách hàng khi restart hoặc redeploy server.
+*   **Frontend Admin (Ví dụ trên Netlify):**
+    *   Trỏ Netlify vào thư mục `public/` (file cấu hình `netlify.toml` đã được định nghĩa sẵn).
+    *   Cập nhật tệp `public/js/admin-runtime-config.js` để chỉ định endpoint của Backend API trên Render:
+        ```javascript
+        window.ADMIN_API_BASE_URL = "https://virtual-tour-backend.onrender.com";
+        ```
+
+---
+
+## PHẦN 6: BẢO MẬT & TỐI ƯU HÓA VẬN HÀNH
+
+Hệ thống được thiết kế với các quy chuẩn bảo mật và tối ưu hiệu năng để bảo vệ tài sản số của khách hàng:
+
+### 6.1. Bảo mật API Endpoint và Xác thực người dùng
+*   Hệ thống quản trị áp dụng cơ chế xác thực session-based bảo mật cao thông qua Express. Cookie chứa session được cấu hình với cờ `HttpOnly` (chống đánh cắp cookie từ client script) và `sameSite: "lax"`.
+*   Trên môi trường production (HTTPS), cờ `secure` tự động được kích hoạt để đảm bảo cookie chỉ được truyền qua kênh mã hóa SSL/TLS.
+*   Mỗi API thay đổi dữ liệu cấu hình đều đi qua middleware xác thực nghiêm ngặt để đảm bảo người dùng thông thường không thể can thiệp vào dữ liệu hệ thống.
+
+### 6.2. Ẩn thông tin nhạy cảm của Mail Hotspot
+*   Để bảo vệ hòm thư của khách hàng khỏi các bot quét email rác (spam bots), hệ thống không lưu địa chỉ email thực tế trên mã nguồn frontend client.
+*   Mỗi mail hotspot chỉ lưu trữ một định danh chỉ mục. Khi người dùng gửi mail, frontend chỉ truyền chỉ mục này kèm nội dung thư lên API `/api/send-mail`, backend Express sẽ tự động phân giải chỉ mục này ra email thật từ file cấu hình bảo mật `data/rooms.json` và thực hiện gửi mail trực tiếp ở phía server.
+
+### 6.3. Tối ưu hóa lưu trữ và Tài nguyên hệ thống
+*   Hệ thống lưu trữ toàn bộ dữ liệu cấu hình phòng, cảm biến và kịch bản dưới dạng tệp tin JSON tĩnh trong thư mục `data/`. Điều này giúp hệ thống phản hồi cực nhanh mà không phụ thuộc vào cơ sở dữ liệu cồng kềnh.
+*   Việc áp dụng tiến trình cắt nhỏ hình ảnh panorama (Sharp Tile Pyramid) giải quyết triệt để bài toán tải trang chậm đối với ảnh panorama độ phân giải cực cao (dung lượng lớn từ 10MB - 50MB), giúp thiết bị di động có cấu hình yếu cũng có thể trải nghiệm mượt mà.
+
+
