@@ -1368,12 +1368,14 @@ body.admin #pano>* {
   box-shadow: none;
   border: 2px solid rgba(255, 255, 255, 0.38);
   transition: box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  z-index: 15;
 }
 
 .sensor-hotspot:hover {
   background: #45a049;
   box-shadow: none;
   border-color: rgba(255, 255, 255, 0.6);
+  z-index: 99999 !important;
 }
 
 .sensor-hotspot.temperature {
