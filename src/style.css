@@ -1514,6 +1514,15 @@ body.admin #pano>* {
   padding: 10px;
 }
 
+#polygonOverlay {
+  transition: opacity 0.25s ease;
+}
+
+#pano:has(.sensor-hotspot:hover) #polygonOverlay {
+  z-index: 1 !important;
+  opacity: 0.15;
+}
+
 .sensor-tooltip-title {
   font-size: 12px;
   font-weight: 700;
