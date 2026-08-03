@@ -1500,6 +1500,13 @@ body.admin #pano>* {
   display: block;
 }
 
+.sensor-hotspot-tooltip.grafana-tooltip {
+  width: 480px;
+  background: rgba(24, 27, 31, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px;
+}
+
 .sensor-tooltip-title {
   font-size: 12px;
   font-weight: 700;

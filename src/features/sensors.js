@@ -772,12 +772,36 @@ export function addSensorHotspots(roomId) {
       const temp = sensor.sensors?.temperature?.value ?? "--";
       const humidity = sensor.sensors?.humidity?.value ?? "--";
       const pm25 = sensor.sensors?.pm25?.value ?? "--";
-      tooltip.innerHTML = `
-        <div class="sensor-tooltip-title">🌡️ ${sensor.name || "Cảm biến"}</div>
-        <div class="sensor-tooltip-line">Nhiệt độ: ${temp}°C</div>
-        <div class="sensor-tooltip-line">Độ ẩm: ${humidity}%</div>
-        <div class="sensor-tooltip-line">PM2.5: ${pm25}</div>
-      `;
+      
+      let rawGrafanaUrl = (sensor.sensors?.grafanaUrl || '').trim();
+      let grafanaUrl = '';
+      if (rawGrafanaUrl) {
+        if (rawGrafanaUrl.includes('<iframe') && rawGrafanaUrl.includes('src=')) {
+          const match = rawGrafanaUrl.match(/src=["']?([^"'\s>]+)["']?/i);
+          if (match && match[1]) {
+            grafanaUrl = match[1];
+          }
+        } else {
+          grafanaUrl = rawGrafanaUrl;
+        }
+        grafanaUrl = grafanaUrl.replace(/&amp;/g, '&');
+      }
+
+      if (grafanaUrl) {
+        tooltip.classList.add("grafana-tooltip");
+        tooltip.innerHTML = `
+          <div class="sensor-tooltip-title" style="margin-bottom: 8px;">📊 Biểu đồ: ${sensor.name || "Cảm biến"}</div>
+          <iframe src="${grafanaUrl}" style="width: 100%; height: 220px; border: none; border-radius: 6px; background: #181b1f;"></iframe>
+        `;
+      } else {
+        tooltip.innerHTML = `
+          <div class="sensor-tooltip-title">🌡️ ${sensor.name || "Cảm biến"}</div>
+          <div class="sensor-tooltip-line">Nhiệt độ: ${temp}°C</div>
+          <div class="sensor-tooltip-line">Độ ẩm: ${humidity}%</div>
+          <div class="sensor-tooltip-line">PM2.5: ${pm25}</div>
+        `;
+      }
+
       el.onclick = (event) => {
         event.stopPropagation();
         showSensorGrafana(sensor);
