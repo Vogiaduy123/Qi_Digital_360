@@ -1352,6 +1352,11 @@ body.admin #pano>* {
   background: rgba(255, 255, 255, 0.3);
 }
 
+/* Ensure the Marzipano hotspots container is stacked above the SVG highlight overlay */
+.marzipano-hotspots-container {
+  z-index: 20 !important;
+}
+
 /* ===== SENSOR HOTSPOT: marker cảm biến trong panorama ===== */
 .sensor-hotspot {
   width: 44px;
