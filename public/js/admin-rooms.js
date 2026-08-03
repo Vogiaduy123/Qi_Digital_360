@@ -3547,7 +3547,17 @@
             unit: 'µg/m³',
             min: 0,
             max: 500
-          }
+          },
+          grafanaUrl: (() => {
+            let val = document.getElementById('sensorGrafanaUrl').value.trim();
+            if (val.includes('<iframe') && val.includes('src=')) {
+              const match = val.match(/src=["']?([^"'\s>]+)["']?/i);
+              if (match && match[1]) {
+                val = match[1];
+              }
+            }
+            return val.replace(/&amp;/g, '&');
+          })()
         };
       } else if (sensorType === 'camera') {
         sensorData.camera = {
@@ -3633,6 +3643,7 @@
         document.getElementById('sensorTemp').value = sensor.sensors?.temperature?.value || 0;
         document.getElementById('sensorHumidity').value = sensor.sensors?.humidity?.value || 0;
         document.getElementById('sensorPM25').value = sensor.sensors?.pm25?.value || 0;
+        document.getElementById('sensorGrafanaUrl').value = sensor.sensors?.grafanaUrl || '';
         document.getElementById('weatherDataInfo').textContent = '';
 
         // Load room API config

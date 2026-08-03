@@ -431,6 +431,59 @@ function showCameraPreview(camera) {
   cameraModal.classList.remove('hidden');
 }
 
+// Show Grafana sensor chart modal
+export function showSensorGrafana(sensor) {
+  const cameraModal = document.getElementById('cameraModal');
+  const cameraModalTitle = document.getElementById('cameraModalTitle');
+  const cameraPreviewContainer = document.getElementById('cameraPreviewContainer');
+  
+  if (!cameraModal) return;
+  
+  // Update title
+  cameraModalTitle.textContent = `📊 Biểu đồ: ${sensor.name}`;
+  
+  // Stop any active camera stream
+  stopActiveCameraPlayback();
+  
+  // Clear previous content
+  cameraPreviewContainer.innerHTML = '';
+
+  let grafanaUrl = (sensor.sensors?.grafanaUrl || '').trim();
+  if (grafanaUrl.includes('<iframe') && grafanaUrl.includes('src=')) {
+    const match = grafanaUrl.match(/src=["']?([^"'\s>]+)["']?/i);
+    if (match && match[1]) {
+      grafanaUrl = match[1];
+    }
+  }
+  grafanaUrl = grafanaUrl.replace(/&amp;/g, '&');
+
+  if (grafanaUrl) {
+    const iframe = document.createElement("iframe");
+    iframe.src = grafanaUrl;
+    iframe.title = sensor.name || "Grafana";
+    iframe.style.width = "100%";
+    iframe.style.height = "450px";
+    iframe.style.border = "none";
+    iframe.style.borderRadius = "8px";
+    iframe.style.background = "white";
+    cameraPreviewContainer.appendChild(iframe);
+  } else {
+    // Show fallback message if no grafana url configured
+    cameraPreviewContainer.innerHTML = `
+      <div style="text-align: center; padding: 60px 40px; color: #fff;">
+        <div style="font-size: 64px; margin-bottom: 16px;">📊</div>
+        <div style="font-size: 18px; margin-bottom: 8px; font-weight: 600;">Chưa cấu hình biểu đồ Grafana</div>
+        <div style="font-size: 13px; color: #999; margin-bottom: 20px;">
+          Vui lòng vào trang Admin để cấu hình Link nhúng Grafana cho cảm biến này
+        </div>
+      </div>
+    `;
+  }
+  
+  // Show modal
+  cameraModal.classList.remove('hidden');
+}
+
 // Close camera modal
 export function closeCameraModal() {
   const cameraModal = document.getElementById('cameraModal');
@@ -725,6 +778,10 @@ export function addSensorHotspots(roomId) {
         <div class="sensor-tooltip-line">Độ ẩm: ${humidity}%</div>
         <div class="sensor-tooltip-line">PM2.5: ${pm25}</div>
       `;
+      el.onclick = (event) => {
+        event.stopPropagation();
+        showSensorGrafana(sensor);
+      };
     }
 
     el.appendChild(tooltip);

@@ -66,6 +66,9 @@ if (!fs.existsSync(ROOM_API_CONFIGS_DIR)) {
 /* ===== SSE CLIENTS ===== */
 const sseClients = new Set();
 
+/* ===== SENSOR LAST STATE CACHE ===== */
+const sensorLastStateCache = new Map();
+
 // Phát dữ liệu thông báo mới cho các client SSE đang kết nối.
 async function broadcastNotifications() {
   try {
@@ -1054,7 +1057,6 @@ app.post("/api/rooms/:roomId/api-config", authMiddleware, requireRole("admin", "
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
 /* ===== REAL-TIME DATA API ===== */
 // Gá»™p dá»¯ liá»‡u thá»i tiáº¿t vĂ  cháº¥t lÆ°á»£ng khĂ´ng khĂ­ thĂ nh 1 payload.
 async function getCombinedData(config) {
@@ -1114,7 +1116,48 @@ async function getCombinedData(config) {
     console.log("⚠️ PM2.5 API lỗi:", e.message);
   }
   
-  const locationName = `Lat: ${weatherApi.params.lat}, Lon: ${weatherApi.params.lon}`;
+  // Try to fetch custom third-party APIs (extensible for future custom APIs)
+  const customApi = config.customApi;
+  if (customApi && customApi.url) {
+    try {
+      const response = await fetch(customApi.url, {
+        headers: customApi.headers || {}
+      });
+      const customData = await response.json();
+      console.log(`📡 [Custom API] Fetched response from ${customApi.url}`);
+      
+      const mappings = customApi.mappings || {};
+      if (mappings.temperature) {
+        const val = getValueByPath(customData, mappings.temperature);
+        if (val !== null && !isNaN(Number(val))) {
+          temp = Number(val);
+          console.log(`✅ [Custom API] Temperature mapped: ${temp}°C`);
+        }
+      }
+      if (mappings.humidity) {
+        const val = getValueByPath(customData, mappings.humidity);
+        if (val !== null && !isNaN(Number(val))) {
+          humidity = Number(val);
+          console.log(`✅ [Custom API] Humidity mapped: ${humidity}%`);
+        }
+      }
+      if (mappings.pm25) {
+        const val = getValueByPath(customData, mappings.pm25);
+        if (val !== null && !isNaN(Number(val))) {
+          pm25Value = Number(val);
+          pmSource = `Real (Custom API: ${customApi.url})`;
+          console.log(`✅ [Custom API] PM2.5 mapped: ${pm25Value}`);
+        }
+      }
+      if (customData.weather) {
+        weather = String(customData.weather);
+      }
+    } catch (customErr) {
+      console.error("⚠️ Error fetching or mapping Custom API:", customErr.message);
+    }
+  }
+
+  const locationName = weatherApi && weatherApi.params ? `Lat: ${weatherApi.params.lat}, Lon: ${weatherApi.params.lon}` : "Custom Source";
   console.log(`📊 ${locationName} - Nhiệt độ: ${temp}°C | Độ ẩm: ${humidity}% | PM2.5: ${Math.round(pm25Value * 10)/10} (${pmSource})`);
   
   return {
@@ -1147,9 +1190,28 @@ app.get("/api/real-data/combined", async (req, res) => {
     }
     
     const data = await getCombinedData(config);
+    
+    // Save fetched real weather/air quality to Supabase database for environmental sensors in this room
+    if (roomId && data) {
+      try {
+        const allSensors = await db.getSensors();
+        const roomEnvSensors = allSensors.filter(s => Number(s.roomId) === Number(roomId) && s.type === 'environment');
+        
+        for (const sensor of roomEnvSensors) {
+          await updateSensorDataAndLog(Number(sensor.id), {
+            temperature: data.temperature,
+            humidity: data.humidity,
+            pm25: data.pm25
+          });
+        }
+      } catch (dbErr) {
+        console.error("⚠️ Error saving real combined data to DB:", dbErr.message);
+      }
+    }
+
     res.json({ success: true, data });
   } catch (err) {
-    console.error("âŒ Error fetching combined data:", err.message);
+    console.error("â Œ Error fetching combined data:", err.message);
     res.json({
       success: true,
       data: {
@@ -1185,6 +1247,153 @@ app.post("/api/real-data/combined/custom", async (req, res) => {
         weather: "clear sky"
       }
     });
+  }
+});
+
+// Helper to get thresholds config
+// Helper to get thresholds config
+function getSensorThresholds() {
+  const file = path.join(__dirname, "data", "sensor-thresholds.json");
+  try {
+    if (fs.existsSync(file)) {
+      return JSON.parse(fs.readFileSync(file, "utf8"));
+    }
+  } catch (err) {
+    console.error("Error reading sensor thresholds configuration:", err.message);
+  }
+  return {
+    temperature: 0.5,
+    humidity: 2.0,
+    pm25: 5.0,
+    co2: 50.0,
+    smoke: 1.0
+  };
+}
+
+// Reusable helper to update sensor in DB and write logs based on threshold checks
+async function updateSensorDataAndLog(sId, { temperature, humidity, pm25, co2, smoke }) {
+  const thresholds = getSensorThresholds();
+
+  let lastState = sensorLastStateCache.get(sId);
+  if (!lastState) {
+    const allSensors = await db.getSensors();
+    const dbSensor = allSensors.find(s => Number(s.id) === sId);
+    if (!dbSensor) {
+      throw new Error(`Sensor with ID ${sId} not found`);
+    }
+    
+    const data = dbSensor.sensors || {};
+    lastState = {
+      temperature: data.temperature?.value !== undefined && data.temperature?.value !== null ? Number(data.temperature.value) : null,
+      humidity: data.humidity?.value !== undefined && data.humidity?.value !== null ? Number(data.humidity.value) : null,
+      pm25: data.pm25?.value !== undefined && data.pm25?.value !== null ? Number(data.pm25.value) : null,
+      co2: data.co2?.value !== undefined && data.co2?.value !== null ? Number(data.co2.value) : null,
+      smoke: data.smoke?.value !== undefined && data.smoke?.value !== null ? Number(data.smoke.value) : null
+    };
+    sensorLastStateCache.set(sId, lastState);
+  }
+
+  let shouldLog = false;
+  const updates = {};
+  const logData = { sensorId: sId };
+
+  const checkMetric = (key, newValue) => {
+    if (newValue === undefined || newValue === null) return;
+    const numVal = Number(newValue);
+    const prevVal = lastState[key];
+    
+    updates[key] = numVal;
+    logData[key] = numVal;
+
+    if (prevVal === null || prevVal === undefined) {
+      shouldLog = true;
+    } else if (Math.abs(numVal - prevVal) >= (thresholds[key] || 0.1)) {
+      shouldLog = true;
+    }
+  };
+
+  checkMetric("temperature", temperature);
+  checkMetric("humidity", humidity);
+  checkMetric("pm25", pm25);
+  checkMetric("co2", co2);
+  checkMetric("smoke", smoke);
+
+  if (Object.keys(updates).length > 0) {
+    const allSensors = await db.getSensors();
+    const sensorObj = allSensors.find(s => Number(s.id) === sId);
+    
+    if (sensorObj) {
+      if (!sensorObj.sensors) sensorObj.sensors = {};
+      
+      if (updates.temperature !== undefined) {
+        sensorObj.sensors.temperature = {
+          value: updates.temperature,
+          min: sensorObj.sensors.temperature?.min ?? 18,
+          max: sensorObj.sensors.temperature?.max ?? 30,
+          unit: sensorObj.sensors.temperature?.unit ?? "°C"
+        };
+      }
+      if (updates.humidity !== undefined) {
+        sensorObj.sensors.humidity = {
+          value: updates.humidity,
+          min: sensorObj.sensors.humidity?.min ?? 40,
+          max: sensorObj.sensors.humidity?.max ?? 80,
+          unit: sensorObj.sensors.humidity?.unit ?? "%"
+        };
+      }
+      if (updates.pm25 !== undefined) {
+        sensorObj.sensors.pm25 = {
+          value: updates.pm25,
+          unit: sensorObj.sensors.pm25?.unit ?? "µg/m³"
+        };
+      }
+      if (updates.co2 !== undefined) {
+        sensorObj.sensors.co2 = {
+          value: updates.co2,
+          unit: sensorObj.sensors.co2?.unit ?? "ppm"
+        };
+      }
+      if (updates.smoke !== undefined) {
+        sensorObj.sensors.smoke = {
+          value: updates.smoke
+        };
+      }
+
+      sensorObj.lastUpdate = new Date().toISOString();
+      await db.updateSensor(sId, sensorObj);
+    }
+
+    for (const k in updates) {
+      lastState[k] = updates[k];
+    }
+    sensorLastStateCache.set(sId, lastState);
+
+    if (shouldLog) {
+      await db.insertSensorLog(logData);
+      console.log(`[Sensor Ingestion] Logged history for sensor ${sId} to Supabase`);
+    }
+
+    await broadcastSensors();
+  }
+
+  return { logged: shouldLog, data: lastState };
+}
+
+// POST endpoint for external real-time sensor updates
+app.post("/api/sensors/realtime-update", async (req, res) => {
+  try {
+    const { sensor_id, sensorId, temperature, humidity, pm25, co2, smoke } = req.body;
+    const sId = Number(sensor_id || sensorId);
+
+    if (!sId || isNaN(sId)) {
+      return res.status(400).json({ success: false, error: "sensor_id is required and must be a valid number" });
+    }
+
+    const result = await updateSensorDataAndLog(sId, { temperature, humidity, pm25, co2, smoke });
+    res.json({ success: true, logged: result.logged, data: result.data });
+  } catch (err) {
+    console.error("Error processing real-time sensor update:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

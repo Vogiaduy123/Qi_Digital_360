@@ -270,6 +270,21 @@ module.exports = {
     if (error) throw error;
   },
 
+  async insertSensorLog(log) {
+    const { error } = await supabase
+      .from('sensor_logs')
+      .insert({
+        sensor_id: Number(log.sensor_id || log.sensorId),
+        temperature: log.temperature !== undefined && log.temperature !== null ? Number(log.temperature) : null,
+        humidity: log.humidity !== undefined && log.humidity !== null ? Number(log.humidity) : null,
+        pm25: log.pm25 !== undefined && log.pm25 !== null ? Number(log.pm25) : null,
+        co2: log.co2 !== undefined && log.co2 !== null ? Number(log.co2) : null,
+        smoke: log.smoke !== undefined && log.smoke !== null ? Number(log.smoke) : null,
+        created_at: log.created_at || log.createdAt || new Date().toISOString()
+      });
+    if (error) throw error;
+  },
+
   // --- MINIMAPS & MARKERS ---
   async getMinimap() {
     const { data: floors, error: floorErr } = await supabase
