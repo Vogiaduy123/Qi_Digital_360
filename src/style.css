@@ -524,9 +524,9 @@ body.admin #pano>* {
 .media-hotspot {
   width: 38px;
   height: 38px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #5c7a8a 0%, #4a6575 100%);
-  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  background: transparent;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -544,9 +544,9 @@ body.admin #pano>* {
 
 
 .media-hotspot:hover {
-  background: linear-gradient(135deg, #6a8a9d 0%, #567084 100%);
+  background: transparent;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-  filter: brightness(1.1);
+  filter: brightness(1.15);
 }
 
 /* Facebook hotspot: nền xanh + icon trắng */
@@ -606,8 +606,8 @@ body.admin #pano>* {
 .note-hotspot .info-hotspot-header {
   width: 40px;
   height: 40px;
-  border-radius: 20px;
-  background-color: rgb(103, 115, 131);
+  border-radius: 8px;
+  background-color: transparent;
   cursor: pointer;
   transition: width 0.3s ease-in-out 0.5s, border-radius 0.3s ease-in-out 0.5s;
   position: relative;
@@ -616,13 +616,14 @@ body.admin #pano>* {
 .mobile .note-hotspot .info-hotspot-header {
   width: 50px;
   height: 50px;
-  border-radius: 25px;
+  border-radius: 8px;
 }
 
 .desktop.no-touch .note-hotspot .info-hotspot-header:hover {
   width: 260px;
   border-radius: 5px;
   transition: width 0.3s ease-in-out, border-radius 0.3s ease-in-out;
+  background-color: rgba(103, 115, 131, 0.85);
 }
 
 .desktop .note-hotspot.visible .info-hotspot-header,
@@ -632,6 +633,7 @@ body.admin #pano>* {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
+  background-color: rgba(103, 115, 131, 0.85);
   transition: width 0.3s ease-in-out, border-radius 0.3s ease-in-out;
 }
 
