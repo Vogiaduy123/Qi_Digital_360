@@ -818,12 +818,81 @@ router.post("/minimap/upload-image", uploadMinimap.single("minimap"), async (req
     const minimap = await getMinimap();
     const floor = minimap.floors.find(f => f.id === floorId);
     
-    res.json({ success: true, floor });
+    res.json({ success: true, minimap, floor });
   } catch (err) {
     if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// Rename floor
+router.patch("/minimap/floor/:id/name", async (req, res) => {
+  const floorId = Number(req.params.id);
+  const { floorName } = req.body;
+  
+  if (!floorName) {
+    return res.status(400).json({ success: false, error: "Floor name is required" });
+  }
+
+  try {
+    const { error } = await db.supabase
+      .from('minimaps')
+      .update({ floor_name: floorName })
+      .eq('floor_id', floorId);
+
+    if (error) throw error;
+
+    const minimap = await getMinimap();
+    res.json({ success: true, minimap });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Update floor image and markers (PUT /minimap/floor/:id)
+router.put("/minimap/floor/:id", async (req, res) => {
+  const floorId = Number(req.params.id);
+  const { image, markers, floorName } = req.body;
+
+  try {
+    // 1. Update floor info
+    const { error: floorErr } = await db.supabase
+      .from('minimaps')
+      .upsert({
+        floor_id: floorId,
+        floor_name: floorName || `Tầng ${floorId}`,
+        image_url: image || ""
+      });
+    if (floorErr) throw floorErr;
+
+    // 2. Clear old markers for this floor
+    const { error: delErr } = await db.supabase
+      .from('minimap_markers')
+      .delete()
+      .eq('floor_id', floorId);
+    if (delErr) throw delErr;
+
+    // 3. Insert new markers
+    if (markers && markers.length > 0) {
+      const insertMarkers = markers.map(m => ({
+        floor_id: floorId,
+        room_id: Number(m.roomId),
+        x: Number(m.x),
+        y: Number(m.y)
+      }));
+      const { error: insErr } = await db.supabase
+        .from('minimap_markers')
+        .insert(insertMarkers);
+      if (insErr) throw insErr;
+    }
+
+    const minimap = await getMinimap();
+    res.json({ success: true, minimap });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 // Save markers / positions on minimap
 router.post("/minimap/save", async (req, res) => {
