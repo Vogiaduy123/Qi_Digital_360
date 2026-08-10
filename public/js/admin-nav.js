@@ -366,7 +366,7 @@ window.initializeAdminNav = function () {
         <polyline points="8,20 22,6 36,20" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
         <polyline points="8,32 22,18 36,32" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>`,
-      media_note: `<img src="/images/info.png" style="width:20px;height:20px;object-fit:contain;">`,
+      media_note: `<img src="/images/info.svg" style="width:20px;height:20px;object-fit:contain;">`,
       media_image: "🖼️",
       media_pdf: "📄",
       media_video: "🎥",

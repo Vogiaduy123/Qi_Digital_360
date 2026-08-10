@@ -1527,7 +1527,7 @@
         panoramaViewer.removeHotSpot(`media-${idx}`);
       } catch (e) {}
 
-      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', web: '🌐', note: '📝', gallery: '📸' };
+      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', web: '🌐', note: 'ℹ️', gallery: '📸' };
       const defaultIcon = icons[media.mediaType] || '📁';
       const customIconKey = 'media_' + media.mediaType;
       const customIconUrl = customIcons && customIcons[customIconKey];
@@ -1574,7 +1574,7 @@
         panoramaViewer.removeHotSpot(`media-${idx}`);
       } catch (e) {}
 
-      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', web: '🌐', note: '📝', gallery: '📸' };
+      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', web: '🌐', note: 'ℹ️', gallery: '📸' };
       const defaultIcon = icons[media.mediaType] || '📁';
       const customIconKey = 'media_' + media.mediaType;
       const customIconUrl = customIcons && customIcons[customIconKey];
@@ -1784,7 +1784,7 @@
 
         if (room.mediaHotspots && room.mediaHotspots.length > 0) {
           room.mediaHotspots.forEach((media, idx) => {
-            const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', web: '🌐', note: '📝', gallery: '📸' };
+            const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', web: '🌐', note: 'ℹ️', gallery: '📸' };
             const defaultIcon = icons[media.mediaType] || '📁';
             const customIconKey = 'media_' + media.mediaType;
             const customIconUrl = customIcons && customIcons[customIconKey];
@@ -2696,7 +2696,7 @@
         return;
       }
 
-      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', facebook: '👍', web: '🌐', note: '📝', gallery: '📸' };
+      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', facebook: '👍', web: '🌐', note: 'ℹ️', gallery: '📸' };
 
       list.innerHTML = mediaHotspots.map((media, idx) => {
         const polyText = (media.mediaType === '3d' && media.highlightPolygon && media.highlightPolygon.length >= 3) ? '<span style="font-size:11px;color:#111827;background:rgba(251,191,36,0.9);padding:2px 6px;border-radius:4px;margin-left:5px;display:inline-block;vertical-align:middle;">🔲 Có vùng sáng</span>' : '';
@@ -3697,7 +3697,7 @@
 
       if (!modal || !title || !body) return;
 
-      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', facebook: '👍', web: '🌐', note: '📝' };
+      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', facebook: '👍', web: '🌐', note: 'ℹ️' };
       title.textContent = `${icons[media.mediaType] || '📁'} ${media.title}`;
 
       let contentHtml = '';

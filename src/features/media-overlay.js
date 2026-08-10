@@ -679,7 +679,7 @@ export function createMediaHotspotElement(media, onClickHandler) {
     iconWrap.className = "info-hotspot-icon-wrapper";
     const icon = document.createElement("img");
     icon.className = "info-hotspot-icon";
-    icon.src = hasCustomIcon ? window.customIcons[customIconKey] : "images/info.png";
+    icon.src = hasCustomIcon ? window.customIcons[customIconKey] : "images/info.svg";
     icon.alt = "Info";
     iconWrap.appendChild(icon);
 
