@@ -17,6 +17,8 @@
     let adminSensorHotspotIds = [];
     let editingSensorIndex = null;
     let roomSensors = [];
+    let allDbSensors = [];
+    let selectedDbSensorId = null;
     let autoRefreshInterval = null;
     let isAutoRefreshEnabled = false;
     let currentPreviewPeerConnection = null;
@@ -439,25 +441,16 @@
 
     /* ===== TOGGLE SENSOR/CAMERA FIELDS ===== */
     function toggleSensorFields() {
-      const sensorType = document.getElementById('sensorType').value;
+      const sensorType = document.getElementById('sensorType')?.value || 'environment';
       const environmentFields = document.getElementById('environmentFields');
       const cameraFields = document.getElementById('cameraFields');
-      const apiConfigContainer = environmentFields.previousElementSibling;
 
       if (sensorType === 'camera') {
-        environmentFields.style.display = 'none';
-        cameraFields.style.display = 'block';
-        // Hide API config for camera
-        if (apiConfigContainer && apiConfigContainer.style) {
-          apiConfigContainer.style.display = 'none';
-        }
+        if (environmentFields) environmentFields.style.display = 'none';
+        if (cameraFields) cameraFields.style.display = 'block';
       } else {
-        environmentFields.style.display = 'block';
-        cameraFields.style.display = 'none';
-        // Show API config for environment sensor
-        if (apiConfigContainer && apiConfigContainer.style) {
-          apiConfigContainer.style.display = 'block';
-        }
+        if (environmentFields) environmentFields.style.display = 'block';
+        if (cameraFields) cameraFields.style.display = 'none';
       }
     }
     window.toggleSensorFields = toggleSensorFields;
@@ -531,39 +524,8 @@
       console.log(`🔄 Refreshing sensors (room ${selectedRoomId})...`);
 
       try {
-        const res = await fetch(`/api/real-data/combined?roomId=${selectedRoomId}`);
-        const result = await res.json();
-
-        if (result.success && result.data && roomSensors.length > 0) {
-          // Update only environment sensors in current room with new data
-          // Skip cameras as they don't have temperature/humidity/pm25
-          let updatedCount = 0;
-          for (const sensor of roomSensors) {
-            // Only update environment sensors, not cameras
-            if (sensor.type === 'camera' || !sensor.sensors) {
-              console.log(`⏭️ Skipping ${sensor.name} (type: ${sensor.type})`);
-              continue;
-            }
-
-            sensor.sensors.temperature.value = result.data.temperature;
-            sensor.sensors.humidity.value = result.data.humidity;
-            sensor.sensors.pm25.value = result.data.pm25;
-            sensor.lastUpdate = new Date().toISOString();
-
-            // Save to backend
-            await fetch(`/api/sensors/${sensor.id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(sensor)
-            });
-
-            updatedCount++;
-          }
-
-          // Reload sensors to display updated data
-          await loadSensors();
-          console.log(`✅ Refreshed ${updatedCount} environment sensor(s) successfully`);
-        }
+        await loadSensors();
+        console.log(`✅ Refreshed sensors for room ${selectedRoomId} successfully`);
       } catch (err) {
         console.error('❌ Auto-refresh error:', err);
       }
@@ -2823,26 +2785,23 @@
 
     async function openSensorModalAtPosition(yaw, pitch) {
       editingSensorIndex = null;
+      selectedDbSensorId = null;
       sensorModalTitle.textContent = '🌡️ Thêm Thiết bị IoT';
 
       sensorForm.reset();
-      document.getElementById('weatherDataInfo').textContent = '';
+      await loadAllDbSensors();
+      const telemetryInfo = document.getElementById('dbTelemetryInfo');
+      if (telemetryInfo) {
+        telemetryInfo.innerHTML = '<em>Chọn thiết bị IoT từ danh sách ở trên để xem dữ liệu đo đạc realtime trong Database.</em>';
+      }
       document.getElementById('sensorType').value = 'environment';
-      document.getElementById('useWebcam').checked = false;
+      const useWebcamEl = document.getElementById('useWebcam');
+      if (useWebcamEl) useWebcamEl.checked = false;
       document.getElementById('sensorYaw').value = Number(yaw || 0).toFixed(2);
       document.getElementById('sensorPitch').value = Number(pitch || 0).toFixed(2);
       resetCameraDiagnostics();
       setCameraConnectionStatus('', '#7f8c8d');
       toggleSensorFields();
-
-      if (selectedRoomId) {
-        await loadRoomApiConfig(selectedRoomId);
-      }
-
-      document.getElementById('apiConfigSection').style.display = 'none';
-      document.getElementById('apiConfigSummary').style.display = 'block';
-      document.getElementById('toggleApiConfig').textContent = '📝 Chỉnh sửa';
-      setApiInputsDisabled(true);
 
       closeAllFeatureModals('sensorModal');
       sensorModal.classList.add('active');
@@ -3197,126 +3156,7 @@
       });
     }
 
-    // Toggle API Config Section
-    function setApiInputsDisabled(disabled) {
-      const ids = [
-        'roomWeatherUrl',
-        'roomWeatherApiKey',
-        'roomWeatherLat',
-        'roomWeatherLon',
-        'roomAirUrl',
-        'roomAirToken'
-      ];
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.disabled = disabled;
-      });
-    }
 
-    async function toggleApiConfigSection() {
-      const section = document.getElementById('apiConfigSection');
-      const summary = document.getElementById('apiConfigSummary');
-      const btn = document.getElementById('toggleApiConfig');
-
-      if (section.style.display === 'none') {
-        section.style.display = 'block';
-        summary.style.display = 'none';
-        btn.textContent = '✅ Xong';
-        setApiInputsDisabled(false);
-      } else {
-        // Save config when closing edit
-        if (selectedRoomId) {
-          await saveRoomApiConfig(selectedRoomId);
-        }
-        section.style.display = 'none';
-        summary.style.display = 'block';
-        btn.textContent = '📝 Chỉnh sửa';
-        setApiInputsDisabled(true);
-        updateApiConfigSummary();
-      }
-    }
-
-    // Update API Config Summary
-    function updateApiConfigSummary() {
-      const weatherKey = document.getElementById('roomWeatherApiKey').value;
-      const airToken = document.getElementById('roomAirToken').value;
-
-      document.getElementById('summaryWeatherStatus').textContent = weatherKey ? '✅ Đã cấu hình' : '❌ Chưa cấu hình';
-      document.getElementById('summaryAirStatus').textContent = airToken ? '✅ Đã cấu hình' : '❌ Chưa cấu hình';
-    }
-
-    // Load Room API Config
-    async function loadRoomApiConfig(roomId) {
-      try {
-        const res = await fetch(`/api/rooms/${roomId}/api-config`);
-        const data = await res.json();
-
-        if (data.success && data.config) {
-          currentRoomApiConfig = data.config;
-
-          // Fill form with existing config
-          document.getElementById('roomWeatherUrl').value = data.config.weatherApi?.url || 'https://api.openweathermap.org/data/2.5/weather';
-          document.getElementById('roomWeatherApiKey').value = data.config.weatherApi?.apiKey || '';
-          document.getElementById('roomWeatherLat').value = data.config.weatherApi?.params?.lat || 10.7769;
-          document.getElementById('roomWeatherLon').value = data.config.weatherApi?.params?.lon || 106.7009;
-
-          document.getElementById('roomAirUrl').value = data.config.airQualityApi?.url || 'https://api.waqi.info/feed/@13659/';
-          document.getElementById('roomAirToken').value = data.config.airQualityApi?.token || '';
-
-          updateApiConfigSummary();
-        } else {
-          // No config yet, use defaults
-          document.getElementById('roomWeatherUrl').value = 'https://api.openweathermap.org/data/2.5/weather';
-          document.getElementById('roomWeatherApiKey').value = '';
-          document.getElementById('roomWeatherLat').value = 10.7769;
-          document.getElementById('roomWeatherLon').value = 106.7009;
-          document.getElementById('roomAirUrl').value = 'https://api.waqi.info/feed/@13659/';
-          document.getElementById('roomAirToken').value = '';
-          updateApiConfigSummary();
-        }
-      } catch (err) {
-        console.error('Load room API config error:', err);
-      }
-    }
-
-    // Save Room API Config
-    async function saveRoomApiConfig(roomId) {
-      const config = {
-        weatherApi: {
-          provider: 'openweathermap',
-          url: document.getElementById('roomWeatherUrl').value,
-          apiKey: document.getElementById('roomWeatherApiKey').value,
-          params: {
-            lat: parseFloat(document.getElementById('roomWeatherLat').value),
-            lon: parseFloat(document.getElementById('roomWeatherLon').value),
-            units: 'metric'
-          }
-        },
-        airQualityApi: {
-          provider: 'waqi',
-          url: document.getElementById('roomAirUrl').value,
-          token: document.getElementById('roomAirToken').value
-        }
-      };
-
-      try {
-        const res = await fetch(`/api/rooms/${roomId}/api-config`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(config)
-        });
-
-        const data = await res.json();
-        if (data.success) {
-          currentRoomApiConfig = config;
-          return true;
-        }
-        return false;
-      } catch (err) {
-        console.error('Save room API config error:', err);
-        return false;
-      }
-    }
 
     async function loadSensors() {
       if (!selectedRoomId) return;
@@ -3396,13 +3236,26 @@
             ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;">` 
             : defaultIcon + ' ';
 
+          const sData = sensor.sensors || sensor.data || {};
+          const getVal = (v) => {
+            if (v === null || v === undefined) return null;
+            if (typeof v === 'object' && v.value !== undefined && v.value !== null) return v.value;
+            if (typeof v === 'number') return v;
+            if (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v))) return Number(v);
+            return null;
+          };
+
+          const tempVal = getVal(sData.temperature ?? sData.temp);
+          const humVal = getVal(sData.humidity ?? sData.hum);
+          const pm25Val = getVal(sData.pm25 ?? sData.pm2_5);
+
           return `
             <div class="hotspot-item" style="background: rgba(255, 107, 107, 0.12); border: 1px solid rgba(255, 107, 107, 0.25); border-left: 4px solid #FF6B6B;">
               <h5 style="display: flex; align-items: center; gap: 4px; color: #ffffff;">${iconHtml}${sensor.name}</h5>
               <div class="hotspot-info" style="color: rgba(255, 255, 255, 0.72);">
-                <span><strong>Nhiệt độ:</strong> ${sensor.sensors?.temperature?.value || 0}°C</span>
-                <span><strong>Độ ẩm:</strong> ${sensor.sensors?.humidity?.value || 0}%</span>
-                <span><strong>PM2.5:</strong> ${sensor.sensors?.pm25?.value || 0} µg/m³</span>
+                <span><strong>Nhiệt độ:</strong> ${tempVal !== null ? tempVal + '°C' : '--'}</span>
+                <span><strong>Độ ẩm:</strong> ${humVal !== null ? humVal + '%' : '--'}</span>
+                ${pm25Val !== null ? `<span><strong>PM2.5:</strong> ${pm25Val} µg/m³</span>` : ''}
                 <span><strong>Yaw:</strong> ${sensor.position?.yaw?.toFixed(2) || 0}° | <strong>Pitch:</strong> ${sensor.position?.pitch?.toFixed(2) || 0}°</span>
               </div>
               <div class="hotspot-actions">
@@ -3431,12 +3284,112 @@
       });
     }
 
+    async function loadAllDbSensors() {
+      const selectEl = document.getElementById('dbSensorSelect');
+      if (!selectEl) return;
+
+      try {
+        const res = await fetch('/api/sensors');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.sensors)) {
+          allDbSensors = data.sensors;
+          let html = '<option value="">-- ➕ Tạo mới thiết bị (Không có trong DB) --</option>';
+          
+          allDbSensors.forEach(s => {
+            let statusText = '';
+            if (s.roomId === null || s.roomId === undefined) {
+              statusText = 'Chưa gán phòng';
+            } else if (Number(s.roomId) === Number(selectedRoomId)) {
+              statusText = 'Thuộc phòng hiện tại';
+            } else {
+              const r = rooms.find(room => Number(room.id) === Number(s.roomId));
+              statusText = `Thuộc: ${r ? r.name : 'Phòng ' + s.roomId}`;
+            }
+            const icon = s.type === 'camera' ? '📹' : '🌡️';
+            html += `<option value="${s.id}">${icon} ${s.name} (ID: ${s.id}) - [${statusText}]</option>`;
+          });
+
+          selectEl.innerHTML = html;
+          if (selectedDbSensorId) {
+            selectEl.value = String(selectedDbSensorId);
+          } else {
+            selectEl.value = '';
+          }
+        }
+      } catch (err) {
+        console.warn('Lỗi khi tải danh sách thiết bị từ DB:', err);
+      }
+    }
+
+    window.onSelectDbSensor = function() {
+      const selectEl = document.getElementById('dbSensorSelect');
+      const selectedId = selectEl ? selectEl.value : '';
+      if (!selectedId) {
+        selectedDbSensorId = null;
+        const telemetryInfo = document.getElementById('dbTelemetryInfo');
+        if (telemetryInfo) {
+          telemetryInfo.innerHTML = '<em>Chọn thiết bị IoT từ danh sách ở trên để xem dữ liệu đo đạc realtime trong Database.</em>';
+        }
+        return;
+      }
+
+      selectedDbSensorId = Number(selectedId);
+      const sensor = allDbSensors.find(s => String(s.id) === String(selectedDbSensorId) || Number(s.id) === selectedDbSensorId);
+      if (!sensor) return;
+
+      // Tự động điền dữ liệu thiết bị từ DB vào form
+      if (sensor.name) document.getElementById('sensorName').value = sensor.name;
+      if (sensor.type) {
+        document.getElementById('sensorType').value = sensor.type;
+        toggleSensorFields();
+      }
+
+      if (sensor.type === 'camera') {
+        if (sensor.camera) {
+          const isWebcam = sensor.camera.streamUrl === 'webcam://0';
+          document.getElementById('useWebcam').checked = isWebcam;
+          document.getElementById('cameraStreamUrl').value = sensor.camera.streamUrl || '';
+          document.getElementById('cameraSnapshotUrl').value = sensor.camera.snapshotUrl || '';
+          document.getElementById('cameraResolution').value = sensor.camera.resolution || '1920x1080';
+          document.getElementById('cameraStatus').value = sensor.camera.status || 'online';
+          document.getElementById('cameraNotes').value = sensor.camera.notes || '';
+          if (isWebcam) toggleWebcam();
+        }
+      } else {
+        const telemetryInfo = document.getElementById('dbTelemetryInfo');
+        if (telemetryInfo) {
+          const temp = sensor.sensors?.temperature?.value ?? sensor.sensors?.temperature;
+          const hum = sensor.sensors?.humidity?.value ?? sensor.sensors?.humidity;
+          const pm = sensor.sensors?.pm25?.value ?? sensor.sensors?.pm25;
+
+          let parts = [];
+          if (temp !== undefined && temp !== null) parts.push(`🌡️ Nhiệt độ: <strong>${temp}°C</strong>`);
+          if (hum !== undefined && hum !== null) parts.push(`💧 Độ ẩm: <strong>${hum}%</strong>`);
+          if (pm !== undefined && pm !== null) parts.push(`🌫️ PM2.5: <strong>${pm} µg/m³</strong>`);
+
+          if (sensor.sensors?.grafanaUrl) {
+            document.getElementById('sensorGrafanaUrl').value = sensor.sensors.grafanaUrl;
+          }
+
+          telemetryInfo.innerHTML = parts.length > 0
+            ? parts.join('<br>') + `<div style="font-size:11px;color:#64748b;margin-top:6px;">⏰ Lần cập nhật cuối: ${sensor.lastUpdate ? new Date(sensor.lastUpdate).toLocaleString('vi-VN') : 'Mới khởi tạo'}</div>`
+            : '<span style="color:#64748b;">Thiết bị này chưa gửi dữ liệu telemetry. Khi thiết bị đo đạc từ bên ngoài, dữ liệu sẽ tự động hiển thị.</span>';
+        }
+      }
+    };
+
     function closeSensorModal() {
       sensorModal.classList.remove('active');
       editingSensorIndex = null;
+      selectedDbSensorId = null;
       setAddSensorPositionMode(false);
       sensorForm.reset();
-      document.getElementById('weatherDataInfo').textContent = '';
+      const dbSelect = document.getElementById('dbSensorSelect');
+      if (dbSelect) dbSelect.value = '';
+      const telemetryInfo = document.getElementById('dbTelemetryInfo');
+      if (telemetryInfo) {
+        telemetryInfo.innerHTML = '<em>Chọn thiết bị IoT từ danh sách ở trên để xem dữ liệu đo đạc realtime trong Database.</em>';
+      }
       document.getElementById('sensorType').value = 'environment';
       document.getElementById('useWebcam').checked = false;
       document.getElementById('sensorYaw').value = 0;
@@ -3446,67 +3399,6 @@
       setCameraConnectionStatus('', '#7f8c8d');
       toggleSensorFields(); // Reset to show environment fields
     }
-
-    window.fetchRealWeatherData = async function () {
-      const infoEl = document.getElementById('weatherDataInfo');
-      const tempInput = document.getElementById('sensorTemp');
-      const humidityInput = document.getElementById('sensorHumidity');
-      const pm25Input = document.getElementById('sensorPM25');
-
-      infoEl.innerHTML = '<span style="color: #3498db;">⏳ Đang lấy dữ liệu từ API thời tiết...</span>';
-
-      try {
-        if (selectedRoomId) {
-          await saveRoomApiConfig(selectedRoomId);
-        }
-        const configPayload = {
-          weatherApi: {
-            provider: 'openweathermap',
-            url: document.getElementById('roomWeatherUrl').value,
-            apiKey: document.getElementById('roomWeatherApiKey').value,
-            params: {
-              lat: parseFloat(document.getElementById('roomWeatherLat').value),
-              lon: parseFloat(document.getElementById('roomWeatherLon').value),
-              units: 'metric'
-            }
-          },
-          airQualityApi: {
-            provider: 'waqi',
-            url: document.getElementById('roomAirUrl').value,
-            token: document.getElementById('roomAirToken').value
-          }
-        };
-        // Use config from admin-rooms form directly
-        const res = await fetch('/api/real-data/combined/custom', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(configPayload)
-        });
-        const result = await res.json();
-
-        if (result.success && result.data) {
-          tempInput.value = result.data.temperature.toFixed(1);
-          humidityInput.value = Math.round(result.data.humidity);
-          pm25Input.value = result.data.pm25.toFixed(1);
-
-          const timestamp = new Date().toLocaleTimeString('vi-VN');
-          const aqiInfo = result.data.aqi ? `<span style="padding: 3px 8px; border-radius: 4px; background: ${result.data.aqi.color}; color: white; font-size: 11px; font-weight: 600;">${result.data.aqi.level}</span>` : '';
-
-          infoEl.innerHTML = `
-            <div style="color: #27ae60; font-weight: 600; margin-bottom: 5px;">✅ Đã cập nhật dữ liệu thực tế (API riêng của phòng)</div>
-            <div style="font-size: 11px; color: #555;">
-              📍 ${result.data.location} | ⏰ ${timestamp}<br>
-              🌤️ ${result.data.weather || 'N/A'} | AQI: ${aqiInfo}
-            </div>
-          `;
-        } else {
-          throw new Error('Không thể lấy dữ liệu');
-        }
-      } catch (err) {
-        console.error('Fetch weather error:', err);
-        infoEl.innerHTML = '<span style="color: #e74c3c;">❌ Lỗi: ' + err.message + '</span>';
-      }
-    };
 
     sensorForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -3524,40 +3416,28 @@
         }
       };
 
+      const selectedDbVal = document.getElementById('dbSensorSelect')?.value;
+      const currentDbSensorId = selectedDbVal ? Number(selectedDbVal) : null;
+
       // Build data based on sensor type
       if (sensorType === 'environment') {
-        // Save room API config first
-        await saveRoomApiConfig(selectedRoomId);
+        const grafanaUrl = (() => {
+          let val = (document.getElementById('sensorGrafanaUrl')?.value || '').trim();
+          if (val.includes('<iframe') && val.includes('src=')) {
+            const match = val.match(/src=["']?([^"'\s>]+)["']?/i);
+            if (match && match[1]) {
+              val = match[1];
+            }
+          }
+          return val.replace(/&amp;/g, '&');
+        })();
+
+        const dbSensor = currentDbSensorId ? allDbSensors.find(s => String(s.id) === String(currentDbSensorId) || Number(s.id) === currentDbSensorId) : null;
+        const existingSensors = dbSensor?.sensors || (editingSensorIndex !== null ? roomSensors[editingSensorIndex]?.sensors : {}) || {};
 
         sensorData.sensors = {
-          temperature: {
-            value: Number(document.getElementById('sensorTemp').value),
-            unit: '°C',
-            min: 0,
-            max: 50
-          },
-          humidity: {
-            value: Number(document.getElementById('sensorHumidity').value),
-            unit: '%',
-            min: 0,
-            max: 100
-          },
-          pm25: {
-            value: Number(document.getElementById('sensorPM25').value),
-            unit: 'µg/m³',
-            min: 0,
-            max: 500
-          },
-          grafanaUrl: (() => {
-            let val = document.getElementById('sensorGrafanaUrl').value.trim();
-            if (val.includes('<iframe') && val.includes('src=')) {
-              const match = val.match(/src=["']?([^"'\s>]+)["']?/i);
-              if (match && match[1]) {
-                val = match[1];
-              }
-            }
-            return val.replace(/&amp;/g, '&');
-          })()
+          ...existingSensors,
+          ...(grafanaUrl ? { grafanaUrl } : {})
         };
       } else if (sensorType === 'camera') {
         sensorData.camera = {
@@ -3575,7 +3455,18 @@
         let url = '/api/sensors';
         let method = 'POST';
 
-        if (editingSensorIndex !== null) {
+        if (currentDbSensorId) {
+          const dbSensor = allDbSensors.find(s => String(s.id) === String(currentDbSensorId) || Number(s.id) === currentDbSensorId);
+          // If sensor is not assigned to any room OR already assigned to this room: update existing device
+          if (dbSensor && (!dbSensor.roomId || String(dbSensor.roomId) === String(selectedRoomId))) {
+            url = `/api/sensors/${currentDbSensorId}`;
+            method = 'PUT';
+          } else {
+            // Sensor belongs to ANOTHER room -> create a new cloned sensor for this room
+            url = '/api/sensors';
+            method = 'POST';
+          }
+        } else if (editingSensorIndex !== null) {
           const sensor = roomSensors[editingSensorIndex];
           url = `/api/sensors/${sensor.id}`;
           method = 'PUT';
@@ -3596,7 +3487,7 @@
           closeSensorModal();
           await loadSensors();
           const deviceType = sensorType === 'camera' ? 'camera' : 'cảm biến';
-          alert('✅ ' + (method === 'PUT' ? `Cập nhật ${deviceType} thành công!` : `Đã thêm ${deviceType}!`));
+          alert('✅ ' + (method === 'PUT' ? `Cập nhật ${deviceType} thành công!` : `Đã gán / thêm ${deviceType} thành công!`));
         } else {
           alert('Lỗi: ' + data.error);
         }
@@ -3611,8 +3502,10 @@
       if (!sensor) return;
 
       editingSensorIndex = idx;
+      selectedDbSensorId = sensor.id;
       sensorModalTitle.textContent = '✏️ Chỉnh sửa ' + (sensor.type === 'camera' ? 'Camera' : 'Cảm biến');
 
+      await loadAllDbSensors();
       document.getElementById('sensorName').value = sensor.name;
       document.getElementById('sensorType').value = sensor.type || 'environment';
       document.getElementById('sensorYaw').value = sensor.position?.yaw || 0;
@@ -3639,26 +3532,27 @@
           previewCameraStream();
         }
       } else {
-        // Fill environment sensor fields
-        document.getElementById('sensorTemp').value = sensor.sensors?.temperature?.value || 0;
-        document.getElementById('sensorHumidity').value = sensor.sensors?.humidity?.value || 0;
-        document.getElementById('sensorPM25').value = sensor.sensors?.pm25?.value || 0;
-        document.getElementById('sensorGrafanaUrl').value = sensor.sensors?.grafanaUrl || '';
-        document.getElementById('weatherDataInfo').textContent = '';
+        // Fill environment sensor telemetry preview
+        const telemetryInfo = document.getElementById('dbTelemetryInfo');
+        if (telemetryInfo) {
+          const temp = sensor.sensors?.temperature?.value ?? sensor.sensors?.temperature;
+          const hum = sensor.sensors?.humidity?.value ?? sensor.sensors?.humidity;
+          const pm = sensor.sensors?.pm25?.value ?? sensor.sensors?.pm25;
 
-        // Load room API config
-        if (selectedRoomId) {
-          await loadRoomApiConfig(selectedRoomId);
+          let parts = [];
+          if (temp !== undefined && temp !== null) parts.push(`🌡️ Nhiệt độ: <strong>${temp}°C</strong>`);
+          if (hum !== undefined && hum !== null) parts.push(`💧 Độ ẩm: <strong>${hum}%</strong>`);
+          if (pm !== undefined && pm !== null) parts.push(`🌫️ PM2.5: <strong>${pm} µg/m³</strong>`);
+
+          document.getElementById('sensorGrafanaUrl').value = sensor.sensors?.grafanaUrl || '';
+
+          telemetryInfo.innerHTML = parts.length > 0
+            ? parts.join('<br>') + `<div style="font-size:11px;color:#64748b;margin-top:6px;">⏰ Lần cập nhật cuối: ${sensor.lastUpdate ? new Date(sensor.lastUpdate).toLocaleString('vi-VN') : 'Mới khởi tạo'}</div>`
+            : '<span style="color:#64748b;">Thiết bị này chưa gửi dữ liệu telemetry trong Database.</span>';
         }
-
-        // Reset API config section state
-        document.getElementById('apiConfigSection').style.display = 'none';
-        document.getElementById('apiConfigSummary').style.display = 'block';
-        document.getElementById('toggleApiConfig').textContent = '📝 Chỉnh sửa';
-        setApiInputsDisabled(true);
       }
 
-        closeAllFeatureModals('sensorModal');
+      closeAllFeatureModals('sensorModal');
       sensorModal.classList.add('active');
     };
 

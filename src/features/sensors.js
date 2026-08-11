@@ -589,81 +589,30 @@ export async function loadSensors() {
   }
 }
 
-// Start real-time sensor updates (simulate temperature changes)
+// Start real-time sensor updates (fetch actual IoT sensor data from DB)
 export function startSensorRealTimeUpdates() {
   // Clear existing interval
   if (sensorUpdateInterval) clearInterval(sensorUpdateInterval);
-  
-  // Update local sensors every 5 seconds (KHÔNG thay đổi temperature/humidity/pm25 nữa)
-  sensorUpdateInterval = setInterval(() => {
-    sensorsData.forEach(sensor => {
-      // Only update CO2 and smoke (simulated)
-      if (sensor.sensors && sensor.sensors.co2) {
-        const co2 = sensor.sensors.co2;
-        // Simulate CO2 fluctuation (±20 ppm)
-        const change = (Math.random() - 0.5) * 40;
-        co2.value = Math.round(co2.value + change);
-        
-        // Keep within realistic bounds
-        co2.value = Math.max(300, Math.min(2500, co2.value));
-      }
-      
-      if (sensor.sensors && sensor.sensors.smoke) {
-        const smoke = sensor.sensors.smoke;
-        // Small fluctuation
-        const change = (Math.random() - 0.5) * 2;
-        smoke.value = Math.max(0, Math.round(smoke.value + change));
-      }
-    });
-    
-    // Refresh widget
-    updateSensorWidget();
-  }, 5000); // Update every 5 seconds
-  
-  // Fetch REAL temperature, humidity, PM2.5 data every 30 seconds
-  fetchRealPM25Data(); // Gọi ngay lần đầu
-  setInterval(fetchRealPM25Data, 10000); // Rồi mỗi 10 giây
+
+  refreshSensorsFromDb();
+  sensorUpdateInterval = setInterval(refreshSensorsFromDb, 10000);
 }
 
-// Fetch real PM2.5 data from API
-async function fetchRealPM25Data() {
+// Fetch actual sensor telemetry data from DB
+async function refreshSensorsFromDb() {
   const currentRoomId = env.getCurrentRoomId();
+  if (!currentRoomId) return;
+
   try {
-    // Đợi nếu sensors chưa load
-    if (sensorsData.length === 0) {
-      return;
-    }
-    
-    if (!currentRoomId) {
-      return;
-    }
-
-    const res = await fetch(`/api/real-data/combined?roomId=${currentRoomId}`);
+    const res = await fetch(`/api/sensors?roomId=${currentRoomId}`);
     const data = await res.json();
-    
-    if (data.success && data.data) {
-      const currentRoomSensors = sensorsData.filter(s => s.roomId === currentRoomId && s.type !== 'camera');
-
-      // Update ONLY environment sensors in current room (skip cameras)
-      currentRoomSensors.forEach((sensor, index) => {
-        if (!sensor.sensors) return; // Skip if no sensors data
-        
-        // Update with real data (add small variation for each sensor)
-        const variation = index * 0.5;
-        
-        sensor.sensors.temperature.value = Math.round((data.data.temperature + variation) * 10) / 10;
-        sensor.sensors.humidity.value = Math.round(data.data.humidity + variation);
-        sensor.sensors.pm25.value = Math.round((data.data.pm25 + variation) * 10) / 10;
-        
-        // Update timestamp
-        sensor.lastUpdate = new Date().toISOString();
-      });
-      
-      // Refresh widget
+    if (data.success && Array.isArray(data.sensors)) {
+      const otherSensors = sensorsData.filter(s => Number(s.roomId) !== Number(currentRoomId));
+      sensorsData = [...otherSensors, ...data.sensors];
       updateSensorWidget();
     }
   } catch (err) {
-    console.error("❌ Lỗi fetch dữ liệu môi trường:", err.message);
+    console.error("❌ Lỗi cập nhật dữ liệu cảm biến từ DB:", err.message);
   }
 }
 
@@ -769,11 +718,24 @@ export function addSensorHotspots(roomId) {
         showCameraPreview(sensor);
       };
     } else {
-      const temp = sensor.sensors?.temperature?.value ?? "--";
-      const humidity = sensor.sensors?.humidity?.value ?? "--";
-      const pm25 = sensor.sensors?.pm25?.value ?? "--";
+      const sData = sensor.sensors || sensor.data || {};
+      const getVal = (v) => {
+        if (v === null || v === undefined) return null;
+        if (typeof v === 'object' && v.value !== undefined && v.value !== null) return v.value;
+        if (typeof v === 'number') return v;
+        if (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v))) return Number(v);
+        return null;
+      };
+
+      const tempVal = getVal(sData.temperature ?? sData.temp);
+      const humVal = getVal(sData.humidity ?? sData.hum);
+      const pm25Val = getVal(sData.pm25 ?? sData.pm2_5);
+
+      const temp = tempVal !== null ? tempVal : "--";
+      const humidity = humVal !== null ? humVal : "--";
+      const pm25 = pm25Val !== null ? pm25 : "--";
       
-      let rawGrafanaUrl = (sensor.sensors?.grafanaUrl || '').trim();
+      let rawGrafanaUrl = (sensor.sensors?.grafanaUrl || sData.grafanaUrl || '').trim();
       let grafanaUrl = '';
       if (rawGrafanaUrl) {
         if (rawGrafanaUrl.includes('<iframe') && rawGrafanaUrl.includes('src=')) {
@@ -794,11 +756,20 @@ export function addSensorHotspots(roomId) {
           <iframe src="${grafanaUrl}" style="width: 100%; height: 220px; border: none; border-radius: 6px; background: #181b1f;"></iframe>
         `;
       } else {
+        let linesHtml = '';
+        if (temp !== "--") linesHtml += `<div class="sensor-tooltip-line">Nhiệt độ: ${temp}°C</div>`;
+        if (humidity !== "--") linesHtml += `<div class="sensor-tooltip-line">Độ ẩm: ${humidity}%</div>`;
+        if (pm25 !== "--") linesHtml += `<div class="sensor-tooltip-line">PM2.5: ${pm25} µg/m³</div>`;
+        if (!linesHtml) {
+          linesHtml = `
+            <div class="sensor-tooltip-line">Nhiệt độ: --°C</div>
+            <div class="sensor-tooltip-line">Độ ẩm: --%</div>
+          `;
+        }
+
         tooltip.innerHTML = `
           <div class="sensor-tooltip-title">🌡️ ${sensor.name || "Cảm biến"}</div>
-          <div class="sensor-tooltip-line">Nhiệt độ: ${temp}°C</div>
-          <div class="sensor-tooltip-line">Độ ẩm: ${humidity}%</div>
-          <div class="sensor-tooltip-line">PM2.5: ${pm25}</div>
+          ${linesHtml}
         `;
       }
 

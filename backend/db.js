@@ -204,7 +204,7 @@ module.exports = {
       const result = {
         id: Number(s.id),
         name: s.name,
-        roomId: Number(s.room_id),
+        roomId: (s.room_id !== null && s.room_id !== undefined && s.room_id !== '') ? Number(s.room_id) : null,
         type: s.type,
         position: {
           yaw: Number(s.yaw),
@@ -229,7 +229,7 @@ module.exports = {
     const { error } = await supabase.from('sensors').insert({
       id: Number(sensor.id),
       name: sensor.name,
-      room_id: Number(sensor.roomId),
+      room_id: (sensor.roomId !== null && sensor.roomId !== undefined && sensor.roomId !== '') ? Number(sensor.roomId) : null,
       type: sensor.type,
       yaw: Number(sensor.position?.yaw || 0),
       pitch: Number(sensor.position?.pitch || 0),
@@ -243,7 +243,7 @@ module.exports = {
   async updateSensor(id, sensor) {
     const mapped = {};
     if (sensor.name !== undefined) mapped.name = sensor.name;
-    if (sensor.roomId !== undefined) mapped.room_id = Number(sensor.roomId);
+    if (sensor.roomId !== undefined) mapped.room_id = (sensor.roomId !== null && sensor.roomId !== '') ? Number(sensor.roomId) : null;
     if (sensor.position !== undefined) {
       mapped.yaw = Number(sensor.position.yaw || 0);
       mapped.pitch = Number(sensor.position.pitch || 0);
@@ -255,11 +255,44 @@ module.exports = {
     const data = sensor.type === 'camera' ? sensor.camera : sensor.sensors;
     if (data !== undefined) mapped.data = data;
 
-    const { error } = await supabase
+    console.log(`🔄 [db.updateSensor] Updating sensor ID=${id} with mapped data:`, mapped);
+
+    // Primary update attempt using numeric id
+    let { data: updatedRows, error } = await supabase
       .from('sensors')
       .update(mapped)
-      .eq('id', Number(id));
-    if (error) throw error;
+      .eq('id', Number(id))
+      .select();
+
+    if (error) {
+      console.error('❌ [db.updateSensor] Primary update error:', error.message);
+    }
+
+    // Secondary fallback using string id if primary updated 0 rows
+    if (!updatedRows || updatedRows.length === 0) {
+      const stringId = String(id);
+      console.warn(`⚠️ [db.updateSensor] 0 rows updated with numeric id=${Number(id)}, trying string id='${stringId}'`);
+      const resAlt = await supabase
+        .from('sensors')
+        .update(mapped)
+        .eq('id', stringId)
+        .select();
+
+      if (resAlt.error) {
+        console.error('❌ [db.updateSensor] Fallback string id update error:', resAlt.error.message);
+        throw resAlt.error;
+      }
+      updatedRows = resAlt.data;
+    }
+
+    if (!updatedRows || updatedRows.length === 0) {
+      const msg = `Không tìm thấy thiết bị nào trong CSDL có ID = ${id} để cập nhật.`;
+      console.error('❌ [db.updateSensor] ' + msg);
+      throw new Error(msg);
+    }
+
+    console.log('✅ [db.updateSensor] Sensor updated successfully in DB:', updatedRows[0]);
+    return updatedRows[0];
   },
 
   async deleteSensor(id) {

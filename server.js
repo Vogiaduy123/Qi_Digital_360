@@ -952,18 +952,18 @@ app.get("/api/sensors/:id", async (req, res) => {
 });
 
 app.put("/api/sensors/:id", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
-  const sensorId = Number(req.params.id);
-  const { name, position, sensors: envSensors, type, camera } = req.body;
+  const sensorId = req.params.id;
+  const { name, roomId, position, sensors: envSensors, type, camera } = req.body;
 
   try {
     const allSensors = await getSensors();
-    const sensor = allSensors.find(s => Number(s.id) === sensorId);
-    if (!sensor) return res.status(404).json({ success: false, error: "Sensor not found" });
+    const sensor = allSensors.find(s => String(s.id) === String(sensorId) || Number(s.id) === Number(sensorId));
 
-    const nextType = type || sensor.type || "environment";
+    const nextType = type || sensor?.type || "environment";
     const isCamera = nextType === "camera";
     const updates = { type: nextType };
     if (name) updates.name = name;
+    if (roomId !== undefined) updates.roomId = roomId;
     if (position) { updates.position = position; }
     if (isCamera && camera) updates.camera = camera;
     else if (!isCamera && envSensors) updates.sensors = envSensors;
@@ -1191,24 +1191,7 @@ app.get("/api/real-data/combined", async (req, res) => {
     
     const data = await getCombinedData(config);
     
-    // Save fetched real weather/air quality to Supabase database for environmental sensors in this room
-    if (roomId && data) {
-      try {
-        const allSensors = await db.getSensors();
-        const roomEnvSensors = allSensors.filter(s => Number(s.roomId) === Number(roomId) && s.type === 'environment');
-        
-        for (const sensor of roomEnvSensors) {
-          await updateSensorDataAndLog(Number(sensor.id), {
-            temperature: data.temperature,
-            humidity: data.humidity,
-            pm25: data.pm25
-          });
-        }
-      } catch (dbErr) {
-        console.error("⚠️ Error saving real combined data to DB:", dbErr.message);
-      }
-    }
-
+    // Return fetched real weather/air quality data without overwriting IoT sensors in DB
     res.json({ success: true, data });
   } catch (err) {
     console.error("â Œ Error fetching combined data:", err.message);
