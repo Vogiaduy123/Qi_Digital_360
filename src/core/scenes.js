@@ -34,26 +34,13 @@ export function initRooms(rooms, roomSelectEl) {
     if (!scenes[room.id]) {
       let source, geometry;
 
-      if (room.tilesConfig && room.tilesConfig.levels && room.tilesPath) {
-        // Multi-resolution Tile Pyramid
-        let basePath = room.tilesPath;
-        if (basePath.startsWith('http')) {
-          // Full Supabase Storage URL — dùng trực tiếp
-          // basePath đã là https://...supabase.co/.../tiles/room_id
-        } else if (!basePath.startsWith('/')) {
-          // Relative path cũ (legacy local) — prefix /backend/
-          basePath = '/backend/' + basePath;
-        }
-        
-        // Marzipano Multi-Res Equirectangular support
-        source = Marzipano.ImageUrlSource.fromString(basePath + "/{z}/{y}/{x}.jpg");
-        geometry = new Marzipano.EquirectGeometry(room.tilesConfig.levels);
-      } else {
-        // Legacy single image fallback
-        const imageUrl = room.image.startsWith('http') ? room.image : window.location.origin + room.image;
-        source = Marzipano.ImageUrlSource.fromString(imageUrl);
-        geometry = new Marzipano.EquirectGeometry([{ width: 4000 }]);
-      }
+      // Equirectangular single panorama image rendering
+      const imageUrl = (room.image && room.image.startsWith('http')) 
+        ? room.image 
+        : (room.image ? window.location.origin + room.image : '');
+
+      source = Marzipano.ImageUrlSource.fromString(imageUrl);
+      geometry = new Marzipano.EquirectGeometry([{ width: 4000 }]);
 
       const view = new Marzipano.RectilinearView({ fov: Math.PI / 2 });
 

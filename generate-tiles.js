@@ -100,7 +100,11 @@ async function generateEquirectangularTiles(inputPath, outputDir) {
   const config = {
     type: 'equirectangular',
     tileSize: tileSize,
-    levels: levels.map(l => ({ width: l.width }))
+    levels: levels.map(l => ({
+      width: l.width,
+      height: l.height,
+      tileSize: tileSize
+    }))
   };
 
   fs.writeFileSync(
