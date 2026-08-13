@@ -214,11 +214,18 @@ function getSmtpConfig() {
   return { host, port, user, pass, secure, from };
 }
 
-// Tạo transporter Nodemailer theo cấu hình SMTP.
+// Tạo transporter Nodemailer theo cấu hình SMTP với timeout chống treo
 function createMailTransporter(config) {
   const host = String(config.host || "").toLowerCase();
-  if (host.includes("gmail")) {
+  const timeouts = {
+    connectionTimeout: 10000, // 10 giây
+    greetingTimeout: 10000,
+    socketTimeout: 15000
+  };
+
+  if (host.includes("gmail") && config.port !== 465) {
     return nodemailer.createTransport({
+      ...timeouts,
       service: "gmail",
       auth: {
         user: config.user,
@@ -228,6 +235,7 @@ function createMailTransporter(config) {
   }
 
   return nodemailer.createTransport({
+    ...timeouts,
     host: config.host,
     port: config.port,
     secure: config.secure,
