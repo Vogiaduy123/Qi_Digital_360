@@ -661,35 +661,72 @@ export function createMediaHotspotElement(media, onClickHandler) {
     return null;
   }
 
-  let el;
   const customIconKey = 'media_' + media.mediaType;
   const hasCustomIcon = window.customIcons && window.customIcons[customIconKey];
 
-  if (media.mediaType === "note") {
-    el = document.createElement("div");
-    el.className = "note-hotspot info-hotspot";
-    el.setAttribute("aria-label", media.title || "Ghi chú");
-    el.textContent = "";
-    el.style.cursor = "pointer";
-    
-    const header = document.createElement("div");
-    header.className = "info-hotspot-header";
+  // Inline YouTube video player if YouTube type with valid video ID and no custom icon
+  if (media.mediaType === "youtube" && !hasCustomIcon) {
+    const videoId = getYouTubeVideoId(media.mediaUrl);
+    if (videoId) {
+      const el = document.createElement("div");
+      el.className = "media-hotspot youtube-hotspot";
+      el.setAttribute("aria-label", media.title || "YouTube Video");
+      
+      const iframe = document.createElement("iframe");
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=0`;
+      iframe.title = media.title || "YouTube Video";
+      iframe.style.width = "100%";
+      iframe.style.height = "100%";
+      iframe.style.borderRadius = "6px";
+      iframe.frameBorder = "0";
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+      iframe.allowFullscreen = true;
+      
+      el.appendChild(iframe);
+      return el;
+    }
+  }
 
-    const iconWrap = document.createElement("div");
-    iconWrap.className = "info-hotspot-icon-wrapper";
+  // Create expandable pill tag element (info-hotspot) for note and all document media tags
+  const el = document.createElement("div");
+  const isNote = media.mediaType === "note";
+  el.className = isNote ? "note-hotspot info-hotspot" : `media-doc-hotspot info-hotspot media-${media.mediaType}-hotspot`;
+  el.setAttribute("aria-label", media.title || getMediaDefaultTitle(media.mediaType));
+  el.style.cursor = "pointer";
+
+  const header = document.createElement("div");
+  header.className = "info-hotspot-header";
+
+  const iconWrap = document.createElement("div");
+  iconWrap.className = "info-hotspot-icon-wrapper";
+
+  if (hasCustomIcon) {
     const icon = document.createElement("img");
     icon.className = "info-hotspot-icon";
-    icon.src = hasCustomIcon ? window.customIcons[customIconKey] : "images/info.svg";
-    icon.alt = "Info";
+    icon.src = window.customIcons[customIconKey];
+    icon.alt = media.mediaType;
     iconWrap.appendChild(icon);
+  } else if (media.iconUrl) {
+    const icon = document.createElement("img");
+    icon.className = "info-hotspot-icon";
+    icon.src = media.iconUrl;
+    icon.alt = media.mediaType;
+    iconWrap.appendChild(icon);
+  } else {
+    iconWrap.innerHTML = getMediaIconSVG(media.mediaType);
+  }
 
-    const titleWrap = document.createElement("div");
-    titleWrap.className = "info-hotspot-title-wrapper";
-    const title = document.createElement("div");
-    title.className = "info-hotspot-title";
-    title.textContent = media.title || "Ghi chú";
-    titleWrap.appendChild(title);
+  const titleWrap = document.createElement("div");
+  titleWrap.className = "info-hotspot-title-wrapper";
+  const title = document.createElement("div");
+  title.className = "info-hotspot-title";
+  title.textContent = media.title || getMediaDefaultTitle(media.mediaType);
+  titleWrap.appendChild(title);
 
+  header.appendChild(iconWrap);
+  header.appendChild(titleWrap);
+
+  if (isNote) {
     const closeWrap = document.createElement("div");
     closeWrap.className = "info-hotspot-close-wrapper";
     closeWrap.setAttribute("role", "button");
@@ -698,9 +735,6 @@ export function createMediaHotspotElement(media, onClickHandler) {
     closeIcon.className = "info-hotspot-close-icon";
     closeIcon.textContent = "×";
     closeWrap.appendChild(closeIcon);
-
-    header.appendChild(iconWrap);
-    header.appendChild(titleWrap);
     header.appendChild(closeWrap);
 
     const content = document.createElement("div");
@@ -718,11 +752,9 @@ export function createMediaHotspotElement(media, onClickHandler) {
 
     header.addEventListener("click", (e) => {
       e.stopPropagation();
-
       if (activeNoteHotspotEl && activeNoteHotspotEl !== el) {
         activeNoteHotspotEl.classList.remove("visible");
       }
-
       const willOpen = !el.classList.contains("visible");
       el.classList.toggle("visible", willOpen);
       activeNoteHotspotEl = willOpen ? el : null;
@@ -735,101 +767,58 @@ export function createMediaHotspotElement(media, onClickHandler) {
     ["mousedown", "pointerdown", "touchstart", "wheel"].forEach((eventName) => {
       content.addEventListener(eventName, (e) => e.stopPropagation(), { passive: false });
     });
-  } else if (hasCustomIcon) {
-    el = document.createElement("div");
-    el.className = `media-hotspot media-${media.mediaType}-hotspot`;
-    el.setAttribute("aria-label", media.title || "Tư liệu");
-    
-    const img = document.createElement("img");
-    img.src = window.customIcons[customIconKey];
-    img.style.width = "100%";
-    img.style.height = "100%";
-    img.style.objectFit = "contain";
-    img.draggable = false;
-    el.appendChild(img);
-
-    el.onclick = (e) => {
-      e.stopPropagation();
-      if (onClickHandler) onClickHandler(media);
-    };
-  } else if (media.mediaType === "youtube") {
-    const videoId = getYouTubeVideoId(media.mediaUrl);
-    if (videoId) {
-      el = document.createElement("div");
-      el.className = "media-hotspot youtube-hotspot";
-      el.setAttribute("aria-label", media.title || "YouTube Video");
-      
-      const iframe = document.createElement("iframe");
-      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=0`;
-      iframe.title = media.title || "YouTube Video";
-      iframe.style.width = "100%";
-      iframe.style.height = "100%";
-      iframe.style.borderRadius = "6px";
-      iframe.frameBorder = "0";
-      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-      iframe.allowFullscreen = true;
-      
-      el.appendChild(iframe);
-    } else {
-      el = document.createElement("div");
-      el.className = "media-hotspot";
-      el.setAttribute("aria-label", media.title || "Tư liệu");
-      el.textContent = "❌";
-    }
   } else {
-    el = document.createElement("div");
-    el.className = "media-hotspot";
-    el.setAttribute("aria-label", media.title || "Tư liệu");
-    
-    if (media.mediaType === "facebook") {
-      el.setAttribute("data-fb", "true");
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("viewBox", "0 0 24 24");
-      svg.setAttribute("width", "24");
-      svg.setAttribute("height", "24");
-      svg.setAttribute("fill", "white");
-      
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", "M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z");
-      svg.appendChild(path);
-      el.appendChild(svg);
-    } else if (media.mediaType === "3d") {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("viewBox", "0 0 100 100");
-      svg.setAttribute("width", "26");
-      svg.setAttribute("height", "26");
-      // Align SVG slightly to look perfectly centered
-      svg.style.transform = "translateY(1px)";
-      
-      svg.innerHTML = `
-        <!-- Left Face -->
-        <path d="M50 90 L15 70 L15 35 L50 55 Z" fill="#3b82f6" />
-        <!-- Right Face -->
-        <path d="M50 90 L85 70 L85 35 L50 55 Z" fill="#2563eb" />
-        <!-- Top Face -->
-        <path d="M50 15 L85 35 L50 55 L15 35 Z" fill="#7ce4fb" />
-        
-        <!-- Sparkles (Stars/Dots) -->
-        <circle cx="27" cy="48" r="2.5" fill="white" opacity="0.9"/>
-        <circle cx="36" cy="65" r="1.8" fill="white" opacity="0.7"/>
-        <circle cx="68" cy="46" r="2.2" fill="white" opacity="0.8"/>
-        <circle cx="75" cy="62" r="1.5" fill="white" opacity="0.6"/>
-        <circle cx="50" cy="30" r="2" fill="white" opacity="0.8"/>
-        <circle cx="64" cy="24" r="1.2" fill="white" opacity="0.6"/>
-        <circle cx="34" cy="26" r="1.5" fill="white" opacity="0.5"/>
-      `;
-      el.appendChild(svg);
-    } else {
-      el.textContent = MEDIA_ICONS[media.mediaType] || "📁";
-    }
+    // Document & media tags: click header triggers media overlay viewer
+    el.appendChild(header);
 
-    el.onclick = (e) => {
+    header.addEventListener("click", (e) => {
       e.stopPropagation();
       if (onClickHandler) onClickHandler(media);
-    };
+    });
+
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (onClickHandler) onClickHandler(media);
+    });
   }
 
   return el;
+}
+
+function getMediaDefaultTitle(type) {
+  const titles = {
+    note: "Ghi chú",
+    pdf: "Tài liệu PDF",
+    image: "Hình ảnh",
+    gallery: "Bộ sưu tập",
+    video: "Video",
+    "3d": "Mô hình 3D",
+    web: "Liên kết web",
+    facebook: "Trang Facebook",
+    youtube: "Video YouTube"
+  };
+  return titles[type] || "Tư liệu";
+}
+
+function getMediaIconSVG(type) {
+  switch (type) {
+    case "pdf":
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#e53e3e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
+    case "image":
+    case "gallery":
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#3182ce" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+    case "video":
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#dd6b20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="15" height="16" rx="2"/><polygon points="17 9 22 6 22 18 17 15" fill="#dd6b20"/></svg>`;
+    case "3d":
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#805ad5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`;
+    case "web":
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#319795" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+    case "facebook":
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`;
+    case "note":
+    default:
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#4a5568" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
+  }
 }
 
 /**

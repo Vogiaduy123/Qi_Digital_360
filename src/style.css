@@ -587,74 +587,105 @@ body.admin #pano>* {
   border: none !important;
 }
 
-/* Note hotspot dùng hiệu ứng info-hotspot (theo mẫu Marzipano) */
-.note-hotspot {
+/* Note & Document hotspots (khung icon hình chữ nhật trong suốt, KHÔNG BO GÓC - border-radius: 0) */
+.info-hotspot,
+.note-hotspot,
+.media-doc-hotspot {
   line-height: 1.2em;
   opacity: 0.9;
   transition: opacity 0.2s 0.2s;
 }
 
-.no-touch .note-hotspot:hover {
+.no-touch .info-hotspot:hover,
+.no-touch .note-hotspot:hover,
+.no-touch .media-doc-hotspot:hover {
   opacity: 1;
   transition: opacity 0.2s;
 }
 
-.note-hotspot.visible {
+.info-hotspot.visible,
+.note-hotspot.visible,
+.media-doc-hotspot.visible {
   opacity: 1;
 }
 
-.note-hotspot .info-hotspot-header {
+.info-hotspot .info-hotspot-header,
+.note-hotspot .info-hotspot-header,
+.media-doc-hotspot .info-hotspot-header {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: 0 !important;
   background-color: transparent;
   cursor: pointer;
-  transition: width 0.3s ease-in-out 0.5s, border-radius 0.3s ease-in-out 0.5s;
+  transition: width 0.3s ease-in-out 0.5s, background-color 0.3s ease-in-out 0.5s;
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
-.mobile .note-hotspot .info-hotspot-header {
+.mobile .info-hotspot .info-hotspot-header,
+.mobile .note-hotspot .info-hotspot-header,
+.mobile .media-doc-hotspot .info-hotspot-header {
   width: 50px;
   height: 50px;
-  border-radius: 8px;
+  border-radius: 0 !important;
 }
 
-.desktop.no-touch .note-hotspot .info-hotspot-header:hover {
+.desktop.no-touch .info-hotspot .info-hotspot-header:hover,
+.desktop.no-touch .note-hotspot .info-hotspot-header:hover,
+.desktop.no-touch .media-doc-hotspot .info-hotspot-header:hover {
   width: 260px;
-  border-radius: 5px;
-  transition: width 0.3s ease-in-out, border-radius 0.3s ease-in-out;
+  border-radius: 0 !important;
+  transition: width 0.3s ease-in-out;
   background-color: rgba(103, 115, 131, 0.85);
 }
 
+.desktop .info-hotspot.visible .info-hotspot-header,
 .desktop .note-hotspot.visible .info-hotspot-header,
+.desktop.no-touch .info-hotspot.visible .info-hotspot-header:hover,
 .desktop.no-touch .note-hotspot.visible .info-hotspot-header:hover {
   width: 260px;
-  border-radius: 5px;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0;
+  border-radius: 0 !important;
   background-color: rgba(103, 115, 131, 0.85);
-  transition: width 0.3s ease-in-out, border-radius 0.3s ease-in-out;
+  transition: width 0.3s ease-in-out;
 }
 
-.note-hotspot .info-hotspot-icon-wrapper {
+.info-hotspot .info-hotspot-icon-wrapper,
+.note-hotspot .info-hotspot-icon-wrapper,
+.media-doc-hotspot .info-hotspot-icon-wrapper {
   width: 40px;
   height: 40px;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: none !important;
+  z-index: 2;
 }
 
-.mobile .note-hotspot .info-hotspot-icon-wrapper {
+.mobile .info-hotspot .info-hotspot-icon-wrapper,
+.mobile .note-hotspot .info-hotspot-icon-wrapper,
+.mobile .media-doc-hotspot .info-hotspot-icon-wrapper {
   width: 50px;
   height: 50px;
 }
 
-.note-hotspot .info-hotspot-icon {
-  width: 90%;
-  height: 90%;
-  margin: 5%;
+.info-hotspot .info-hotspot-icon,
+.note-hotspot .info-hotspot-icon,
+.media-doc-hotspot .info-hotspot-icon {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
   object-fit: contain;
+  display: block;
 }
 
-.note-hotspot .info-hotspot-title-wrapper {
+.info-hotspot .info-hotspot-title-wrapper,
+.note-hotspot .info-hotspot-title-wrapper,
+.media-doc-hotspot .info-hotspot-title-wrapper {
   position: absolute;
   left: 40px;
   top: 0;
@@ -662,16 +693,21 @@ body.admin #pano>* {
   height: 40px;
   padding: 0;
   overflow: hidden;
+  display: flex;
+  align-items: center;
   transition: width 0s 0.4s, padding 0s 0.4s;
 }
 
+.desktop .info-hotspot.visible .info-hotspot-title-wrapper,
 .desktop .note-hotspot.visible .info-hotspot-title-wrapper,
+.desktop.no-touch .info-hotspot .info-hotspot-header:hover .info-hotspot-title-wrapper,
 .desktop.no-touch .note-hotspot .info-hotspot-header:hover .info-hotspot-title-wrapper {
   width: 220px;
   padding: 0 5px;
   transition: width 0s 0.4s, padding 0s 0.4s;
 }
 
+.info-hotspot .info-hotspot-title-wrapper:before,
 .note-hotspot .info-hotspot-title-wrapper:before {
   content: '';
   display: inline-block;
@@ -679,7 +715,9 @@ body.admin #pano>* {
   height: 100%;
 }
 
-.note-hotspot .info-hotspot-title {
+.info-hotspot .info-hotspot-title,
+.note-hotspot .info-hotspot-title,
+.media-doc-hotspot .info-hotspot-title {
   display: inline-block;
   vertical-align: middle;
   color: white;
@@ -695,7 +733,7 @@ body.admin #pano>* {
   top: 0;
   height: 40px;
   width: 40px;
-  border-top-right-radius: 5px;
+  border-radius: 0 !important;
   background-color: rgb(78, 88, 104);
   visibility: hidden;
   transform: perspective(200px) rotateY(90deg);
@@ -727,10 +765,10 @@ body.admin #pano>* {
   color: white;
   top: 40px;
   left: 0;
-  padding: 10px;
-  background-color: rgb(103 115 131 / 56%);
-  border-bottom-right-radius: 5px;
-  border-bottom-left-radius: 5px;
+  padding: 12px;
+  background-color: rgba(60, 72, 88, 0.92);
+  border-radius: 0 !important;
+  box-sizing: border-box;
   overflow-y: auto;
   visibility: hidden;
   transform: perspective(200px) rotateX(-89.999deg);
