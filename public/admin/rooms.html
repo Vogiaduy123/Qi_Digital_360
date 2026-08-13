@@ -412,7 +412,7 @@
         <h3 id="modalTitle">Thêm Hotspot</h3>
         <button class="close-modal" type="button" onclick="closeHotspotModal()">&times;</button>
       </div>
-      <form id="hotspotForm">
+      <form id="hotspotForm" novalidate>
         <div class="form-group">
           <label>Phòng đích</label>
           <select id="targetRoom" onchange="onTargetRoomChange()">
@@ -432,17 +432,9 @@
             <button type="button" onclick="openInitialViewModal()" style="background:var(--accent);color:white;border:none;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">🧭 Chỉnh hướng</button>
           </div>
         </div>
-        <!-- Hidden Yaw and Pitch fields as they are edited via drag and drop now -->
-        <div style="display: none;">
-          <div class="form-group">
-            <label>Góc Yaw (-180 - 180°)</label>
-            <input type="number" id="yaw" min="-180" max="180" step="0.01">
-          </div>
-          <div class="form-group">
-            <label>Góc Pitch (-90 - 90°)</label>
-            <input type="number" id="pitch" min="-90" max="90" step="0.01">
-          </div>
-        </div>
+        <!-- Hidden Yaw and Pitch fields -->
+        <input type="hidden" id="yaw" value="0">
+        <input type="hidden" id="pitch" value="0">
         <div class="form-group">
           <label>Xoay (0 - 360°)</label>
           <input type="number" id="rotation" min="0" max="360" step="0.01" value="0">
@@ -652,7 +644,7 @@
     </div>
   </div>
 
-  <script src="/js/admin-rooms.js?v=4"></script>
+  <script src="/js/admin-rooms.js?v=5"></script>
 </body>
 
 </html>
