@@ -547,6 +547,28 @@ app.get("/api/rooms", async (req, res) => {
   res.json(safeRooms);
 });
 
+// GET SENSORS
+app.get("/api/sensors", async (req, res) => {
+  try {
+    const roomId = req.query.roomId;
+    let sensors = await getSensors();
+    if (roomId !== undefined && roomId !== null && roomId !== "") {
+      const rooms = await getRooms();
+      const validRoomIds = rooms.map(r => String(r.id));
+      sensors = sensors.filter(s => {
+        if (String(s.roomId) === String(roomId)) return true;
+        if (s.roomId && !validRoomIds.includes(String(s.roomId))) {
+          return String(roomId) === validRoomIds[0];
+        }
+        return false;
+      });
+    }
+    res.json({ success: true, sensors });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET NOTIFICATIONS (Protected)
 app.get("/api/notifications", authMiddleware, async (req, res) => {
   try {

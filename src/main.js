@@ -443,6 +443,12 @@ async function initApp() {
     switchRoom(rooms[0].id);
 
     await loadMinimap();
+    initSensors({
+      getCurrentRoomId: () => currentRoomId,
+      getRoomsData: () => getRoomsData(),
+      getScene: (id) => getScenes()[id],
+      switchRoom: (id) => switchRoom(id)
+    });
     await loadSensors();
 
     initZoomControl();
@@ -589,6 +595,7 @@ function switchRoom(roomId, initialYaw, initialPitch) {
   }
 
   addHotspots(roomId);
+  addSensorHotspots(roomId);
   updateMinimapHighlight();
   hideMediaOverlay();
   closeCameraModal();
@@ -608,10 +615,15 @@ function addHotspots(roomId) {
   const container = scene.hotspotContainer();
   resetActiveNoteHotspot();
   clearFixedMailHotspots();
-  // Remove existing hotspots
+  // Remove existing hotspots (preserve IoT sensor hotspots)
   try {
     const existing = container.listHotspots();
-    existing.forEach(h => container.destroyHotspot(h));
+    existing.forEach(h => {
+      const el = typeof h.domElement === 'function' ? h.domElement() : h.element;
+      if (!el || !el.classList || !el.classList.contains("sensor-hotspot")) {
+        container.destroyHotspot(h);
+      }
+    });
   } catch { }
 
   const hotspots = room.hotspots || [];

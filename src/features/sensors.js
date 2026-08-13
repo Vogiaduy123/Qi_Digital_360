@@ -512,7 +512,7 @@ export function renderCameraPanel() {
   if (!cameraPanel || !cameraPanelContent) return;
   
   // Filter cameras for current room
-  const currentRoomCameras = sensorsData.filter(s => s.type === 'camera' && s.roomId === currentRoomId);
+  const currentRoomCameras = sensorsData.filter(s => s.type === 'camera' && String(s.roomId) === String(currentRoomId));
   
   if (currentRoomCameras.length === 0) {
     cameraPanel.classList.add('hidden');
@@ -604,11 +604,11 @@ async function refreshSensorsFromDb() {
   if (!currentRoomId) return;
 
   try {
-    const res = await fetch(`/api/sensors?roomId=${currentRoomId}`);
+    const res = await fetch('/api/sensors');
     const data = await res.json();
     if (data.success && Array.isArray(data.sensors)) {
-      const otherSensors = sensorsData.filter(s => Number(s.roomId) !== Number(currentRoomId));
-      sensorsData = [...otherSensors, ...data.sensors];
+      sensorsData = data.sensors;
+      addSensorHotspots(currentRoomId);
       updateSensorWidget();
     }
   } catch (err) {
@@ -627,13 +627,24 @@ export function addSensorHotspots(roomId) {
   try {
     const existing = container.listHotspots();
     existing.forEach(h => {
-      if (h.element && h.element.classList && h.element.classList.contains("sensor-hotspot")) {
+      const el = typeof h.domElement === 'function' ? h.domElement() : h.element;
+      if (el && el.classList && el.classList.contains("sensor-hotspot")) {
         container.destroyHotspot(h);
       }
     });
   } catch {}
 
-  const roomSensors = sensorsData.filter(s => s.roomId === roomId);
+  const roomsData = env.getRoomsData ? env.getRoomsData() : {};
+  const validRoomIds = Object.keys(roomsData || {});
+
+  const roomSensors = sensorsData.filter(s => {
+    if (String(s.roomId) === String(roomId)) return true;
+    // Fallback: If sensor's assigned roomId no longer exists in the tour, show it in the first room
+    if (s.roomId && validRoomIds.length > 0 && !validRoomIds.includes(String(s.roomId))) {
+      return String(roomId) === String(validRoomIds[0]);
+    }
+    return false;
+  });
   if (!roomSensors.length) return;
 
   roomSensors.forEach(sensor => {
@@ -691,9 +702,9 @@ export function addSensorHotspots(roomId) {
       else if (cameraStatus === "maintenance") badgeEl.classList.add("maintenance");
       else badgeEl.classList.add("offline");
     } else {
-      const pm25 = Number(sensor.sensors?.pm25?.value ?? 0);
-      if (pm25 > 150.4) badgeEl.classList.add("offline");
-      else if (pm25 > 55.4) badgeEl.classList.add("maintenance");
+      const pm25StatusVal = Number(sensor.sensors?.pm25?.value ?? 0);
+      if (pm25StatusVal > 150.4) badgeEl.classList.add("offline");
+      else if (pm25StatusVal > 55.4) badgeEl.classList.add("maintenance");
       else badgeEl.classList.add("online");
     }
     el.appendChild(badgeEl);
@@ -731,9 +742,9 @@ export function addSensorHotspots(roomId) {
       const humVal = getVal(sData.humidity ?? sData.hum);
       const pm25Val = getVal(sData.pm25 ?? sData.pm2_5);
 
-      const temp = tempVal !== null ? tempVal : "--";
-      const humidity = humVal !== null ? humVal : "--";
-      const pm25 = pm25Val !== null ? pm25 : "--";
+      const tempText = tempVal !== null ? tempVal : "--";
+      const humidityText = humVal !== null ? humVal : "--";
+      const pm25Text = pm25Val !== null ? pm25Val : "--";
       
       let rawGrafanaUrl = (sensor.sensors?.grafanaUrl || sData.grafanaUrl || '').trim();
       let grafanaUrl = '';
@@ -757,9 +768,9 @@ export function addSensorHotspots(roomId) {
         `;
       } else {
         let linesHtml = '';
-        if (temp !== "--") linesHtml += `<div class="sensor-tooltip-line">Nhiệt độ: ${temp}°C</div>`;
-        if (humidity !== "--") linesHtml += `<div class="sensor-tooltip-line">Độ ẩm: ${humidity}%</div>`;
-        if (pm25 !== "--") linesHtml += `<div class="sensor-tooltip-line">PM2.5: ${pm25} µg/m³</div>`;
+        if (tempText !== "--") linesHtml += `<div class="sensor-tooltip-line">Nhiệt độ: ${tempText}°C</div>`;
+        if (humidityText !== "--") linesHtml += `<div class="sensor-tooltip-line">Độ ẩm: ${humidityText}%</div>`;
+        if (pm25Text !== "--") linesHtml += `<div class="sensor-tooltip-line">PM2.5: ${pm25Text} µg/m³</div>`;
         if (!linesHtml) {
           linesHtml = `
             <div class="sensor-tooltip-line">Nhiệt độ: --°C</div>
