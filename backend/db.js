@@ -488,5 +488,15 @@ module.exports = {
     if (error) {
       console.error('Failed to update last login for user:', id, error);
     }
+  },
+
+  // --- INVITATIONS ---
+  async getInvitations() {
+    const data = await this.getAppConfig('invitations');
+    return Array.isArray(data) ? data : [];
+  },
+
+  async saveInvitations(invitations) {
+    await this.saveAppConfig('invitations', invitations);
   }
 };

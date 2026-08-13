@@ -214,8 +214,19 @@ function getSmtpConfig() {
   return { host, port, user, pass, secure, from };
 }
 
-// Táº¡o transporter Nodemailer theo cáº¥u hĂ¬nh SMTP.
+// Tạo transporter Nodemailer theo cấu hình SMTP.
 function createMailTransporter(config) {
+  const host = String(config.host || "").toLowerCase();
+  if (host.includes("gmail")) {
+    return nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: config.user,
+        pass: config.pass
+      }
+    });
+  }
+
   return nodemailer.createTransport({
     host: config.host,
     port: config.port,
@@ -223,7 +234,8 @@ function createMailTransporter(config) {
     auth: {
       user: config.user,
       pass: config.pass
-    }
+    },
+    tls: { rejectUnauthorized: false }
   });
 }
 
@@ -407,6 +419,74 @@ function buildVirtualTourMailContent({ pageUrl, summary, notes }) {
   return { html, text };
 }
 
+// Gửi email qua SMTP hoặc HTTP API
+async function sendMailMessage({ to, subject, body, html, pageUrl, summary, notes }) {
+  const mailApiConfig = getMailApiConfig();
+  const mailFrom = mailApiConfig.from || process.env.MAIL_FROM || `Virtual Tour <${process.env.SMTP_USER}>`;
+
+  let finalHtml = html;
+  let finalText = body;
+
+  if (!finalHtml && Array.isArray(notes) && notes.length > 0) {
+    const built = buildVirtualTourMailContent({ pageUrl, summary: summary || body, notes });
+    finalHtml = built.html;
+    finalText = built.text;
+  } else if (!finalHtml) {
+    const safeSubject = escapeHtml(subject || "Thông báo từ Virtual Tour");
+    const safeBody = escapeHtml(body || "").replace(/\n/g, "<br>");
+    finalHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #ffffff; color: #333333; border: 1px solid #e2e8f0; border-radius: 12px;">
+        <h2 style="color: #4f46e5; margin-top: 0; margin-bottom: 16px;">${safeSubject}</h2>
+        <div style="font-size: 15px; line-height: 1.6; margin-bottom: 24px;">${safeBody}</div>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+        <p style="font-size: 12px; color: #64748b; text-align: center; margin: 0;">Qi Technologies · Virtual Tour Manager</p>
+      </div>
+    `;
+  }
+
+  const toList = Array.isArray(to) ? to : String(to || "").split(",").map(s => s.trim()).filter(Boolean);
+  if (!toList.length) {
+    throw new Error("Vui lòng nhập địa chỉ email người nhận.");
+  }
+
+  // HTTP API Provider
+  if (mailApiConfig.provider && mailApiConfig.provider !== "smtp") {
+    const apiKey = mailApiConfig.resendApiKey || mailApiConfig.brevoApiKey || mailApiConfig.sendgridApiKey;
+    return await sendMailViaHttpApi({
+      provider: mailApiConfig.provider,
+      apiKey,
+      from: mailFrom,
+      toList,
+      subject: subject || "Thông báo từ Virtual Tour",
+      text: finalText || body,
+      html: finalHtml
+    });
+  }
+
+  // SMTP Nodemailer
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
+    throw new Error("Chưa cấu hình SMTP trong file .env (SMTP_HOST / SMTP_USER).");
+  }
+
+  const transporter = createMailTransporter({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === "true",
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  });
+
+  const info = await transporter.sendMail({
+    from: mailFrom,
+    to: toList.join(", "),
+    subject: subject || "Thông báo từ Virtual Tour 360",
+    text: finalText || body,
+    html: finalHtml
+  });
+
+  return { messageId: info.messageId, provider: "smtp" };
+}
+
 /* ===== MIDDLEWARE ===== */
 app.use(cookieParser());
 app.use(cors());
@@ -420,6 +500,33 @@ if (path.resolve(LEGACY_UPLOADS_DIR) !== path.resolve(UPLOADS_DIR)) {
   app.use("/uploads", express.static(LEGACY_UPLOADS_DIR));
 }
 app.use("/backend/tiles", express.static("backend/tiles"));
+
+/* ===== EMAIL ENDPOINTS ===== */
+app.post(["/api/mail/send", "/api/send-mail"], async (req, res) => {
+  try {
+    const { to, subject, body, html, pageUrl, summary, notes } = req.body;
+    const recipient = to || process.env.SMTP_USER;
+
+    if (!recipient) {
+      return res.status(400).json({ success: false, error: "Vui lòng nhập địa chỉ email người nhận." });
+    }
+
+    const result = await sendMailMessage({
+      to: recipient,
+      subject,
+      body,
+      html,
+      pageUrl,
+      summary,
+      notes
+    });
+
+    res.json({ success: true, message: "Gửi thư thành công!", details: result });
+  } catch (err) {
+    console.error("[Mail Route Error]:", err.message);
+    res.status(500).json({ success: false, error: err.message || "Không thể gửi email" });
+  }
+});
 
 // Serve built frontend (dist/index.html) or show error if not built
 app.get("/", (req, res) => {
@@ -1637,27 +1744,95 @@ app.post("/api/auth/setup", async (req, res) => {
   }
 });
 
-app.post("/api/auth/register", async (req, res) => {
+app.post("/api/auth/register", (req, res) => {
+  return res.status(403).json({ success: false, error: "Chức năng đăng ký tài khoản đã bị tắt. Vui lòng liên hệ Admin để được cấp tài khoản." });
+});
+
+/* ===== INVITATION ACCEPTANCE ROUTES (PUBLIC) ===== */
+app.get("/api/auth/invitations/verify", async (req, res) => {
   try {
-    const { username, password, displayName } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ success: false, error: "Username and password are required" });
+    const token = String(req.query.token || "").trim();
+    if (!token) {
+      return res.status(400).json({ success: false, error: "Thiếu mã lời mời (token)" });
     }
 
-    const existing = await db.getUserByUsername(username);
+    const invitations = await db.getInvitations();
+    const inv = invitations.find(i => i.token === token);
+
+    if (!inv) {
+      return res.status(404).json({ success: false, error: "Đường link lời mời không tồn tại hoặc không hợp lệ." });
+    }
+    if (inv.used) {
+      return res.status(400).json({ success: false, error: "Đường link lời mời này đã được sử dụng trước đó." });
+    }
+    if (new Date(inv.expiresAt) < new Date()) {
+      return res.status(400).json({ success: false, error: "Đường link lời mời đã hết hạn." });
+    }
+
+    res.json({
+      success: true,
+      invitation: {
+        email: inv.email,
+        role: inv.role
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/auth/invitations/accept", async (req, res) => {
+  try {
+    const { token, password, displayName } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ success: false, error: "Vui lòng nhập Mật khẩu để hoàn tất đăng ký." });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ success: false, error: "Mật khẩu phải chứa ít nhất 6 ký tự." });
+    }
+
+    const invitations = await db.getInvitations();
+    const inv = invitations.find(i => i.token === token);
+
+    if (!inv) {
+      return res.status(404).json({ success: false, error: "Đường link lời mời không hợp lệ." });
+    }
+    if (inv.used) {
+      return res.status(400).json({ success: false, error: "Đường link lời mời này đã được sử dụng." });
+    }
+    if (new Date(inv.expiresAt) < new Date()) {
+      return res.status(400).json({ success: false, error: "Đường link lời mời đã hết hạn." });
+    }
+
+    // Tên đăng nhập được cố định theo Email được mời
+    const cleanUsername = String(inv.email).trim().toLowerCase();
+    const existing = await db.getUserByUsername(cleanUsername);
     if (existing) {
-      return res.status(400).json({ success: false, error: "Username already exists" });
+      return res.status(400).json({ success: false, error: `Tài khoản với Email "${cleanUsername}" đã tồn tại trên hệ thống.` });
     }
 
     const passwordHash = hashPassword(password);
     const newUser = await db.createUser({
-      username,
+      username: cleanUsername,
       passwordHash,
-      role: "user",
-      displayName: displayName || username
+      role: inv.role,
+      displayName: displayName ? String(displayName).trim() : cleanUsername
     });
 
-    res.json({ success: true, message: "User registered successfully", user: { username: newUser.username, role: newUser.role } });
+    inv.used = true;
+    inv.usedAt = new Date().toISOString();
+    inv.registeredUsername = cleanUsername;
+    await db.saveInvitations(invitations);
+
+    res.json({
+      success: true,
+      message: "Đăng ký tài khoản thành công!",
+      user: {
+        username: newUser.username,
+        role: newUser.role
+      }
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

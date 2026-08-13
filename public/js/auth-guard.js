@@ -41,7 +41,7 @@
   const path = window.location.pathname.replace(/\.html$/, '');
   const isLoginPage = path.endsWith('/admin/login');
   const isSetupPage = path.endsWith('/admin/setup');
-  const isRegisterPage = path.endsWith('/admin/register');
+  const isInviteRegisterPage = path.endsWith('/admin/invite-register');
 
   try {
     // 1. Kiểm tra trạng thái Setup của hệ thống
@@ -63,7 +63,7 @@
       }
     }
 
-    if (isLoginPage || isRegisterPage) {
+    if (isLoginPage || isInviteRegisterPage) {
       removeFlashProtection();
       return;
     }

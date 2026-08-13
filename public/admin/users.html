@@ -32,6 +32,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
     }
     .users-wrap .panel-title {
       font-size: 22px;
@@ -42,8 +44,77 @@
       color: rgba(232,236,255,0.8);
       font-size: 13px;
     }
+
+    /* ── Tab Switcher ── */
+    .section-tabs {
+      display: flex;
+      gap: 0;
+      background: rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 4px;
+    }
+    .section-tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 18px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.7);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .section-tab-btn:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.1);
+    }
+    .section-tab-btn.active {
+      background: rgba(255,255,255,0.22);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    .tab-badge {
+      background: rgba(255,255,255,0.25);
+      border-radius: 20px;
+      padding: 1px 7px;
+      font-size: 11px;
+      min-width: 20px;
+      text-align: center;
+    }
+    .tab-badge.active-badge {
+      background: rgba(255,220,100,0.55);
+      color: #fff;
+    }
+
+    /* ── Tab Content ── */
+    .tab-section {
+      display: none;
+    }
+    .tab-section.active {
+      display: block;
+    }
+
+    /* ── Action bar bên dưới tab switcher ── */
+    .tab-action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px 6px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tab-action-bar .tab-section-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #334;
+    }
+
     .users-table-container {
-      padding: 20px;
+      padding: 6px 20px 20px;
     }
     .badge-admin {
       background-color: #dc3545;
@@ -78,38 +149,114 @@
   <!-- ===== CONTENT ===== -->
   <div class="users-wrap">
     <div class="panel">
+
+      <!-- Panel Header với Tab Switcher tích hợp -->
       <div class="panel-header">
         <div>
           <div class="panel-title">👥 Quản lý Phân Quyền Tài khoản</div>
           <div class="panel-subtitle">Thêm tài khoản và cấp quyền cho Admin / Collaborator / User</div>
         </div>
-        <button class="btn btn-light btn-sm" onclick="openAddModal()">
-          ➕ Thêm tài khoản mới
-        </button>
-      </div>
 
-      <div class="users-table-container">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Tên đăng nhập</th>
-                <th>Tên hiển thị</th>
-                <th>Quyền hạn</th>
-                <th>Đăng nhập cuối</th>
-                <th class="text-end">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody id="usersList">
-              <tr>
-                <td colspan="6" class="text-center py-4">Đang tải danh sách tài khoản...</td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Tab Switcher (dropdown-style segmented control) -->
+        <div class="section-tabs" role="tablist">
+          <button
+            id="tab-btn-accounts"
+            class="section-tab-btn active"
+            role="tab"
+            aria-selected="true"
+            aria-controls="tab-accounts"
+            onclick="switchTab('accounts')"
+          >
+            👤 Tài khoản
+            <span class="tab-badge" id="badge-accounts">—</span>
+          </button>
+          <button
+            id="tab-btn-invites"
+            class="section-tab-btn"
+            role="tab"
+            aria-selected="false"
+            aria-controls="tab-invites"
+            onclick="switchTab('invites')"
+          >
+            ✉️ Lời mời
+            <span class="tab-badge" id="badge-invites">—</span>
+          </button>
         </div>
       </div>
-    </div>
+
+      <!-- ── Tab: Danh sách tài khoản ── -->
+      <div id="tab-accounts" class="tab-section active" role="tabpanel" aria-labelledby="tab-btn-accounts">
+        <div class="tab-action-bar">
+          <span class="tab-section-label">Danh sách tài khoản hệ thống</span>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm" onclick="openInviteModal()">
+              ✉️ Mời qua Email
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="openAddModal()">
+              ➕ Thêm trực tiếp
+            </button>
+          </div>
+        </div>
+        <div class="users-table-container">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Tên đăng nhập</th>
+                  <th>Tên hiển thị</th>
+                  <th>Quyền hạn</th>
+                  <th>Đăng nhập cuối</th>
+                  <th class="text-end">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="usersList">
+                <tr>
+                  <td colspan="6" class="text-center py-4">Đang tải danh sách tài khoản...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Lời mời đã gửi ── -->
+      <div id="tab-invites" class="tab-section" role="tabpanel" aria-labelledby="tab-btn-invites">
+        <div class="tab-action-bar">
+          <span class="tab-section-label">📋 Lời mời Đăng ký đã gửi — Quản lý đường link, hạn dùng và trạng thái</span>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadInvitations()">
+              🔄 Tải lại
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="openInviteModal()">
+              ✉️ Tạo lời mời mới
+            </button>
+          </div>
+        </div>
+        <div class="users-table-container">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>Email được mời</th>
+                  <th>Vai trò</th>
+                  <th>Trạng thái</th>
+                  <th>Thời gian tạo</th>
+                  <th>Hết hạn</th>
+                  <th class="text-end">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="invitationsList">
+                <tr>
+                  <td colspan="6" class="text-center py-4">Đang tải danh sách lời mời...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /panel -->
   </div>
 
   <!-- ===== MODAL: THÊM TÀI KHOẢN ===== -->
@@ -146,6 +293,45 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
             <button type="submit" class="btn btn-primary">Lưu tài khoản</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: MỜI NGƯỜI DÙNG QUA EMAIL ===== -->
+  <div class="modal fade" id="inviteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title">✉️ Mời thành viên đăng ký qua Email</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="inviteUserForm">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="inviteEmail" class="form-label">Email người nhận <span class="text-danger">*</span></label>
+              <input type="email" class="form-control" id="inviteEmail" required placeholder="nhanvien@example.com">
+            </div>
+            <div class="mb-3">
+              <label for="inviteRole" class="form-label">Vai trò được cấp (Role)</label>
+              <select class="form-select" id="inviteRole" required>
+                <option value="collaborator" selected>Collaborator (Quản lý tour, upload, minimap)</option>
+                <option value="user">User (Chỉ xem và gửi phản hồi)</option>
+                <option value="admin">Admin (Tất cả các quyền)</option>
+              </select>
+            </div>
+            <div id="inviteResultBox" class="alert alert-info d-none" style="word-break: break-all;">
+              <div id="inviteResultMsg" class="fw-bold mb-2"></div>
+              <div class="input-group input-group-sm mb-1">
+                <input type="text" class="form-control" id="inviteLinkInput" readonly>
+                <button class="btn btn-outline-primary" type="button" onclick="copyInviteLink()">Sao chép Link</button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            <button type="submit" class="btn btn-primary" id="sendInviteBtn">Gửi Lời Mời</button>
           </div>
         </form>
       </div>
@@ -194,16 +380,42 @@
   </div>
 
   <script>
-    let addModal, editModal;
+    let addModal, editModal, inviteModal;
     const API_BASE = window.getAdminApiBase ? window.getAdminApiBase() : '/api/admin';
+
+    /* ===== TAB SWITCHER ===== */
+    function switchTab(tab) {
+      const tabs = ['accounts', 'invites'];
+      tabs.forEach(t => {
+        const section = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const badge = document.getElementById(`badge-${t}`);
+        if (t === tab) {
+          section.classList.add('active');
+          btn.classList.add('active');
+          btn.setAttribute('aria-selected', 'true');
+          badge.classList.add('active-badge');
+        } else {
+          section.classList.remove('active');
+          btn.classList.remove('active');
+          btn.setAttribute('aria-selected', 'false');
+          badge.classList.remove('active-badge');
+        }
+      });
+      // Khi chuyển sang tab lời mời mà chưa load, load ngay
+      if (tab === 'invites') loadInvitations();
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
       addModal = new bootstrap.Modal(document.getElementById('addModal'));
       editModal = new bootstrap.Modal(document.getElementById('editModal'));
+      inviteModal = new bootstrap.Modal(document.getElementById('inviteModal'));
       loadUsers();
+      loadInvitations();
 
       document.getElementById('addUserForm').addEventListener('submit', handleAddUser);
       document.getElementById('editUserForm').addEventListener('submit', handleEditUser);
+      document.getElementById('inviteUserForm').addEventListener('submit', handleSendInvite);
     });
 
     async function loadUsers() {
@@ -213,6 +425,9 @@
         
         if (data.success) {
           renderUsers(data.users);
+          // Cập nhật badge số tài khoản
+          const badge = document.getElementById('badge-accounts');
+          if (badge) badge.textContent = data.users.length;
         } else {
           document.getElementById('usersList').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Lỗi: ${data.error}</td></tr>`;
         }
@@ -354,6 +569,169 @@
         }
       } catch (err) {
         alert('Có lỗi xảy ra.');
+      }
+    }
+
+    function openInviteModal() {
+      document.getElementById('inviteUserForm').reset();
+      document.getElementById('inviteResultBox').classList.add('d-none');
+      document.getElementById('sendInviteBtn').disabled = false;
+      document.getElementById('sendInviteBtn').textContent = 'Gửi Lời Mời';
+      inviteModal.show();
+    }
+
+    async function handleSendInvite(e) {
+      e.preventDefault();
+      const email = document.getElementById('inviteEmail').value.trim();
+      const role = document.getElementById('inviteRole').value;
+      const sendBtn = document.getElementById('sendInviteBtn');
+
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Đang xử lý...';
+
+      try {
+        const res = await fetch(`${API_BASE}/invitations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, role })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          document.getElementById('inviteResultMsg').textContent = data.message;
+          document.getElementById('inviteLinkInput').value = data.inviteLink;
+          document.getElementById('inviteResultBox').classList.remove('d-none');
+          sendBtn.textContent = 'Đã tạo Lời Mời';
+          loadInvitations();
+          // Auto chuyển sang tab lời mời sau khi tạo thành công
+          switchTab('invites');
+        } else {
+          alert('Lỗi: ' + data.error);
+          sendBtn.disabled = false;
+          sendBtn.textContent = 'Gửi Lời Mời';
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Có lỗi xảy ra khi tạo lời mời.');
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Gửi Lời Mời';
+      }
+    }
+
+    function copyInviteLink() {
+      const input = document.getElementById('inviteLinkInput');
+      input.select();
+      input.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(input.value).then(() => {
+        alert('Đã sao chép đường link lời mời!');
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+      });
+    }
+
+    /* ===== QUẢN LÝ LỜI MỜI JS ===== */
+    async function loadInvitations() {
+      try {
+        const res = await fetch(`${API_BASE}/invitations`);
+        const data = await res.json();
+        if (data.success) {
+          renderInvitations(data.invitations || []);
+          // Cập nhật badge số lời mời
+          const badge = document.getElementById('badge-invites');
+          if (badge) badge.textContent = (data.invitations || []).length;
+        } else {
+          document.getElementById('invitationsList').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Lỗi: ${data.error}</td></tr>`;
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('invitationsList').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Không thể kết nối API.</td></tr>`;
+      }
+    }
+
+    function renderInvitations(invitations) {
+      const tbody = document.getElementById('invitationsList');
+      if (!invitations || invitations.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Chưa có lời mời nào được tạo.</td></tr>`;
+        return;
+      }
+
+      const sorted = [...invitations].sort((a, b) => new Date(b.createdAt || b.id) - new Date(a.createdAt || a.id));
+
+      tbody.innerHTML = sorted.map(inv => {
+        const isUsed = inv.used === true;
+        const isExpired = !isUsed && new Date(inv.expiresAt) < new Date();
+        
+        let statusBadge = '<span class="badge bg-warning text-dark">🟡 Đang chờ đăng ký</span>';
+        if (isUsed) {
+          statusBadge = `<span class="badge bg-success">🟢 Đã đăng ký (${inv.registeredUsername || inv.email})</span>`;
+        } else if (isExpired) {
+          statusBadge = '<span class="badge bg-danger">🔴 Đã hết hạn</span>';
+        }
+
+        let roleBadge = 'badge-user';
+        if (inv.role === 'admin') roleBadge = 'badge-admin';
+        else if (inv.role === 'collaborator') roleBadge = 'badge-collab';
+
+        const createdStr = inv.createdAt ? new Date(inv.createdAt).toLocaleString('vi-VN') : '—';
+        const expiresStr = inv.expiresAt ? new Date(inv.expiresAt).toLocaleString('vi-VN') : '—';
+
+        return `
+          <tr>
+            <td class="fw-bold text-primary">${inv.email}</td>
+            <td><span class="badge ${roleBadge}">${(inv.role || 'user').toUpperCase()}</span></td>
+            <td>${statusBadge}</td>
+            <td style="font-size: 13px;">${createdStr}</td>
+            <td style="font-size: 13px;">${expiresStr}</td>
+            <td class="text-end">
+              <button class="btn btn-outline-primary btn-action me-1" title="Sao chép link đăng ký" onclick="copyInviteUrlByToken('${inv.token}')">
+                🔗 Copy Link
+              </button>
+              <button class="btn btn-outline-warning btn-action me-1" title="Gia hạn thêm 48h / Gửi lại mail" onclick="resendInvitation(${inv.id})">
+                🔄 Gia hạn
+              </button>
+              <button class="btn btn-outline-danger btn-action" title="Thu hồi / Xóa lời mời" onclick="deleteInvitation(${inv.id}, '${inv.email}')">
+                🗑️ Thu hồi
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function copyInviteUrlByToken(token) {
+      const inviteUrl = `${window.location.origin}/admin/invite-register.html?token=${token}`;
+      navigator.clipboard.writeText(inviteUrl).then(() => {
+        alert(`Đã sao chép link lời mời:\n${inviteUrl}`);
+      }).catch(err => {
+        console.error(err);
+        prompt('Link lời mời của bạn:', inviteUrl);
+      });
+    }
+
+    async function resendInvitation(id) {
+      if (!confirm('Bạn có muốn gia hạn lời mời này thêm 48h và gửi lại email không?')) return;
+      try {
+        const res = await fetch(`${API_BASE}/invitations/${id}/resend`, { method: 'POST' });
+        const data = await res.json();
+        alert(data.message || (data.success ? 'Đã gia hạn lời mời!' : 'Lỗi gia hạn'));
+        loadInvitations();
+      } catch (err) {
+        alert('Có lỗi xảy ra.');
+      }
+    }
+
+    async function deleteInvitation(id, email) {
+      if (!confirm(`Bạn có chắc chắn muốn thu hồi lời mời tới email "${email}" không?`)) return;
+      try {
+        const res = await fetch(`${API_BASE}/invitations/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          loadInvitations();
+        } else {
+          alert('Lỗi: ' + data.error);
+        }
+      } catch (err) {
+        alert('Có lỗi xảy ra khi thu hồi.');
       }
     }
   </script>

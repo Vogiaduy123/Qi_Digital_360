@@ -8,6 +8,8 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 const { generateCubeTiles } = require("../generate-tiles");
 const db = require("./db");
 const storage = require("./storage");
@@ -1122,6 +1124,206 @@ router.delete("/users/:id", requireRole("admin"), async (req, res) => {
 
     await db.deleteUser(userId);
     res.json({ success: true, message: "User deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* ===== INVITATION ROUTES (ADMIN ONLY) ===== */
+router.get("/invitations", requireRole("admin"), async (req, res) => {
+  try {
+    const list = await db.getInvitations();
+    res.json({ success: true, invitations: list });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/invitations", requireRole("admin"), async (req, res) => {
+  try {
+    const { email, role } = req.body;
+    const cleanEmail = email.trim().toLowerCase();
+    const existingUser = await db.getUserByUsername(cleanEmail);
+    if (existingUser) {
+      return res.status(400).json({ success: false, error: `Email "${cleanEmail}" đã được đăng ký tài khoản trên hệ thống.` });
+    }
+
+    const validRole = ["admin", "collaborator", "user"].includes(role) ? role : "collaborator";
+    const token = crypto.randomBytes(24).toString("hex");
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(); // 48h
+
+    const newInvite = {
+      id: Date.now(),
+      email: email.trim(),
+      role: validRole,
+      token,
+      expiresAt,
+      used: false,
+      createdAt: new Date().toISOString(),
+      createdBy: req.user?.username || "admin"
+    };
+
+    const invitations = await db.getInvitations();
+    invitations.push(newInvite);
+    await db.saveInvitations(invitations);
+
+    const protocol = req.protocol || "http";
+    const host = req.get("host") || "localhost:3000";
+    const inviteLink = `${protocol}://${host}/admin/invite-register.html?token=${token}`;
+
+    let emailSent = false;
+    let emailError = null;
+
+    // Send email using SMTP if configured
+    if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+      try {
+        const isGmail = process.env.SMTP_HOST.includes("gmail");
+        const transporterConfig = isGmail
+          ? {
+              service: "gmail",
+              auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+              }
+            }
+          : {
+              host: process.env.SMTP_HOST,
+              port: Number(process.env.SMTP_PORT || 587),
+              secure: process.env.SMTP_SECURE === "true",
+              auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+              },
+              tls: { rejectUnauthorized: false }
+            };
+
+        const transporter = nodemailer.createTransport(transporterConfig);
+
+        const mailFrom = process.env.MAIL_FROM || `Virtual Tour Manager <${process.env.SMTP_USER}>`;
+        await transporter.sendMail({
+          from: mailFrom,
+          to: email,
+          subject: "Lời mời đăng ký tài khoản Virtual Tour 360",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #1e1e2d; color: #ffffff; border-radius: 12px;">
+              <h2 style="color: #6366f1; text-align: center;">Lời mời đăng ký tài khoản</h2>
+              <p>Xin chào,</p>
+              <p>Bạn đã được mời khởi tạo tài khoản trên hệ thống <strong>Virtual Tour 360</strong> với vai trò: <strong style="color: #a5b4fc;">${validRole.toUpperCase()}</strong>.</p>
+              <p>Vui lòng nhấn vào nút bên dưới để hoàn tất thiết lập tài khoản của bạn (Link có hiệu lực trong 48 giờ):</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${inviteLink}" style="background-color: #6366f1; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Đăng ký tài khoản ngay</a>
+              </div>
+              <p style="font-size: 12px; color: #94a3b8; word-break: break-all;">Hoặc copy đường dẫn sau: <br>${inviteLink}</p>
+              <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
+              <p style="font-size: 12px; color: #64748b; text-align: center;">Qi Technologies · Virtual Tour Manager</p>
+            </div>
+          `
+        });
+        emailSent = true;
+      } catch (mailErr) {
+        console.error("[Mail Error] Failed to send invitation email:", mailErr.message);
+        emailError = mailErr.message;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: emailSent ? "Đã gửi mail mời đăng ký thành công!" : "Đã tạo link mời đăng ký thành công (chưa gửi email).",
+      inviteLink,
+      emailSent,
+      emailError
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete("/invitations/:id", requireRole("admin"), async (req, res) => {
+  try {
+    const inviteId = Number(req.params.id);
+    let invitations = await db.getInvitations();
+    invitations = invitations.filter(inv => Number(inv.id) !== inviteId);
+    await db.saveInvitations(invitations);
+    res.json({ success: true, message: "Đã thu hồi lời mời thành công!" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/invitations/:id/resend", requireRole("admin"), async (req, res) => {
+  try {
+    const inviteId = Number(req.params.id);
+    const invitations = await db.getInvitations();
+    const inv = invitations.find(i => Number(i.id) === inviteId);
+
+    if (!inv) {
+      return res.status(404).json({ success: false, error: "Không tìm thấy thông tin lời mời." });
+    }
+
+    // Gia hạn thêm 48 tiếng
+    inv.expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+    inv.used = false;
+    await db.saveInvitations(invitations);
+
+    const protocol = req.protocol || "http";
+    const host = req.get("host") || "localhost:3000";
+    const inviteLink = `${protocol}://${host}/admin/invite-register.html?token=${inv.token}`;
+
+    let emailSent = false;
+    let emailError = null;
+
+    if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+      try {
+        const isGmail = process.env.SMTP_HOST.includes("gmail");
+        const transporterConfig = isGmail
+          ? {
+              service: "gmail",
+              auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+            }
+          : {
+              host: process.env.SMTP_HOST,
+              port: Number(process.env.SMTP_PORT || 587),
+              secure: process.env.SMTP_SECURE === "true",
+              auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+              tls: { rejectUnauthorized: false }
+            };
+
+        const transporter = nodemailer.createTransport(transporterConfig);
+        const mailFrom = process.env.MAIL_FROM || `Virtual Tour Manager <${process.env.SMTP_USER}>`;
+
+        await transporter.sendMail({
+          from: mailFrom,
+          to: inv.email,
+          subject: "Gia hạn lời mời đăng ký tài khoản Virtual Tour 360",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #1e1e2d; color: #ffffff; border-radius: 12px;">
+              <h2 style="color: #6366f1; text-align: center;">Gia hạn Lời mời đăng ký tài khoản</h2>
+              <p>Xin chào,</p>
+              <p>Lời mời khởi tạo tài khoản trên hệ thống <strong>Virtual Tour 360</strong> của bạn đã được gia hạn thêm 48 giờ.</p>
+              <p>Vui lòng nhấn vào nút bên dưới để đăng ký ngay:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${inviteLink}" style="background-color: #6366f1; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Đăng ký tài khoản ngay</a>
+              </div>
+              <p style="font-size: 12px; color: #94a3b8; word-break: break-all;">Link đăng ký: <br>${inviteLink}</p>
+              <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
+              <p style="font-size: 12px; color: #64748b; text-align: center;">Qi Technologies · Virtual Tour Manager</p>
+            </div>
+          `
+        });
+        emailSent = true;
+      } catch (mailErr) {
+        console.error("[Mail Error] Failed to resend invitation email:", mailErr.message);
+        emailError = mailErr.message;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: emailSent ? "Đã gửi lại Email lời mời thành công!" : "Đã gia hạn lời mời thành công (chưa gửi được email tự động).",
+      inviteLink,
+      emailSent,
+      emailError
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
