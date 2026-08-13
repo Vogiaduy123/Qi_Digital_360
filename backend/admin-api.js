@@ -9,7 +9,7 @@ const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+const mailHelper = require("./mail-helper");
 const { generateCubeTiles } = require("../generate-tiles");
 const db = require("./db");
 const storage = require("./storage");
@@ -1174,64 +1174,30 @@ router.post("/invitations", requireRole("admin"), async (req, res) => {
     let emailSent = false;
     let emailError = null;
 
-    // Send email using SMTP if configured
-    if (process.env.SMTP_HOST && process.env.SMTP_USER) {
-      try {
-        const isGmail = (process.env.SMTP_HOST || "").includes("gmail");
-        const portNum = Number(process.env.SMTP_PORT || 587);
-        const isSecure = process.env.SMTP_SECURE === "true" || portNum === 465;
-
-        const transporterConfig = {
-          connectionTimeout: 8000,
-          greetingTimeout: 8000,
-          socketTimeout: 10000,
-          ...(isGmail && portNum !== 465
-            ? {
-                service: "gmail",
-                auth: {
-                  user: process.env.SMTP_USER,
-                  pass: process.env.SMTP_PASS
-                }
-              }
-            : {
-                host: process.env.SMTP_HOST,
-                port: portNum,
-                secure: isSecure,
-                auth: {
-                  user: process.env.SMTP_USER,
-                  pass: process.env.SMTP_PASS
-                },
-                tls: { rejectUnauthorized: false }
-              })
-        };
-
-        const transporter = nodemailer.createTransport(transporterConfig);
-
-        const mailFrom = process.env.MAIL_FROM || `Virtual Tour Manager <${process.env.SMTP_USER}>`;
-        await transporter.sendMail({
-          from: mailFrom,
-          to: email,
-          subject: "Lời mời đăng ký tài khoản Virtual Tour 360",
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #1e1e2d; color: #ffffff; border-radius: 12px;">
-              <h2 style="color: #6366f1; text-align: center;">Lời mời đăng ký tài khoản</h2>
-              <p>Xin chào,</p>
-              <p>Bạn đã được mời khởi tạo tài khoản trên hệ thống <strong>Virtual Tour 360</strong> với vai trò: <strong style="color: #a5b4fc;">${validRole.toUpperCase()}</strong>.</p>
-              <p>Vui lòng nhấn vào nút bên dưới để hoàn tất thiết lập tài khoản của bạn (Link có hiệu lực trong 48 giờ):</p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${inviteLink}" style="background-color: #6366f1; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Đăng ký tài khoản ngay</a>
-              </div>
-              <p style="font-size: 12px; color: #94a3b8; word-break: break-all;">Hoặc copy đường dẫn sau: <br>${inviteLink}</p>
-              <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
-              <p style="font-size: 12px; color: #64748b; text-align: center;">Qi Technologies · Virtual Tour Manager</p>
+    // Send email using SMTP or HTTP API via mail-helper
+    try {
+      await mailHelper.sendMailRaw({
+        to: email,
+        subject: "Lời mời đăng ký tài khoản Virtual Tour 360",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #1e1e2d; color: #ffffff; border-radius: 12px;">
+            <h2 style="color: #6366f1; text-align: center;">Lời mời đăng ký tài khoản</h2>
+            <p>Xin chào,</p>
+            <p>Bạn đã được mời khởi tạo tài khoản trên hệ thống <strong>Virtual Tour 360</strong> với vai trò: <strong style="color: #a5b4fc;">${validRole.toUpperCase()}</strong>.</p>
+            <p>Vui lòng nhấn vào nút bên dưới để hoàn tất thiết lập tài khoản của bạn (Link có hiệu lực trong 48 giờ):</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${inviteLink}" style="background-color: #6366f1; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Đăng ký tài khoản ngay</a>
             </div>
-          `
-        });
-        emailSent = true;
-      } catch (mailErr) {
-        console.error("[Mail Error] Failed to send invitation email:", mailErr.message);
-        emailError = mailErr.message;
-      }
+            <p style="font-size: 12px; color: #94a3b8; word-break: break-all;">Hoặc copy đường dẫn sau: <br>${inviteLink}</p>
+            <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
+            <p style="font-size: 12px; color: #64748b; text-align: center;">Qi Technologies · Virtual Tour Manager</p>
+          </div>
+        `
+      });
+      emailSent = true;
+    } catch (mailErr) {
+      console.error("[Mail Error] Failed to send invitation email:", mailErr.message);
+      emailError = mailErr.message;
     }
 
     res.json({
@@ -1280,57 +1246,29 @@ router.post("/invitations/:id/resend", requireRole("admin"), async (req, res) =>
     let emailSent = false;
     let emailError = null;
 
-    if (process.env.SMTP_HOST && process.env.SMTP_USER) {
-      try {
-        const isGmail = (process.env.SMTP_HOST || "").includes("gmail");
-        const portNum = Number(process.env.SMTP_PORT || 587);
-        const isSecure = process.env.SMTP_SECURE === "true" || portNum === 465;
-
-        const transporterConfig = {
-          connectionTimeout: 8000,
-          greetingTimeout: 8000,
-          socketTimeout: 10000,
-          ...(isGmail && portNum !== 465
-            ? {
-                service: "gmail",
-                auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-              }
-            : {
-                host: process.env.SMTP_HOST,
-                port: portNum,
-                secure: isSecure,
-                auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-                tls: { rejectUnauthorized: false }
-              })
-        };
-
-        const transporter = nodemailer.createTransport(transporterConfig);
-        const mailFrom = process.env.MAIL_FROM || `Virtual Tour Manager <${process.env.SMTP_USER}>`;
-
-        await transporter.sendMail({
-          from: mailFrom,
-          to: inv.email,
-          subject: "Gia hạn lời mời đăng ký tài khoản Virtual Tour 360",
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #1e1e2d; color: #ffffff; border-radius: 12px;">
-              <h2 style="color: #6366f1; text-align: center;">Gia hạn Lời mời đăng ký tài khoản</h2>
-              <p>Xin chào,</p>
-              <p>Lời mời khởi tạo tài khoản trên hệ thống <strong>Virtual Tour 360</strong> của bạn đã được gia hạn thêm 48 giờ.</p>
-              <p>Vui lòng nhấn vào nút bên dưới để đăng ký ngay:</p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${inviteLink}" style="background-color: #6366f1; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Đăng ký tài khoản ngay</a>
-              </div>
-              <p style="font-size: 12px; color: #94a3b8; word-break: break-all;">Link đăng ký: <br>${inviteLink}</p>
-              <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
-              <p style="font-size: 12px; color: #64748b; text-align: center;">Qi Technologies · Virtual Tour Manager</p>
+    try {
+      await mailHelper.sendMailRaw({
+        to: inv.email,
+        subject: "Gia hạn lời mời đăng ký tài khoản Virtual Tour 360",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #1e1e2d; color: #ffffff; border-radius: 12px;">
+            <h2 style="color: #6366f1; text-align: center;">Gia hạn Lời mời đăng ký tài khoản</h2>
+            <p>Xin chào,</p>
+            <p>Lời mời khởi tạo tài khoản trên hệ thống <strong>Virtual Tour 360</strong> của bạn đã được gia hạn thêm 48 giờ.</p>
+            <p>Vui lòng nhấn vào nút bên dưới để đăng ký ngay:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${inviteLink}" style="background-color: #6366f1; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Đăng ký tài khoản ngay</a>
             </div>
-          `
-        });
-        emailSent = true;
-      } catch (mailErr) {
-        console.error("[Mail Error] Failed to resend invitation email:", mailErr.message);
-        emailError = mailErr.message;
-      }
+            <p style="font-size: 12px; color: #94a3b8; word-break: break-all;">Link đăng ký: <br>${inviteLink}</p>
+            <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
+            <p style="font-size: 12px; color: #64748b; text-align: center;">Qi Technologies · Virtual Tour Manager</p>
+          </div>
+        `
+      });
+      emailSent = true;
+    } catch (mailErr) {
+      console.error("[Mail Error] Failed to resend invitation email:", mailErr.message);
+      emailError = mailErr.message;
     }
 
     res.json({

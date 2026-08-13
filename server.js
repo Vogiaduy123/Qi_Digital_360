@@ -6,7 +6,7 @@ const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const nodemailer = require("nodemailer");
+const mailHelper = require("./backend/mail-helper");
 const cookieParser = require("cookie-parser");
 const db = require("./backend/db");
 const { authMiddleware, requireRole, hashPassword, comparePassword, signToken, verifyToken } = require("./backend/auth");
@@ -202,161 +202,6 @@ async function broadcastCustomIcons(config) {
 }
 
 
-// Ä á» c cáº¥u hĂ¬nh SMTP tá»« biáº¿n mĂ´i trÆ°á» ng.
-function getSmtpConfig() {
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT || 587);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const secure = String(process.env.SMTP_SECURE || "false").toLowerCase() === "true";
-  const from = process.env.MAIL_FROM || user;
-
-  return { host, port, user, pass, secure, from };
-}
-
-// Tạo transporter Nodemailer theo cấu hình SMTP với timeout chống treo
-function createMailTransporter(config) {
-  const host = String(config.host || "").toLowerCase();
-  const timeouts = {
-    connectionTimeout: 10000, // 10 giây
-    greetingTimeout: 10000,
-    socketTimeout: 15000
-  };
-
-  if (host.includes("gmail") && config.port !== 465) {
-    return nodemailer.createTransport({
-      ...timeouts,
-      service: "gmail",
-      auth: {
-        user: config.user,
-        pass: config.pass
-      }
-    });
-  }
-
-  return nodemailer.createTransport({
-    ...timeouts,
-    host: config.host,
-    port: config.port,
-    secure: config.secure,
-    auth: {
-      user: config.user,
-      pass: config.pass
-    },
-    tls: { rejectUnauthorized: false }
-  });
-}
-
-// Ä á» c cáº¥u hĂ¬nh gá»­i mail qua HTTP API (Resend/Brevo/SendGrid).
-function getMailApiConfig() {
-  const provider = String(process.env.MAIL_PROVIDER || "").trim().toLowerCase();
-  const from = process.env.MAIL_FROM;
-
-  return {
-    provider,
-    from,
-    resendApiKey: process.env.RESEND_API_KEY,
-    brevoApiKey: process.env.BREVO_API_KEY,
-    sendgridApiKey: process.env.SENDGRID_API_KEY
-  };
-}
-
-// TĂ¡ch chuá»—i email dáº¡ng "Name <email>" vá»  object chuáº©n.
-function parseEmailAddress(email) {
-  const value = String(email || "").trim();
-  const match = value.match(/^(.*)<(.+)>$/);
-  if (match) {
-    return { name: match[1].trim().replace(/^"|"$/g, ""), email: match[2].trim() };
-  }
-  return { email: value };
-}
-
-// Gá»­i mail qua nhĂ  cung cáº¥p HTTP API theo MAIL_PROVIDER.
-async function sendMailViaHttpApi({ provider, apiKey, from, toList, subject, text, html }) {
-  const normalizedProvider = String(provider || "").toLowerCase();
-
-  if (normalizedProvider === "resend") {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        from,
-        to: toList,
-        subject,
-        text,
-        html
-      })
-    });
-
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(data?.message || data?.error || `Resend error ${response.status}`);
-    }
-
-    return { messageId: data?.id || null, provider: "resend" };
-  }
-
-  if (normalizedProvider === "brevo") {
-    const sender = parseEmailAddress(from);
-    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "api-key": apiKey
-      },
-      body: JSON.stringify({
-        sender,
-        to: toList.map(email => ({ email })),
-        subject,
-        textContent: text,
-        htmlContent: html
-      })
-    });
-
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(data?.message || data?.code || `Brevo error ${response.status}`);
-    }
-
-    return { messageId: data?.messageId || null, provider: "brevo" };
-  }
-
-  if (normalizedProvider === "sendgrid") {
-    const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        from: parseEmailAddress(from),
-        personalizations: [{ to: toList.map(email => ({ email })) }],
-        subject,
-        content: [
-          { type: "text/plain", value: text || "" },
-          { type: "text/html", value: html || "" }
-        ]
-      })
-    });
-
-    if (!response.ok) {
-      const textBody = await response.text().catch(() => "");
-      const snippet = String(textBody || "").slice(0, 300);
-      throw new Error(snippet || `SendGrid error ${response.status}`);
-    }
-
-    return {
-      messageId: response.headers.get("x-message-id") || null,
-      provider: "sendgrid"
-    };
-  }
-
-  throw new Error("Unsupported MAIL_PROVIDER. Use: resend, brevo, sendgrid, or smtp");
-}
-
 // Escape HTML Ä‘á»ƒ trĂ¡nh lá»—i hiá»ƒn thá»‹ vĂ  chĂ¨n mĂ£ Ä‘á»™c trong email.
 function escapeHtml(value) {
   return String(value || "")
@@ -427,11 +272,8 @@ function buildVirtualTourMailContent({ pageUrl, summary, notes }) {
   return { html, text };
 }
 
-// Gửi email qua SMTP hoặc HTTP API
+// Gửi email qua SMTP hoặc HTTP API (Ủy quyền cho mail-helper)
 async function sendMailMessage({ to, subject, body, html, pageUrl, summary, notes }) {
-  const mailApiConfig = getMailApiConfig();
-  const mailFrom = mailApiConfig.from || process.env.MAIL_FROM || `Virtual Tour <${process.env.SMTP_USER}>`;
-
   let finalHtml = html;
   let finalText = body;
 
@@ -452,47 +294,12 @@ async function sendMailMessage({ to, subject, body, html, pageUrl, summary, note
     `;
   }
 
-  const toList = Array.isArray(to) ? to : String(to || "").split(",").map(s => s.trim()).filter(Boolean);
-  if (!toList.length) {
-    throw new Error("Vui lòng nhập địa chỉ email người nhận.");
-  }
-
-  // HTTP API Provider
-  if (mailApiConfig.provider && mailApiConfig.provider !== "smtp") {
-    const apiKey = mailApiConfig.resendApiKey || mailApiConfig.brevoApiKey || mailApiConfig.sendgridApiKey;
-    return await sendMailViaHttpApi({
-      provider: mailApiConfig.provider,
-      apiKey,
-      from: mailFrom,
-      toList,
-      subject: subject || "Thông báo từ Virtual Tour",
-      text: finalText || body,
-      html: finalHtml
-    });
-  }
-
-  // SMTP Nodemailer
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
-    throw new Error("Chưa cấu hình SMTP trong file .env (SMTP_HOST / SMTP_USER).");
-  }
-
-  const transporter = createMailTransporter({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === "true",
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  });
-
-  const info = await transporter.sendMail({
-    from: mailFrom,
-    to: toList.join(", "),
-    subject: subject || "Thông báo từ Virtual Tour 360",
+  return await mailHelper.sendMailRaw({
+    to,
+    subject: subject || "Thông báo từ Virtual Tour",
     text: finalText || body,
     html: finalHtml
   });
-
-  return { messageId: info.messageId, provider: "smtp" };
 }
 
 /* ===== MIDDLEWARE ===== */
@@ -985,58 +792,15 @@ app.post("/api/mail/send", authMiddleware, async (req, res) => {
           html: `<pre style=\"font-family: Arial, sans-serif; white-space: pre-wrap;\">${escapeHtml(body || "")}</pre>`
         };
 
-    const mailSubject = String(subject || "GHI CHĂš Tá»ª VIRTUAL TOUR");
-    const apiMail = getMailApiConfig();
-    const preferredProvider = apiMail.provider || "smtp";
-
-    if (preferredProvider !== "smtp") {
-      const providerKeyMap = {
-        resend: apiMail.resendApiKey,
-        brevo: apiMail.brevoApiKey,
-        sendgrid: apiMail.sendgridApiKey
-      };
-      const apiKey = providerKeyMap[preferredProvider];
-
-      if (!apiKey || !apiMail.from) {
-        return res.status(500).json({
-          success: false,
-          error: "Mail API is not configured. Please set MAIL_PROVIDER, MAIL_FROM and corresponding API key"
-        });
-      }
-
-      const result = await sendMailViaHttpApi({
-        provider: preferredProvider,
-        apiKey,
-        from: apiMail.from,
-        toList,
-        subject: mailSubject,
-        text: content.text,
-        html: content.html
-      });
-
-      return res.json({ success: true, messageId: result.messageId, provider: result.provider });
-    }
-
-    const smtp = getSmtpConfig();
-    if (!smtp.host || !smtp.port || !smtp.user || !smtp.pass) {
-      return res.status(500).json({
-        success: false,
-        error: "SMTP is not configured. Please set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS or switch to MAIL_PROVIDER"
-      });
-    }
-
-    const transporter = createMailTransporter(smtp);
-    await transporter.verify();
-
-    const info = await transporter.sendMail({
-      from: smtp.from,
+    const mailSubject = String(subject || "Ghi chú từ Virtual Tour");
+    const result = await mailHelper.sendMailRaw({
       to: normalizedTo,
       subject: mailSubject,
       text: content.text,
       html: content.html
     });
 
-    res.json({ success: true, messageId: info.messageId, provider: "smtp" });
+    res.json({ success: true, messageId: result.messageId, provider: result.provider });
   } catch (err) {
     console.error("MAIL SEND ERROR:", err);
     res.status(500).json({ success: false, error: err.message || "Send mail failed" });
