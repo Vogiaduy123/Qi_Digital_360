@@ -326,7 +326,7 @@ router.get("/rooms/:roomId/hotspots", async (req, res) => {
 // ADD hotspot
 router.post("/rooms/:roomId/hotspots", async (req, res) => {
   const roomId = Number(req.params.roomId);
-  const { yaw, pitch, target, rotation, color, iconUrl } = req.body;
+  const { yaw, pitch, target, rotation, color, iconUrl, initialYaw, initialPitch } = req.body;
 
   if ([yaw, pitch, target].some(v => v === undefined || v === null || v === "")) {
     return res.status(400).json({ success: false, error: "Missing yaw/pitch/target" });
@@ -338,7 +338,8 @@ router.post("/rooms/:roomId/hotspots", async (req, res) => {
       return res.status(404).json({ success: false, error: "Room not found" });
     }
 
-    const { error } = await db.supabase.from('hotspots').insert({
+    // Build insert payload — only add initial_yaw/initial_pitch when they have real values
+    const insertPayload = {
       room_id: roomId,
       yaw: Number(yaw),
       pitch: Number(pitch),
@@ -346,7 +347,15 @@ router.post("/rooms/:roomId/hotspots", async (req, res) => {
       rotation: rotation !== undefined ? Number(rotation) : 0,
       color: color || null,
       icon_url: iconUrl || null
-    });
+    };
+    if (initialYaw !== undefined && initialYaw !== null && initialYaw !== '') {
+      insertPayload.initial_yaw = Number(initialYaw);
+    }
+    if (initialPitch !== undefined && initialPitch !== null && initialPitch !== '') {
+      insertPayload.initial_pitch = Number(initialPitch);
+    }
+
+    const { error } = await db.supabase.from('hotspots').insert(insertPayload);
 
     if (error) throw error;
 
@@ -363,7 +372,7 @@ router.post("/rooms/:roomId/hotspots", async (req, res) => {
 router.patch("/rooms/:roomId/hotspots/:index", async (req, res) => {
   const roomId = Number(req.params.roomId);
   const index = Number(req.params.index);
-  const { yaw, pitch, target, rotation, color, iconUrl } = req.body;
+  const { yaw, pitch, target, rotation, color, iconUrl, initialYaw, initialPitch } = req.body;
 
   try {
     await ensureRoomHotspotsSynced(roomId);
@@ -387,6 +396,13 @@ router.patch("/rooms/:roomId/hotspots/:index", async (req, res) => {
     if (rotation !== undefined) updates.rotation = Number(rotation);
     if (color !== undefined) updates.color = color;
     if (iconUrl !== undefined) updates.icon_url = iconUrl || null;
+    // Only include initial_yaw/initial_pitch when they have a real numeric value
+    if (initialYaw !== undefined && initialYaw !== null && initialYaw !== '') {
+      updates.initial_yaw = Number(initialYaw);
+    }
+    if (initialPitch !== undefined && initialPitch !== null && initialPitch !== '') {
+      updates.initial_pitch = Number(initialPitch);
+    }
 
     const { error: updateErr } = await db.supabase
       .from('hotspots')

@@ -558,7 +558,7 @@ try {
 }
 
 /* ===== SWITCH ROOM ===== */
-function switchRoom(roomId) {
+function switchRoom(roomId, initialYaw, initialPitch) {
   currentRoomId = roomId;
   const scene = getScenes()[roomId];
 
@@ -579,6 +579,15 @@ function switchRoom(roomId) {
   }
 
   scene.switchTo();
+
+  // Apply initial view direction if provided (from hotspot setting)
+  if (view && initialYaw !== undefined && initialYaw !== null) {
+    const yawRad = degToRad(Number(initialYaw));
+    const pitchRad = degToRad(-(Number(initialPitch || 0)));
+    view.setYaw(yawRad);
+    view.setPitch(pitchRad);
+  }
+
   addHotspots(roomId);
   updateMinimapHighlight();
   hideMediaOverlay();
@@ -621,7 +630,7 @@ function addHotspots(roomId) {
 
     el.onclick = (e) => {
       e.stopPropagation();
-      switchRoom(hs.target);
+      switchRoom(hs.target, hs.initialYaw, hs.initialPitch);
     };
 
     container.createHotspot(el, {

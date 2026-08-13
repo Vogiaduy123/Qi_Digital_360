@@ -560,7 +560,7 @@ app.get("/api/notifications", authMiddleware, async (req, res) => {
 // UPDATE HOTSPOT
 app.put("/api/rooms/:id/hotspots", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const roomId = Number(req.params.id);
-  const { yaw, pitch, target, rotation, color } = req.body;
+  const { yaw, pitch, target, rotation, color, initialYaw, initialPitch } = req.body;
 
   if ([yaw, pitch, target].some(v => v === undefined || v === null || v === "")) {
     return res.status(400).json({ success: false, error: "Missing yaw/pitch/target" });
@@ -570,13 +570,21 @@ app.put("/api/rooms/:id/hotspots", authMiddleware, requireRole("admin", "collabo
     const room = await db.getRoomById(roomId);
     if (!room) return res.status(404).json({ success: false, error: "Room not found" });
 
-    const { error } = await db.supabase.from('hotspots').insert({
+    // Build insert payload — only include initial_yaw/initial_pitch when a real value is provided
+    // (prevents Supabase errors if migration hasn't been run yet)
+    const insertPayload = {
       room_id: roomId,
       yaw: Number(yaw), pitch: Number(pitch),
       target_room_id: Number(target),
       rotation: rotation !== undefined ? Number(rotation) : 0,
       color: color || null
-    });
+    };
+    const hasInitialYaw = initialYaw !== undefined && initialYaw !== null && initialYaw !== '';
+    const hasInitialPitch = initialPitch !== undefined && initialPitch !== null && initialPitch !== '';
+    if (hasInitialYaw) insertPayload.initial_yaw = Number(initialYaw);
+    if (hasInitialPitch) insertPayload.initial_pitch = Number(initialPitch);
+
+    const { error } = await db.supabase.from('hotspots').insert(insertPayload);
     if (error) throw error;
 
     const user = req.user?.username || 'Collaborator';
@@ -624,7 +632,7 @@ app.delete("/api/rooms/:id/hotspots/:index", authMiddleware, requireRole("admin"
 app.patch("/api/rooms/:id/hotspots/:index", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const roomId = Number(req.params.id);
   const index = Number(req.params.index);
-  const { yaw, pitch, target, rotation, color } = req.body;
+  const { yaw, pitch, target, rotation, color, initialYaw, initialPitch } = req.body;
 
   try {
     const { data: dbHotspots, error: selErr } = await db.supabase
@@ -639,6 +647,14 @@ app.patch("/api/rooms/:id/hotspots/:index", authMiddleware, requireRole("admin",
     if (target !== undefined) updates.target_room_id = Number(target);
     if (rotation !== undefined) updates.rotation = Number(rotation);
     if (color !== undefined) updates.color = color;
+    // Only include initial_yaw/initial_pitch when they have a real numeric value
+    // (skipped when null/empty — prevents Supabase error if migration not yet run)
+    if (initialYaw !== undefined && initialYaw !== null && initialYaw !== '') {
+      updates.initial_yaw = Number(initialYaw);
+    }
+    if (initialPitch !== undefined && initialPitch !== null && initialPitch !== '') {
+      updates.initial_pitch = Number(initialPitch);
+    }
 
     const { error: upErr } = await db.supabase.from('hotspots').update(updates).eq('id', dbHotspots[index].id);
     if (upErr) throw upErr;

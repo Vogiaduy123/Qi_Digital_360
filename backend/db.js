@@ -73,7 +73,9 @@ module.exports = {
         target: Number(h.target_room_id),
         rotation: Number(h.rotation || 0),
         color: h.color || undefined,
-        iconUrl: h.icon_url || undefined
+        iconUrl: h.icon_url || undefined,
+        initialYaw: h.initial_yaw !== null && h.initial_yaw !== undefined ? Number(h.initial_yaw) : undefined,
+        initialPitch: h.initial_pitch !== null && h.initial_pitch !== undefined ? Number(h.initial_pitch) : undefined
       })),
       mediaHotspots: (r.media_hotspots || []).map(m => ({
         yaw: Number(m.yaw),

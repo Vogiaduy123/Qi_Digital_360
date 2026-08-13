@@ -35,6 +35,12 @@
     let activeDragMouseMoveHandler = null;
     let activeDragMouseUpHandler = null;
 
+    // Initial view direction state for nav hotspot
+    let _initialViewYaw = null;   // Saved yaw (degrees) for initial view
+    let _initialViewPitch = null; // Saved pitch (degrees) for initial view
+    let _initialViewPannellum = null; // Pannellum instance in initialViewModal
+    let _initialViewUpdateTimer = null; // Timer for polling Pannellum position
+
     let customIcons = {};
 
     async function loadCustomIcons() {
@@ -92,6 +98,13 @@
       if (hotspotIconUrlInput) hotspotIconUrlInput.value = '';
       if (hotspotIconFileInput) hotspotIconFileInput.value = '';
       if (hotspotIconFileInfo) hotspotIconFileInfo.textContent = '';
+
+      // Reset initial view state
+      _resetInitialViewState();
+
+      // Hide initialViewGroup
+      const ivGroup = document.getElementById('initialViewGroup');
+      if (ivGroup) ivGroup.style.display = 'none';
     }
 
     function closeAllFeatureModals(keepModalId = null) {
@@ -105,12 +118,179 @@
         const addRoomModal = document.getElementById('addRoomModal');
         if (addRoomModal) addRoomModal.classList.remove('active');
       }
+      if (keepModalId !== 'initialViewModal') closeInitialViewModal();
 
       setAddHotspotMode(false);
       setAddMediaMode(false);
       setAddSensorPositionMode(false);
       addMailMode = false;
     }
+
+    /* ===== INITIAL VIEW DIRECTION FUNCTIONS ===== */
+
+    function _resetInitialViewState() {
+      _initialViewYaw = null;
+      _initialViewPitch = null;
+      const yawInput = document.getElementById('initialViewYaw');
+      const pitchInput = document.getElementById('initialViewPitch');
+      if (yawInput) yawInput.value = '';
+      if (pitchInput) pitchInput.value = '';
+      _updateInitialViewStatus();
+    }
+
+    function _updateInitialViewStatus() {
+      const statusEl = document.getElementById('initialViewStatus');
+      if (!statusEl) return;
+      if (_initialViewYaw !== null && _initialViewPitch !== null) {
+        statusEl.innerHTML = `✅ Yaw: <strong>${_initialViewYaw.toFixed(1)}°</strong> — Pitch: <strong>${_initialViewPitch.toFixed(1)}°</strong>`;
+        statusEl.style.color = '#4ade80';
+      } else {
+        statusEl.innerHTML = '<em>Chưa đặt — sẽ dùng hướng mặc định</em>';
+        statusEl.style.color = '';
+      }
+    }
+
+    // Called when targetRoom select changes
+    window.onTargetRoomChange = function() {
+      const targetId = Number(document.getElementById('targetRoom').value);
+      const ivGroup = document.getElementById('initialViewGroup');
+      if (targetId) {
+        if (ivGroup) ivGroup.style.display = 'block';
+      } else {
+        if (ivGroup) ivGroup.style.display = 'none';
+        _resetInitialViewState();
+      }
+    };
+
+    window.openInitialViewModal = function() {
+      const targetId = Number(document.getElementById('targetRoom').value);
+      if (!targetId) {
+        alert('Vui lòng chọn phòng đích trước');
+        return;
+      }
+
+      const targetRoom = rooms.find(r => r.id === targetId);
+      if (!targetRoom) {
+        alert('Không tìm thấy thông tin phòng đích');
+        return;
+      }
+
+      // Get panorama image URL for the destination room
+      let imageUrl = targetRoom.image || '';
+      if (!imageUrl) {
+        alert('Phòng đích chưa có ảnh panorama');
+        return;
+      }
+      // Make sure URL is absolute
+      if (!imageUrl.startsWith('http') && !imageUrl.startsWith('/')) {
+        imageUrl = '/' + imageUrl;
+      }
+
+      // Update modal title
+      const modalTitle = document.getElementById('initialViewModalTitle');
+      if (modalTitle) modalTitle.textContent = `🧭 Chọn hướng nhìn — ${targetRoom.name}`;
+
+      // Show modal
+      const modal = document.getElementById('initialViewModal');
+      if (modal) modal.classList.add('active');
+
+      // Destroy existing Pannellum instance
+      if (_initialViewPannellum) {
+        try { _initialViewPannellum.destroy(); } catch(e) {}
+        _initialViewPannellum = null;
+      }
+      if (_initialViewUpdateTimer) {
+        clearInterval(_initialViewUpdateTimer);
+        _initialViewUpdateTimer = null;
+      }
+
+      // Init Pannellum after a short delay to ensure container is visible
+      setTimeout(() => {
+        const container = document.getElementById('initialViewPannellumContainer');
+        if (!container) return;
+        container.innerHTML = ''; // Clear
+
+        // Determine initial yaw/pitch (use saved value or 0)
+        const startYaw = _initialViewYaw !== null ? _initialViewYaw : 0;
+        const startPitch = _initialViewPitch !== null ? _initialViewPitch : 0;
+
+        _initialViewPannellum = pannellum.viewer('initialViewPannellumContainer', {
+          type: 'equirectangular',
+          panorama: imageUrl,
+          autoLoad: true,
+          showControls: false,
+          mouseZoom: true,
+          hfov: 90,
+          yaw: startYaw,
+          pitch: startPitch,
+          compass: false
+        });
+
+        // Poll Pannellum yaw/pitch and update badges
+        _initialViewUpdateTimer = setInterval(() => {
+          if (!_initialViewPannellum) return;
+          try {
+            const yaw = _initialViewPannellum.getYaw();
+            const pitch = _initialViewPannellum.getPitch();
+            const yawBadge = document.getElementById('ivPreviewYawBadge');
+            const pitchBadge = document.getElementById('ivPreviewPitchBadge');
+            if (yawBadge) yawBadge.textContent = `Yaw: ${yaw.toFixed(1)}°`;
+            if (pitchBadge) pitchBadge.textContent = `Pitch: ${pitch.toFixed(1)}°`;
+          } catch(e) {}
+        }, 100);
+      }, 100);
+    };
+
+    window.closeInitialViewModal = function() {
+      const modal = document.getElementById('initialViewModal');
+      if (modal) modal.classList.remove('active');
+
+      // Destroy Pannellum viewer
+      if (_initialViewUpdateTimer) {
+        clearInterval(_initialViewUpdateTimer);
+        _initialViewUpdateTimer = null;
+      }
+      if (_initialViewPannellum) {
+        try { _initialViewPannellum.destroy(); } catch(e) {}
+        _initialViewPannellum = null;
+      }
+
+      // Clear container
+      const container = document.getElementById('initialViewPannellumContainer');
+      if (container) container.innerHTML = '';
+    };
+
+    window.saveInitialView = function() {
+      if (!_initialViewPannellum) return;
+      try {
+        const yaw = _initialViewPannellum.getYaw();
+        const pitch = _initialViewPannellum.getPitch();
+
+        _initialViewYaw = yaw;
+        _initialViewPitch = pitch;
+
+        // Write to hidden inputs
+        const yawInput = document.getElementById('initialViewYaw');
+        const pitchInput = document.getElementById('initialViewPitch');
+        if (yawInput) yawInput.value = yaw;
+        if (pitchInput) pitchInput.value = pitch;
+
+        _updateInitialViewStatus();
+        closeInitialViewModal();
+      } catch(e) {
+        alert('Lỗi khi lưu hướng nhìn: ' + e.message);
+      }
+    };
+
+    window.resetInitialView = function() {
+      _initialViewYaw = null;
+      _initialViewPitch = null;
+      const yawInput = document.getElementById('initialViewYaw');
+      const pitchInput = document.getElementById('initialViewPitch');
+      if (yawInput) yawInput.value = '';
+      if (pitchInput) pitchInput.value = '';
+      _updateInitialViewStatus();
+    };
 
     function applyRoomsPanelState() {
       const roomsPanel = document.querySelector('.rooms-panel');
@@ -907,13 +1087,18 @@
         return;
       }
 
+      const ivYaw = document.getElementById('initialViewYaw').value;
+      const ivPitch = document.getElementById('initialViewPitch').value;
+
       const data = {
         target: targetId,
         yaw: Number(document.getElementById('yaw').value),
         pitch: Number(document.getElementById('pitch').value),
         rotation: Number(document.getElementById('rotation').value),
         color: document.getElementById('color').value,
-        iconUrl
+        iconUrl,
+        initialYaw: ivYaw !== '' ? Number(ivYaw) : null,
+        initialPitch: ivPitch !== '' ? Number(ivPitch) : null
       };
 
       try {
@@ -966,6 +1151,28 @@
       selectedHotspotIconFile = null;
       if (hotspotIconFileInput) hotspotIconFileInput.value = '';
       if (hotspotIconFileInfo) hotspotIconFileInfo.textContent = hotspot.iconUrl ? 'Đang dùng icon đã lưu' : '';
+
+      // Populate initial view direction
+      if (hotspot.target) {
+        const ivGroup = document.getElementById('initialViewGroup');
+        if (ivGroup) ivGroup.style.display = 'block';
+      }
+      if (hotspot.initialYaw !== undefined && hotspot.initialYaw !== null) {
+        _initialViewYaw = hotspot.initialYaw;
+        _initialViewPitch = hotspot.initialPitch !== undefined ? hotspot.initialPitch : 0;
+        const yawInput = document.getElementById('initialViewYaw');
+        const pitchInput = document.getElementById('initialViewPitch');
+        if (yawInput) yawInput.value = _initialViewYaw;
+        if (pitchInput) pitchInput.value = _initialViewPitch;
+      } else {
+        _initialViewYaw = null;
+        _initialViewPitch = null;
+        const yawInput = document.getElementById('initialViewYaw');
+        const pitchInput = document.getElementById('initialViewPitch');
+        if (yawInput) yawInput.value = '';
+        if (pitchInput) pitchInput.value = '';
+      }
+      _updateInitialViewStatus();
 
       hotspotModal.classList.add('active');
     };
@@ -1162,7 +1369,9 @@
         pitch: Number(hotspot.pitch),
         rotation: Number(hotspot.rotation || 0),
         color: hotspot.color || '#ff0000',
-        iconUrl: hotspot.iconUrl || ''
+        iconUrl: hotspot.iconUrl || '',
+        initialYaw: hotspot.initialYaw !== undefined && hotspot.initialYaw !== null ? Number(hotspot.initialYaw) : null,
+        initialPitch: hotspot.initialPitch !== undefined && hotspot.initialPitch !== null ? Number(hotspot.initialPitch) : null
       };
 
       try {
