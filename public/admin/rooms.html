@@ -225,15 +225,16 @@
         
         <!-- Room Info Panel Overlay (Sticky top bar for selected room) -->
         <div id="roomEditTopBar" style="display:none;background:rgba(10,12,18,0.85);border-bottom:1px solid var(--border);padding:10px 20px;align-items:center;gap:12px;z-index:100;backdrop-filter:blur(10px);">
-          <span style="font-size:14px;font-weight:700;color:#fff;" id="currentRoomTitle">🏠 Chọn phòng để chỉnh sửa</span>
+          <span style="font-size:13px;font-weight:600;color:rgba(200,210,230,0.7);" id="currentRoomTitle">🏠</span>
+
           <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end;">
             <div class="building-row" style="margin-bottom:0;padding:4px 8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px;">
-              <label style="font-size:11px;">Tòa nhà:</label>
+              <label style="font-size:11px;color:#9AA3B8;">Tòa nhà:</label>
               <select id="editRoomBuilding" style="padding:4px 8px;font-size:11px;background:none;border:none;color:#fff;outline:none;">
                 <option value="">-- Phòng rời --</option>
               </select>
             </div>
-            <button class="btn btn-small btn-primary" onclick="saveRoomBuilding()" style="margin:0;padding:6px 12px;font-size:11px;">💾 Đổi</button>
+            <button class="btn btn-small btn-primary" onclick="saveRoomBuilding()" style="margin:0;padding:6px 12px;font-size:11px;">💾 Đổi tòa nhà</button>
           </div>
         </div>
 
@@ -644,7 +645,7 @@
     </div>
   </div>
 
-  <script src="/js/admin-rooms.js?v=5"></script>
+  <script src="/js/admin-rooms.js?v=8"></script>
 </body>
 
 </html>

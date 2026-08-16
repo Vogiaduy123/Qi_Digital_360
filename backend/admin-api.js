@@ -325,8 +325,8 @@ router.get("/rooms/:roomId/hotspots", async (req, res) => {
   }
 });
 
-// ADD hotspot
-router.post("/rooms/:roomId/hotspots", async (req, res) => {
+// ADD hotspot (Support POST and PUT)
+const addHotspotHandler = async (req, res) => {
   const roomId = Number(req.params.roomId);
   const { yaw, pitch, target, rotation, color, iconUrl, initialYaw, initialPitch } = req.body;
 
@@ -363,12 +363,19 @@ router.post("/rooms/:roomId/hotspots", async (req, res) => {
 
     await syncRoomToLocalJson(roomId);
 
+    if (global.broadcastRooms) {
+      await global.broadcastRooms().catch(err => console.error("Error broadcasting rooms:", err));
+    }
+
     const updatedRoom = await db.getRoomById(roomId);
     res.json({ success: true, hotspots: updatedRoom.hotspots });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
-});
+};
+
+router.post("/rooms/:roomId/hotspots", addHotspotHandler);
+router.put("/rooms/:roomId/hotspots", addHotspotHandler);
 
 // UPDATE hotspot
 router.patch("/rooms/:roomId/hotspots/:index", async (req, res) => {
@@ -415,6 +422,10 @@ router.patch("/rooms/:roomId/hotspots/:index", async (req, res) => {
 
     await syncRoomToLocalJson(roomId);
 
+    if (global.broadcastRooms) {
+      await global.broadcastRooms().catch(err => console.error("Error broadcasting rooms:", err));
+    }
+
     const updatedRoom = await db.getRoomById(roomId);
     res.json({ success: true, hotspots: updatedRoom.hotspots });
   } catch (err) {
@@ -450,6 +461,10 @@ router.delete("/rooms/:roomId/hotspots/:index", async (req, res) => {
     if (delErr) throw delErr;
 
     await syncRoomToLocalJson(roomId);
+
+    if (global.broadcastRooms) {
+      await global.broadcastRooms().catch(err => console.error("Error broadcasting rooms:", err));
+    }
 
     const updatedRoom = await db.getRoomById(roomId);
     res.json({ success: true, hotspots: updatedRoom.hotspots });

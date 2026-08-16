@@ -833,6 +833,9 @@
                       <div class="room-item-info">Hotspots: ${room.hotspots ? room.hotspots.length : 0} | Tầng ${room.floor || 1}</div>
                     </div>
                     <div class="room-item-actions">
+                      <button class="room-action-btn rename" title="Đổi tên phòng" onclick="inlineRenameRoom(event, ${room.id})">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
                       <button class="room-action-btn danger" title="Xóa phòng" onclick="deleteRoom(${room.id}, event)">🗑️</button>
                     </div>
                   </div>
@@ -1103,7 +1106,7 @@
 
       try {
         let url = `/api/admin/rooms/${selectedRoomId}/hotspots`;
-        let method = 'PUT';
+        let method = 'POST';
 
         if (editingHotspotIndex !== null) {
           url += `/${editingHotspotIndex}`;
@@ -3318,11 +3321,10 @@
       const room = rooms.find(r => r.id === selectedRoomId);
       if (!room) return;
       if (room.buildingId === newBuildingId) {
-         alert("Phòng đã ở tòa nhà này.");
-         return;
+        alert("Phòng đã ở tòa nhà này.");
+        return;
       }
       if (!confirm("Bạn có muốn chuyển phòng này sang tòa nhà khác? Các file ảnh cũng sẽ được di chuyển theo.")) return;
-
       try {
         const rawRes = await fetch(`/api/admin/rooms/${selectedRoomId}`, {
            method: "PATCH",
@@ -3341,6 +3343,90 @@
         console.error(e);
         alert("Lỗi khi chuyển phòng.");
       }
+    };
+
+    // Inline rename: nhấn nút ✏️ để đổi tên phòng ngay tại chỗ
+    window.inlineRenameRoom = function(event, roomId) {
+      event.stopPropagation();
+      const btn = event.currentTarget;
+      const roomItem = btn.closest('.room-item');
+      if (!roomItem) return;
+      const nameEl = roomItem.querySelector('.room-item-name');
+      if (!nameEl) return;
+
+      const room = rooms.find(r => r.id === roomId);
+      if (!room) return;
+
+      // Nếu đang có input rồi thì focus vào đó
+      if (nameEl.querySelector('input')) {
+        nameEl.querySelector('input').focus();
+        return;
+      }
+
+      const oldName = room.name;
+
+      // Ẩn nút rename, hiện input
+      btn.style.display = 'none';
+      nameEl.textContent = '';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = oldName;
+      input.style.cssText = 'width:100%;background:rgba(30,40,60,0.7);border:1px solid rgba(99,179,237,0.9);border-radius:4px;padding:3px 7px;font-size:13px;font-weight:600;color:#fff;outline:none;font-family:inherit;min-width:0;';
+      nameEl.appendChild(input);
+      input.focus();
+      input.select();
+
+      // Hàm lưu — chỉ gọi từ blur để đảm bảo không bị double-call
+      async function onBlur() {
+        btn.style.display = '';
+        const newName = input.value.trim();
+        if (!newName || newName === oldName) {
+          nameEl.textContent = oldName;
+          return;
+        }
+        nameEl.textContent = '⏳ ' + newName;
+        try {
+          const rawRes = await fetch(`/api/admin/rooms/${roomId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newName })
+          });
+          const res = await rawRes.json();
+          if (res && res.success) {
+            // Cập nhật tên trong local array để giữ nguyên thứ tự phòng
+            const localRoom = rooms.find(r => r.id === roomId);
+            if (localRoom) localRoom.name = newName;
+            renderRooms();
+            updateTargetRoomSelect();
+            if (selectedRoomId === roomId) {
+              // Cập nhật tiêu đề top bar
+              const titleEl = document.getElementById('currentRoomTitle');
+              if (titleEl) titleEl.textContent = `🏠 ${newName}`;
+            }
+          } else {
+            alert('Lỗi: ' + (res?.error || 'Không rõ nguyên nhân.'));
+            nameEl.textContent = oldName;
+          }
+        } catch(e) {
+          console.error('[Rename error]', e);
+          nameEl.textContent = oldName;
+        }
+      }
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+          input.blur(); // blur → onBlur xử lý lưu
+        }
+        if (e.key === 'Escape') {
+          input.removeEventListener('blur', onBlur); // bỏ listener để không lưu
+          btn.style.display = '';
+          nameEl.textContent = oldName;
+        }
+      });
+
+      input.addEventListener('blur', onBlur);
     };
 
     // (Handled inside panorama mousedown)

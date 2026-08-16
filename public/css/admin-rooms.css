@@ -616,6 +616,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   margin-bottom: 2px;
+  min-width: 0;
 }
 
 .room-item-info {
@@ -655,6 +656,15 @@ body {
 .room-action-btn:hover {
   background: rgba(0, 0, 0, 0.05);
   color: var(--text);
+}
+
+.room-action-btn.rename {
+  color: #3B82F6;
+}
+
+.room-action-btn.rename:hover {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563EB;
 }
 
 .room-action-btn.danger:hover {

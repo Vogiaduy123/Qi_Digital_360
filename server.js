@@ -501,8 +501,8 @@ app.get("/api/notifications", authMiddleware, async (req, res) => {
   }
 });
 
-// UPDATE HOTSPOT
-app.put("/api/rooms/:id/hotspots", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
+// ADD / UPDATE HOTSPOT
+const addPublicHotspotHandler = async (req, res) => {
   const roomId = Number(req.params.id);
   const { yaw, pitch, target, rotation, color, initialYaw, initialPitch } = req.body;
 
@@ -547,7 +547,9 @@ app.put("/api/rooms/:id/hotspots", authMiddleware, requireRole("admin", "collabo
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
-});
+};
+app.put("/api/rooms/:id/hotspots", authMiddleware, requireRole("admin", "collaborator"), addPublicHotspotHandler);
+app.post("/api/rooms/:id/hotspots", authMiddleware, requireRole("admin", "collaborator"), addPublicHotspotHandler);
 
 // DELETE HOTSPOT
 app.delete("/api/rooms/:id/hotspots/:index", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
