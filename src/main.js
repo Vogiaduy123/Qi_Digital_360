@@ -39,7 +39,7 @@ window.customIcons = {};
 
 
 import { degToRad, radToDeg, parseJsonResponse } from './core/utils.js';
-import { fetchRooms } from './core/api.js';
+import { fetchRooms, fetchBuildings } from './core/api.js';
 import { initViewer, initZoomControl, getViewer } from './core/viewer.js';
 import { initScenesFeature, initRooms, getScenes, getRoomsData } from './core/scenes.js';
 import { initMinimap, loadMinimap, updateMinimapHighlight, drawUserMinimap } from './features/minimap.js';
@@ -128,17 +128,17 @@ function initBuildingSelector(rooms, buildings) {
     buildingSelect.appendChild(opt);
   });
 
-  // Auto-select first building (with rooms)
-  const firstBuilding = buildingsWithRooms[0];
-  buildingSelect.value = firstBuilding.id;
-  filterRoomsByBuilding(firstBuilding.id);
+  // Determine initial building selection: if rooms[0] has buildingId, select it; otherwise first building
+  const initialBldgId = (rooms[0] && rooms[0].buildingId) ? rooms[0].buildingId : (buildingsWithRooms[0] ? buildingsWithRooms[0].id : '');
+  buildingSelect.value = initialBldgId;
+  filterRoomsByBuilding(initialBldgId, true);
 
   buildingSelect.onchange = () => {
-    filterRoomsByBuilding(buildingSelect.value);
+    filterRoomsByBuilding(buildingSelect.value, false);
   };
 }
 
-function filterRoomsByBuilding(buildingId) {
+function filterRoomsByBuilding(buildingId, isInitial = false) {
   if (!roomSelect) return;
 
   const filtered = buildingId
@@ -158,9 +158,15 @@ function filterRoomsByBuilding(buildingId) {
     switchRoom(parseInt(e.target.value));
   };
 
-  // Switch to first room of this building
-  if (filtered.length > 0) {
-    switchRoom(filtered[0].id);
+  if (!isInitial && filtered.length > 0) {
+    const isCurrentInFiltered = filtered.some(r => r.id === currentRoomId);
+    if (!isCurrentInFiltered) {
+      switchRoom(filtered[0].id);
+    } else {
+      roomSelect.value = currentRoomId;
+    }
+  } else if (currentRoomId && filtered.some(r => r.id === currentRoomId)) {
+    roomSelect.value = currentRoomId;
   }
 }
 
@@ -442,15 +448,14 @@ async function initApp() {
     }
     allRooms = rooms;
 
-    // Load buildings
-    try {
-      const bRes = await fetch('/api/admin/buildings').then(r => r.json());
-      allBuildings = (bRes && bRes.success) ? bRes.buildings : [];
-    } catch { allBuildings = []; }
+    // Load buildings from public API
+    await loadBuildingsData();
 
     initBuildingSelector(allRooms, allBuildings);
     initRooms(rooms, roomSelect);
-    switchRoom(rooms[0].id);
+    if (allRooms.length > 0) {
+      switchRoom(allRooms[0].id);
+    }
 
     await loadMinimap();
     initSensors({
@@ -486,6 +491,20 @@ async function initApp() {
   }
 }
 
+async function loadBuildingsData() {
+  try {
+    const bRes = await fetchBuildings();
+    allBuildings = (bRes && bRes.success) ? bRes.buildings : [];
+  } catch {
+    try {
+      const bRes = await fetch('/api/buildings').then(r => r.json());
+      allBuildings = (bRes && bRes.success) ? bRes.buildings : [];
+    } catch {
+      allBuildings = [];
+    }
+  }
+}
+
 initApp();
 
 /* ===== SUBSCRIBE TO SSE ===== */
@@ -503,10 +522,13 @@ try {
     }
   });
 
-  es.addEventListener("rooms", (e) => {
+  es.addEventListener("rooms", async (e) => {
     const rooms = JSON.parse(e.data || "[]");
     if (!rooms || rooms.length === 0) return;
+    allRooms = rooms;
 
+    await loadBuildingsData();
+    initBuildingSelector(allRooms, allBuildings);
     initRooms(rooms, roomSelect);
     // Keep current room if still exists; otherwise switch to first
     const exists = rooms.find(r => r.id === currentRoomId);
@@ -549,13 +571,13 @@ try {
   const polygonOverlay = document.getElementById('polygonOverlay');
   if (polygonOverlay) {
     polygonOverlay.addEventListener('click', (e) => {
-      const target = e.target;
-      const mediaIndex = target.getAttribute('data-media-index');
-      if (mediaIndex !== null && window.currentRoomMediaHotspots && window.currentHotspotContainer) {
-        const media = window.currentRoomMediaHotspots[mediaIndex];
-        if (media) {
-          createMediaHotspotOverlay(media, window.currentHotspotContainer, degToRad(media.yaw), degToRad(-media.pitch));
-        }
+      const poly = e.target.closest('polygon[data-media-index]');
+      if (!poly) return;
+      const index = parseInt(poly.dataset.mediaIndex);
+      if (isNaN(index)) return;
+      const media = (window.currentRoomMediaHotspots || [])[index];
+      if (media) {
+        showMediaOverlay(media);
       }
     });
   }
@@ -569,6 +591,16 @@ function switchRoom(roomId, initialYaw, initialPitch) {
   const scene = getScenes()[roomId];
 
   if (!scene) return;
+
+  // Sync building selector if room belongs to another building
+  const curRoom = allRooms.find(r => r.id === roomId);
+  if (curRoom && buildingSelect && buildingSelectWrapper && buildingSelectWrapper.style.display !== 'none') {
+    const activeBldg = buildingSelect.value;
+    if (activeBldg && curRoom.buildingId && activeBldg !== curRoom.buildingId) {
+      buildingSelect.value = curRoom.buildingId;
+      filterRoomsByBuilding(curRoom.buildingId, true);
+    }
+  }
 
   if (roomSelect) {
     roomSelect.value = roomId;

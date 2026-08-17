@@ -127,6 +127,15 @@ async function getSensors() {
   }
 }
 
+// Đọc danh sách phân khu / tòa nhà từ Supabase.
+async function getBuildings() {
+  try {
+    return await db.getBuildings();
+  } catch {
+    return [];
+  }
+}
+
 // Trả về cấu hình API mặc định dùng khi chưa có file cấu hình.
 function getDefaultApiConfig() {
   return {
@@ -433,6 +442,16 @@ const upload = multer({ storage });
 // TEST
 app.get("/test", (req, res) => {
   res.send("SERVER OK");
+});
+
+// GET BUILDINGS (Public)
+app.get("/api/buildings", async (req, res) => {
+  try {
+    const buildings = await getBuildings();
+    res.json({ success: true, buildings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // GET ROOMS

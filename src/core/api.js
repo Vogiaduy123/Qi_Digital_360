@@ -15,3 +15,8 @@ export async function fetchSensors() {
   const res = await fetch("/api/sensors");
   return parseJsonResponse(res);
 }
+
+export async function fetchBuildings() {
+  const res = await fetch("/api/buildings");
+  return parseJsonResponse(res);
+}
