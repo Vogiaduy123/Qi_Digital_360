@@ -1730,7 +1730,7 @@
             parent.classList.add('pnlm-custom-media-hotspot');
             parent.classList.add('moving-active');
             parent.style.cursor = 'grab';
-            applyCustomIconToHotspotElement(parent, media.mediaType);
+            applyCustomIconToHotspotElement(parent, media.mediaType, media.iconUrl);
           }
         },
         clickHandlerFunc: function () {
@@ -1751,15 +1751,12 @@
         panoramaViewer.removeHotSpot(`media-${idx}`);
       } catch (e) {}
 
-      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', web: '🌐', note: 'ℹ️', gallery: '📸' };
-      const defaultIcon = icons[media.mediaType] || '📁';
-      const customIconKey = 'media_' + media.mediaType;
-      const customIconUrl = customIcons && customIcons[customIconKey];
+      const customIconUrl = media.iconUrl || (customIcons && customIcons['media_' + media.mediaType]) || (customIcons && customIcons['media_doc']);
       const iconHtml = customIconUrl 
         ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">` 
-        : defaultIcon + ' ';
-      const polyText = (media.mediaType === '3d' && media.highlightPolygon && media.highlightPolygon.length >= 3) ? ' [Vùng sáng]' : '';
-      const labelText = `${media.title}${polyText}`;
+        : '📁 ';
+      const polyText = (media.highlightPolygon && media.highlightPolygon.length >= 3) ? ' [Vùng sáng]' : '';
+      const labelText = `${media.title || 'Tư liệu'}${polyText}`;
       
       panoramaViewer.addHotSpot({
         id: `media-${idx}`,
@@ -1775,7 +1772,7 @@
           if (parent) {
             parent.setAttribute('data-media-idx', idx);
             parent.classList.add('pnlm-custom-media-hotspot');
-            applyCustomIconToHotspotElement(parent, media.mediaType);
+            applyCustomIconToHotspotElement(parent, media.mediaType, media.iconUrl);
           }
         },
         clickHandlerFunc: function () {
@@ -1962,15 +1959,12 @@
 
         if (room.mediaHotspots && room.mediaHotspots.length > 0) {
           room.mediaHotspots.forEach((media, idx) => {
-            const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', web: '🌐', note: 'ℹ️', gallery: '📸' };
-            const defaultIcon = icons[media.mediaType] || '📁';
-            const customIconKey = 'media_' + media.mediaType;
-            const customIconUrl = customIcons && customIcons[customIconKey];
+            const customIconUrl = media.iconUrl || (customIcons && customIcons['media_' + media.mediaType]) || (customIcons && customIcons['media_doc']);
             const iconHtml = customIconUrl 
               ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;">` 
-              : defaultIcon + ' ';
-            const polyText = (media.mediaType === '3d' && media.highlightPolygon && media.highlightPolygon.length >= 3) ? ' [Vùng sáng]' : '';
-            const labelText = `${media.title}${polyText}`;
+              : '📁 ';
+            const polyText = (media.highlightPolygon && media.highlightPolygon.length >= 3) ? ' [Vùng sáng]' : '';
+            const labelText = `${media.title || 'Tư liệu'}${polyText}`;
 
             panoramaViewer.addHotSpot({
               id: `media-${idx}`,
@@ -1990,7 +1984,7 @@
                     parent.classList.add('moving-active');
                     parent.style.cursor = 'grab';
                   }
-                  applyCustomIconToHotspotElement(parent, media.mediaType);
+                  applyCustomIconToHotspotElement(parent, media.mediaType, media.iconUrl);
                 }
               },
               clickHandlerFunc: function () {
@@ -2149,17 +2143,12 @@
               if (addMediaMode) {
                 closeAllFeatureModals('mediaHotspotModal');
                 
-                // Reset state for new creation to prevent overwriting previous media hotspot
-                editingMediaHotspotIndex = null;
-                document.getElementById('mediaHotspotForm').reset();
-                selectedMediaFile = null;
-                document.getElementById('mediaFileInfo').textContent = '';
-                document.getElementById('mediaUrl').value = '';
-                delete document.getElementById('mediaHotspotForm').dataset.existingMediaUrl;
+                // Reset state for new creation
+                closeMediaHotspotModal();
 
                 // Reset modal header
                 const modal = document.getElementById('mediaHotspotModal');
-                const modalHeader = modal.querySelector('.modal-header h3');
+                const modalHeader = document.getElementById('mediaModalTitle') || (modal && modal.querySelector('.modal-header h3'));
                 if (modalHeader) modalHeader.textContent = '📁 Thêm Tư liệu';
 
                 document.getElementById('mediaYaw').value = yaw.toFixed(2);
@@ -2655,134 +2644,213 @@
     }
     window.clearPolygon = clearPolygon;
 
-    function updateMediaUploadHint() {
-      const type = document.getElementById('mediaType').value;
-      const hint = document.getElementById('mediaUploadHint');
-      const fileInput = document.getElementById('mediaFileInput');
-      const fileSection = document.getElementById('fileUploadSection');
-      const linkSection = document.getElementById('linkInputSection');
-      const mediaUrlInput = document.getElementById('mediaUrl');
+    let selectedMediaIconFile = null;
+    let selectedMediaImagesFiles = [];
+    let selectedMediaPdfFile = null;
+    let selectedMediaVideoFile = null;
+    let selectedMedia3dFile = null;
 
-      // Hide both sections first
-      fileSection.style.display = 'none';
-      linkSection.style.display = 'none';
+    function handleMediaIconFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      selectedMediaIconFile = file;
+      updateMediaIconPreview(URL.createObjectURL(file), file.name);
+    }
+    window.handleMediaIconFileSelect = handleMediaIconFileSelect;
 
-      // Show/hide polygon section for 3d type
-      const polySection = document.getElementById('polygonHighlightSection');
-      if (polySection) polySection.style.display = (type === '3d') ? 'block' : 'none';
-      if (type !== '3d') { polygonPoints = []; isPolygonDrawMode = false; }
-
-      const hints = {
-        'image': { text: '🖼️ Chọn ảnh', accept: 'image/*' },
-        'pdf': { text: '📄 Chọn PDF', accept: '.pdf' },
-        'video': { text: '🎥 Chọn video', accept: 'video/*' },
-        '3d': { text: '🎮 Chọn 3D', accept: '.glb,.gltf' }
-      };
-
-      if (type === 'youtube' || type === 'facebook' || type === 'web') {
-        // Show link input section
-        linkSection.style.display = 'block';
-        if (type === 'youtube') {
-          mediaUrlInput.placeholder = 'https://www.youtube.com/watch?v=... hoặc https://youtu.be/...';
-        } else if (type === 'facebook') {
-          mediaUrlInput.placeholder = 'https://www.facebook.com/watch/?v=... hoặc link bài đăng Facebook';
-        } else if (type === 'web') {
-          mediaUrlInput.placeholder = 'https://example.com - Nhập URL trang web';
-        }
-      } else if (type === 'note') {
-        // For notes, don't show file or link section - description is enough
-        // Note: nothing to show, just let user fill in description
+    function updateMediaIconPreview(url, fileName) {
+      const container = document.getElementById('mediaIconPreviewContainer');
+      const img = document.getElementById('mediaIconPreview');
+      const info = document.getElementById('mediaIconFileInfo');
+      const clearBtn = document.getElementById('mediaClearIconBtn');
+      if (url) {
+        if (img) img.src = url;
+        if (container) container.style.display = 'flex';
+        if (info) info.textContent = fileName ? `File: ${fileName}` : 'Đang dùng icon tùy chỉnh';
+        if (clearBtn) clearBtn.style.display = 'inline-block';
       } else {
-        // Show file upload section
-        fileSection.style.display = 'block';
-        if (hints[type]) {
-          hint.textContent = hints[type].text;
-          fileInput.accept = hints[type].accept;
-        }
+        if (img) img.src = '';
+        if (container) container.style.display = 'none';
+        if (info) info.textContent = '';
+        if (clearBtn) clearBtn.style.display = 'none';
       }
     }
 
-    function handleMediaFileSelect(event) {
+    function clearMediaHotspotIcon() {
+      selectedMediaIconFile = null;
+      const fileInput = document.getElementById('mediaHotspotIconFile');
+      if (fileInput) fileInput.value = '';
+      const urlInput = document.getElementById('mediaHotspotIconUrl');
+      if (urlInput) urlInput.value = '';
+      updateMediaIconPreview('', '');
+    }
+    window.clearMediaHotspotIcon = clearMediaHotspotIcon;
+
+    function handleMediaImagesSelect(event) {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+      selectedMediaImagesFiles = files;
+      const info = document.getElementById('mediaImagesListInfo');
+      if (info) info.textContent = `📎 Đã chọn ${files.length} ảnh: ${files.map(f => f.name).join(', ')}`;
+    }
+    window.handleMediaImagesSelect = handleMediaImagesSelect;
+
+    function handleMediaPdfSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
-
-      selectedMediaFile = file;
-      document.getElementById('mediaFileInfo').textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      selectedMediaPdfFile = file;
+      const info = document.getElementById('mediaPdfFileInfo');
+      if (info) info.textContent = `📎 Đã chọn: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
     }
+    window.handleMediaPdfSelect = handleMediaPdfSelect;
+
+    function handleMediaVideoSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      selectedMediaVideoFile = file;
+      const info = document.getElementById('mediaVideoFileInfo');
+      if (info) info.textContent = `📎 Đã chọn: ${file.name} (${(file.size / (1024*1024)).toFixed(1)} MB)`;
+    }
+    window.handleMediaVideoSelect = handleMediaVideoSelect;
+
+    function handleMedia3dSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      selectedMedia3dFile = file;
+      const info = document.getElementById('media3dFileInfo');
+      if (info) info.textContent = `📎 Đã chọn: ${file.name} (${(file.size / (1024*1024)).toFixed(1)} MB)`;
+    }
+    window.handleMedia3dSelect = handleMedia3dSelect;
+
+    async function uploadSingleFile(file) {
+      if (!file) return null;
+      const formData = new FormData();
+      formData.append('media', file);
+
+      const uploadRes = await fetch('/api/admin/media/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const contentType = uploadRes.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        const errorText = await uploadRes.text();
+        throw new Error(`Upload file "${file.name}" thất bại (${uploadRes.status}): ${errorText.slice(0, 150)}`);
+      }
+
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok || !uploadData.success || !uploadData.media?.url) {
+        throw new Error(uploadData.error || `Upload file "${file.name}" thất bại`);
+      }
+      return uploadData.media.url;
+    }
+
+    function closeMediaHotspotModal() {
+      const modal = document.getElementById('mediaHotspotModal');
+      if (modal) modal.classList.remove('active');
+      const mediaForm = document.getElementById('mediaHotspotForm');
+      if (mediaForm) mediaForm.reset();
+      clearMediaHotspotIcon();
+      selectedMediaImagesFiles = [];
+      selectedMediaPdfFile = null;
+      selectedMediaVideoFile = null;
+      selectedMedia3dFile = null;
+      const imagesInfo = document.getElementById('mediaImagesListInfo');
+      if (imagesInfo) imagesInfo.textContent = '';
+      const pdfInfo = document.getElementById('mediaPdfFileInfo');
+      if (pdfInfo) pdfInfo.textContent = '';
+      const videoInfo = document.getElementById('mediaVideoFileInfo');
+      if (videoInfo) videoInfo.textContent = '';
+      const model3dInfo = document.getElementById('media3dFileInfo');
+      if (model3dInfo) model3dInfo.textContent = '';
+      editingMediaHotspotIndex = null;
+      if (typeof clearPolygon === 'function') clearPolygon();
+    }
+    window.closeMediaHotspotModal = closeMediaHotspotModal;
 
     const mediaForm = document.getElementById('mediaHotspotForm');
     if (mediaForm) {
       mediaForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const mediaType = document.getElementById('mediaType').value;
-
         if (!selectedRoomId) {
           alert('Vui lòng chọn phòng');
           return;
         }
 
-        let mediaUrl = null;
+        const title = document.getElementById('mediaTitle').value.trim();
+        const description = document.getElementById('mediaDescription').value.trim();
+
+        let iconUrl = (document.getElementById('mediaHotspotIconUrl')?.value || '').trim();
+        let imagesUrlText = (document.getElementById('mediaImagesUrl')?.value || '').trim();
+        let pdfUrl = (document.getElementById('mediaPdfUrl')?.value || '').trim();
+        let videoUrl = (document.getElementById('mediaVideoUrl')?.value || '').trim();
+        let youtubeUrl = (document.getElementById('mediaYoutubeUrl')?.value || '').trim();
+        let model3dUrl = (document.getElementById('media3dUrl')?.value || '').trim();
+        let facebookUrl = (document.getElementById('mediaFacebookUrl')?.value || '').trim();
+        let webUrl = (document.getElementById('mediaWebUrl')?.value || '').trim();
 
         try {
-          // Handle YouTube/Facebook/Web links
-          if (mediaType === 'youtube' || mediaType === 'facebook' || mediaType === 'web') {
-            mediaUrl = document.getElementById('mediaUrl').value.trim();
-            if (!mediaUrl) {
-              alert('Vui lòng nhập URL');
-              return;
-            }
-          } else if (mediaType === 'note') {
-            // For notes, use the description as mediaUrl (we'll use it as note content)
-            // Description is optional - can be empty
-            const description = document.getElementById('mediaDescription').value.trim();
-            mediaUrl = description || ''; // Allow empty notes
-          } else {
-            // Handle file upload
-            if (editingMediaHotspotIndex !== null && !selectedMediaFile) {
-              mediaUrl = mediaForm.dataset.existingMediaUrl;
-            } else if (!selectedMediaFile) {
-              alert('Vui lòng chọn file');
-              return;
-            }
+          // 1. Upload custom icon if selected
+          if (selectedMediaIconFile) {
+            iconUrl = await uploadSingleFile(selectedMediaIconFile);
+          }
 
-            // Upload new media file if provided
-            if (selectedMediaFile) {
-              const formData = new FormData();
-              formData.append('media', selectedMediaFile);
-
-              const uploadRes = await fetch('/api/admin/media/upload', {
-                method: 'POST',
-                body: formData
-              });
-
-              const contentType = uploadRes.headers.get('content-type') || '';
-              if (!contentType.includes('application/json')) {
-                const errorText = await uploadRes.text();
-                throw new Error(`Upload thất bại (${uploadRes.status}): ${errorText.slice(0, 150)}`);
-              }
-
-              const uploadData = await uploadRes.json();
-              if (!uploadRes.ok || !uploadData.success) {
-                throw new Error(uploadData.error || `Upload thất bại (${uploadRes.status})`);
-              }
-
-              mediaUrl = uploadData.media.url;
+          // 2. Upload images if selected
+          let finalImages = [];
+          if (imagesUrlText) {
+            finalImages = imagesUrlText.split(',').map(s => s.trim()).filter(Boolean);
+          }
+          if (selectedMediaImagesFiles && selectedMediaImagesFiles.length > 0) {
+            for (const imgFile of selectedMediaImagesFiles) {
+              const uploadedImgUrl = await uploadSingleFile(imgFile);
+              if (uploadedImgUrl) finalImages.push(uploadedImgUrl);
             }
           }
 
-          // Prepare media hotspot data
-          const mediaHotspot = {
-            yaw: parseFloat(document.getElementById('mediaYaw').value),
-            pitch: parseFloat(document.getElementById('mediaPitch').value),
-            title: document.getElementById('mediaTitle').value,
-            description: document.getElementById('mediaDescription').value,
-            mediaUrl: mediaUrl,
-            mediaType: mediaType,
-            highlightPolygon: (mediaType === '3d' && polygonPoints.length >= 3) ? polygonPoints.map(p => [...p]) : null
+          // 3. Upload PDF if selected
+          if (selectedMediaPdfFile) {
+            pdfUrl = await uploadSingleFile(selectedMediaPdfFile);
+          }
+
+          // 4. Upload Video if selected
+          if (selectedMediaVideoFile) {
+            videoUrl = await uploadSingleFile(selectedMediaVideoFile);
+          }
+
+          // 5. Upload 3D model if selected
+          if (selectedMedia3dFile) {
+            model3dUrl = await uploadSingleFile(selectedMedia3dFile);
+          }
+
+          const mediaItems = {
+            images: finalImages.length > 0 ? finalImages : undefined,
+            pdfUrl: pdfUrl || undefined,
+            videoUrl: videoUrl || undefined,
+            youtubeUrl: youtubeUrl || undefined,
+            model3dUrl: model3dUrl || undefined,
+            facebookUrl: facebookUrl || undefined,
+            webUrl: webUrl || undefined
           };
 
-          // Add or update
+          // Clean undefined keys
+          Object.keys(mediaItems).forEach(k => mediaItems[k] === undefined && delete mediaItems[k]);
+
+          // Pick primary mediaUrl for backward compatibility
+          const primaryMediaUrl = finalImages[0] || pdfUrl || videoUrl || youtubeUrl || model3dUrl || facebookUrl || webUrl || '';
+
+          const mediaHotspot = {
+            yaw: parseFloat(document.getElementById('mediaYaw').value) || 0,
+            pitch: parseFloat(document.getElementById('mediaPitch').value) || 0,
+            title: title || 'Tư liệu',
+            description: description,
+            iconUrl: iconUrl || null,
+            mediaType: 'all',
+            mediaUrl: primaryMediaUrl,
+            mediaItems: Object.keys(mediaItems).length > 0 ? mediaItems : null,
+            highlightPolygon: polygonPoints.length >= 3 ? polygonPoints.map(p => [...p]) : null
+          };
+
           let url = `/api/admin/rooms/${selectedRoomId}/media-hotspots`;
           let method = 'POST';
 
@@ -2800,38 +2868,11 @@
           const data = await res.json();
 
           if (data.success) {
-            document.getElementById('mediaHotspotModal').classList.remove('active');
-            mediaForm.reset();
-            selectedMediaFile = null;
-            editingMediaHotspotIndex = null;
-            document.getElementById('mediaFileInfo').textContent = '';
-            document.getElementById('mediaUrl').value = '';
-            delete mediaForm.dataset.existingMediaUrl;
-
-            // --- Reset Polygon State ---
-            if (typeof clearPolygon === 'function') clearPolygon();
-            isPolygonDrawMode = false;
-            const polyBtn = document.getElementById('polygonDrawBtn');
-            if (polyBtn) { polyBtn.textContent = '✏️ Bắt đầu vẽ'; polyBtn.style.background = '#3498db'; }
-            const polyStatus = document.getElementById('polygonStatus');
-            if (polyStatus) polyStatus.textContent = '';
-            const finishBtn = document.getElementById('floatingFinishDrawBtn');
-            if (finishBtn) finishBtn.style.display = 'none';
-            const svgOverlay = document.getElementById('adminPolygonOverlay');
-            if (svgOverlay) svgOverlay.style.display = 'none';
-            if (window.syncPolygonRaf) cancelAnimationFrame(window.syncPolygonRaf);
-            // ---------------------------
-
-            // Reset modal header to default
-            const modal = document.getElementById('mediaHotspotModal');
-            const modalHeader = modal.querySelector('.modal-header h3');
-            modalHeader.textContent = '📁 Thêm Tư liệu';
-
-            // Refresh room data so panorama has latest media hotspots
+            closeMediaHotspotModal();
             await loadRooms();
             loadMediaHotspots();
             loadPanoramaPreview();
-            alert('✅ ' + (method === 'PATCH' ? 'Cập nhật thành công!' : 'Đã thêm tư liệu!'));
+            alert('✅ ' + (method === 'PATCH' ? 'Cập nhật tư liệu thành công!' : 'Đã thêm tư liệu thành công!'));
           } else {
             alert('Lỗi: ' + data.error);
           }
@@ -2852,13 +2893,11 @@
         if (data.success && data.mediaHotspots && data.mediaHotspots.length > 0) {
           renderMediaHotspots(data.mediaHotspots);
         } else {
-          // Fallback to local room data if Supabase returns nothing or is empty
           const room = rooms.find(r => r.id === selectedRoomId);
           renderMediaHotspots(room?.mediaHotspots || []);
         }
       } catch (err) {
         console.error('Load media error:', err);
-        // Fallback to local room data on error
         const room = rooms.find(r => r.id === selectedRoomId);
         renderMediaHotspots(room?.mediaHotspots || []);
       }
@@ -2874,23 +2913,35 @@
         return;
       }
 
-      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', facebook: '👍', web: '🌐', note: 'ℹ️', gallery: '📸' };
-
       list.innerHTML = mediaHotspots.map((media, idx) => {
-        const polyText = (media.mediaType === '3d' && media.highlightPolygon && media.highlightPolygon.length >= 3) ? '<span style="font-size:11px;color:#111827;background:rgba(251,191,36,0.9);padding:2px 6px;border-radius:4px;margin-left:5px;display:inline-block;vertical-align:middle;">🔲 Có vùng sáng</span>' : '';
-        const defaultIcon = icons[media.mediaType] || '📁';
-        const customIconKey = 'media_' + media.mediaType;
-        const customIconUrl = customIcons && customIcons[customIconKey];
+        const polyText = (media.highlightPolygon && media.highlightPolygon.length >= 3) ? '<span style="font-size:11px;color:#111827;background:rgba(251,191,36,0.9);padding:2px 6px;border-radius:4px;margin-left:5px;display:inline-block;vertical-align:middle;">🔲 Có vùng sáng</span>' : '';
+        
+        // Badges for included media types
+        const items = media.mediaItems || {};
+        let badges = [];
+        if (items.images?.length || media.mediaType === 'image' || media.mediaType === 'gallery') badges.push('🖼️ Ảnh');
+        if (items.pdfUrl || media.mediaType === 'pdf') badges.push('📄 PDF');
+        if (items.videoUrl || media.mediaType === 'video') badges.push('🎥 Video');
+        if (items.youtubeUrl || media.mediaType === 'youtube') badges.push('▶️ YouTube');
+        if (items.model3dUrl || media.mediaType === '3d') badges.push('🧊 3D');
+        if (items.facebookUrl || media.mediaType === 'facebook') badges.push('👍 FB');
+        if (items.webUrl || media.mediaType === 'web') badges.push('🌐 Web');
+        if (media.description) badges.push('ℹ️ Ghi chú');
+        const badgeHtml = badges.length > 0 ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">${badges.map(b => `<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(37,99,235,0.2);color:#93c5fd;border:1px solid rgba(37,99,235,0.3);">${b}</span>`).join('')}</div>` : '';
+
+        const defaultIcon = '📁';
+        const customIconUrl = media.iconUrl || (customIcons && customIcons['media_' + media.mediaType]) || (customIcons && customIcons['media_doc']);
         const iconHtml = customIconUrl 
-          ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;">` 
+          ? `<img src="${customIconUrl}" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;">` 
           : defaultIcon + ' ';
 
         return `
         <div class="hotspot-item" style="background: rgba(22,26,36,0.94); border-left-color: #27ae60; border-color: rgba(39,174,96,0.25); box-shadow: 0 10px 30px rgba(0,0,0,0.18);">
-          <h5 style="display: flex; align-items: center; gap: 4px;">${iconHtml}${media.title}${polyText}</h5>
+          <h5 style="display: flex; align-items: center; gap: 4px;">${iconHtml}${media.title || 'Tư liệu'}${polyText}</h5>
           <div class="hotspot-info">
-            <span>${media.description || ''}</span>
-            <span><strong>Yaw:</strong> ${media.yaw?.toFixed(2) || '?'}° | <strong>Pitch:</strong> ${media.pitch?.toFixed(2) || '?'}°</span>
+            ${media.description ? `<span>${media.description.length > 60 ? media.description.slice(0,60)+'...' : media.description}</span>` : ''}
+            ${badgeHtml}
+            <span style="margin-top:4px;"><strong>Yaw:</strong> ${media.yaw?.toFixed(2) || '?'}° | <strong>Pitch:</strong> ${media.pitch?.toFixed(2) || '?'}°</span>
           </div>
           <div class="hotspot-actions">
             <button class="btn btn-small" onclick="previewMediaHotspot(${idx})" style="margin-bottom: 0; background: #2196f3; color: white;">👁️ Xem</button>
@@ -2932,39 +2983,66 @@
 
       closeAllFeatureModals('mediaHotspotModal');
       editingMediaHotspotIndex = idx;
-      document.getElementById('mediaTitle').value = media.title;
+
+      document.getElementById('mediaTitle').value = media.title || '';
       document.getElementById('mediaDescription').value = media.description || '';
-      document.getElementById('mediaType').value = media.mediaType;
-      document.getElementById('mediaYaw').value = media.yaw;
-      document.getElementById('mediaPitch').value = media.pitch;
+      document.getElementById('mediaYaw').value = media.yaw || 0;
+      document.getElementById('mediaPitch').value = media.pitch || 0;
 
-      // Store the current media URL for reference if not uploading new file
-      document.getElementById('mediaHotspotForm').dataset.existingMediaUrl = media.mediaUrl;
-
-      // Update UI based on media type
-      if (media.mediaType === 'youtube' || media.mediaType === 'facebook' || media.mediaType === 'web') {
-        document.getElementById('mediaUrl').value = media.mediaUrl;
-        document.getElementById('mediaFileInfo').textContent = '';
-      } else if (media.mediaType === 'note') {
-        // For notes, media.mediaUrl contains the note content
-        document.getElementById('mediaUrl').value = '';
-        document.getElementById('mediaFileInfo').textContent = '';
-      } else {
-        document.getElementById('mediaFileInfo').textContent = `📎 Tệp hiện tại: ${media.mediaUrl.split('/').pop()}`;
-        document.getElementById('mediaUrl').value = '';
+      // Icon
+      const iconUrl = media.iconUrl || '';
+      if (document.getElementById('mediaHotspotIconUrl')) {
+        document.getElementById('mediaHotspotIconUrl').value = iconUrl;
       }
+      updateMediaIconPreview(iconUrl, '');
 
-      updateMediaUploadHint();
+      // Media items (support new format & legacy format)
+      const items = media.mediaItems || {};
+      
+      // Images / gallery
+      let images = items.images || [];
+      if (!images.length && (media.mediaType === 'image' || media.mediaType === 'gallery') && media.mediaUrl && !media.mediaUrl.startsWith('{')) {
+        images = media.mediaUrl.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      document.getElementById('mediaImagesUrl').value = images.join(', ');
+      document.getElementById('mediaImagesListInfo').textContent = images.length ? `🖼️ Có ${images.length} ảnh đã lưu` : '';
 
-      // Restore polygon for 3d hotspots
-      polygonPoints = (media.mediaType === '3d' && Array.isArray(media.highlightPolygon)) ? media.highlightPolygon.map(p => [...p]) : [];
+      // PDF
+      const pdfUrl = items.pdfUrl || (media.mediaType === 'pdf' ? media.mediaUrl : '') || '';
+      document.getElementById('mediaPdfUrl').value = (pdfUrl && !pdfUrl.startsWith('{')) ? pdfUrl : '';
+      document.getElementById('mediaPdfFileInfo').textContent = (pdfUrl && !pdfUrl.startsWith('{')) ? `📄 File đã lưu: ${pdfUrl.split('/').pop()}` : '';
+
+      // Video
+      const videoUrl = items.videoUrl || (media.mediaType === 'video' ? media.mediaUrl : '') || '';
+      document.getElementById('mediaVideoUrl').value = (videoUrl && !videoUrl.startsWith('{')) ? videoUrl : '';
+      document.getElementById('mediaVideoFileInfo').textContent = (videoUrl && !videoUrl.startsWith('{')) ? `🎥 File đã lưu: ${videoUrl.split('/').pop()}` : '';
+
+      // YouTube
+      const ytUrl = items.youtubeUrl || (media.mediaType === 'youtube' ? media.mediaUrl : '') || '';
+      document.getElementById('mediaYoutubeUrl').value = (ytUrl && !ytUrl.startsWith('{')) ? ytUrl : '';
+
+      // 3D Model
+      const model3dUrl = items.model3dUrl || (media.mediaType === '3d' ? media.mediaUrl : '') || '';
+      document.getElementById('media3dUrl').value = (model3dUrl && !model3dUrl.startsWith('{')) ? model3dUrl : '';
+      document.getElementById('media3dFileInfo').textContent = (model3dUrl && !model3dUrl.startsWith('{')) ? `🧊 Model đã lưu: ${model3dUrl.split('/').pop()}` : '';
+
+      // Facebook
+      const fbUrl = items.facebookUrl || (media.mediaType === 'facebook' ? media.mediaUrl : '') || '';
+      document.getElementById('mediaFacebookUrl').value = (fbUrl && !fbUrl.startsWith('{')) ? fbUrl : '';
+
+      // Web
+      const webUrl = items.webUrl || (media.mediaType === 'web' ? media.mediaUrl : '') || '';
+      document.getElementById('mediaWebUrl').value = (webUrl && !webUrl.startsWith('{')) ? webUrl : '';
+
+      // Restore polygon for 3d / highlight
+      polygonPoints = (Array.isArray(media.highlightPolygon)) ? media.highlightPolygon.map(p => [...p]) : [];
       const polyStatus = document.getElementById('polygonStatus');
       if (polyStatus && polygonPoints.length > 0) polyStatus.textContent = `✅ ${polygonPoints.length} điểm đã lưu.`;
       setTimeout(() => updatePolygonPreviewHotspots(), 500);
 
       const modal = document.getElementById('mediaHotspotModal');
-      const modalHeader = modal.querySelector('.modal-header h3');
-      modalHeader.textContent = '📝 Chỉnh sửa Tư liệu';
+      const modalHeader = document.getElementById('mediaModalTitle');
+      if (modalHeader) modalHeader.textContent = '📝 Chỉnh sửa Tư liệu';
 
       modal.classList.add('active');
     };
@@ -3971,46 +4049,118 @@
 
       if (!modal || !title || !body) return;
 
-      const icons = { image: '🖼️', pdf: '📄', video: '🎥', '3d': '🧊', youtube: '▶️', facebook: '👍', web: '🌐', note: 'ℹ️' };
-      title.textContent = `${icons[media.mediaType] || '📁'} ${media.title}`;
+      const customIconUrl = media.iconUrl || (customIcons && customIcons['media_' + media.mediaType]) || (customIcons && customIcons['media_doc']);
+      const iconHtml = customIconUrl ? `<img src="${customIconUrl}" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;margin-right:8px;border-radius:4px;">` : '📁 ';
+      title.innerHTML = `${iconHtml}${media.title || 'Tư liệu'}`;
 
-      let contentHtml = '';
-      const mediaUrlClean = media.mediaUrl.startsWith('http') ? media.mediaUrl : window.location.origin + media.mediaUrl;
+      const items = media.mediaItems || {};
+      let sectionsHtml = [];
 
-      if (media.mediaType === 'image') {
-        contentHtml = `<img src="${mediaUrlClean}" style="max-width:100%; max-height:55vh; object-fit:contain; border-radius:6px; box-shadow:0 4px 15px rgba(0,0,0,0.5);">`;
-      } else if (media.mediaType === 'video') {
-        contentHtml = `<video src="${mediaUrlClean}" controls autoplay style="max-width:100%; max-height:55vh; border-radius:6px; box-shadow:0 4px 15px rgba(0,0,0,0.5);"></video>`;
-      } else if (media.mediaType === 'pdf') {
-        contentHtml = `<iframe src="${mediaUrlClean}" style="width:100%; height:55vh; border:none; border-radius:6px; background:white;"></iframe>`;
-      } else if (media.mediaType === 'youtube') {
-        let videoId = '';
-        if (media.mediaUrl.includes('youtube.com/watch?v=')) {
-          videoId = media.mediaUrl.split('watch?v=')[1]?.split('&')[0];
-        } else if (media.mediaUrl.includes('youtu.be/')) {
-          videoId = media.mediaUrl.split('youtu.be/')[1]?.split('?')[0];
-        }
-        if (videoId) {
-          contentHtml = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" style="width:100%; height:450px; border:none; border-radius:6px;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-        } else {
-          contentHtml = `<iframe src="${mediaUrlClean}" style="width:100%; height:55vh; border:none; border-radius:6px;"></iframe>`;
-        }
-      } else if (media.mediaType === 'facebook') {
-        contentHtml = `<iframe src="https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(media.mediaUrl)}&show_text=true" style="width:100%; height:500px; border:none; border-radius:6px; background:white; overflow:hidden;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>`;
-      } else if (media.mediaType === 'web') {
-        contentHtml = `<iframe src="${mediaUrlClean}" style="width:100%; height:55vh; border:none; border-radius:6px; background:white;"></iframe>`;
-      } else if (media.mediaType === 'note') {
-        contentHtml = `<div style="color:#f3f4f6; font-size:14px; line-height:1.6; padding:20px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px; width:100%; max-height:50vh; overflow-y:auto; white-space:pre-wrap;">${media.description || 'Không có mô tả'}</div>`;
-      } else if (media.mediaType === '3d') {
-        contentHtml = `
-          <model-viewer src="${mediaUrlClean}" alt="${media.title || '3D Model'}" auto-rotate camera-controls style="width:100%; height:55vh; border-radius:6px; background:rgba(0,0,0,0.25);">
-          </model-viewer>
-        `;
-      } else {
-        contentHtml = `<div style="color:var(--text-muted); font-size:13px; text-align:center; width:100%;">Không hỗ trợ xem trước cho loại tư liệu này. <a href="${mediaUrlClean}" target="_blank" style="color:#2196f3; text-decoration:underline;">Tải xuống hoặc mở liên kết</a></div>`;
+      // 1. Description / Note
+      if (media.description) {
+        sectionsHtml.push(`
+          <div style="color:#f3f4f6; font-size:14px; line-height:1.6; padding:14px 16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; white-space:pre-wrap;">
+            ${media.description}
+          </div>
+        `);
       }
 
-      body.innerHTML = contentHtml;
+      // 2. Images / Gallery
+      let images = items.images || [];
+      if (!images.length && (media.mediaType === 'image' || media.mediaType === 'gallery') && media.mediaUrl && !media.mediaUrl.startsWith('{')) {
+        images = media.mediaUrl.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      if (images.length > 0) {
+        const imagesHtml = images.map(imgUrl => {
+          const cleanUrl = imgUrl.startsWith('http') ? imgUrl : window.location.origin + imgUrl;
+          return `<img src="${cleanUrl}" style="max-width:100%; max-height:45vh; object-fit:contain; border-radius:6px; box-shadow:0 4px 15px rgba(0,0,0,0.5);">`;
+        }).join('');
+        sectionsHtml.push(`
+          <div style="display:flex; flex-direction:column; gap:10px; align-items:center;">
+            ${imagesHtml}
+          </div>
+        `);
+      }
+
+      // 3. Video
+      const videoUrl = items.videoUrl || (media.mediaType === 'video' ? media.mediaUrl : '') || '';
+      if (videoUrl && !videoUrl.startsWith('{')) {
+        const cleanUrl = videoUrl.startsWith('http') ? videoUrl : window.location.origin + videoUrl;
+        sectionsHtml.push(`
+          <video src="${cleanUrl}" controls style="width:100%; max-height:45vh; border-radius:6px; box-shadow:0 4px 15px rgba(0,0,0,0.5);"></video>
+        `);
+      }
+
+      // 4. YouTube
+      const youtubeUrl = items.youtubeUrl || (media.mediaType === 'youtube' ? media.mediaUrl : '') || '';
+      if (youtubeUrl && !youtubeUrl.startsWith('{')) {
+        let videoId = '';
+        if (youtubeUrl.includes('youtube.com/watch?v=')) {
+          videoId = youtubeUrl.split('watch?v=')[1]?.split('&')[0];
+        } else if (youtubeUrl.includes('youtu.be/')) {
+          videoId = youtubeUrl.split('youtu.be/')[1]?.split('?')[0];
+        }
+        if (videoId) {
+          sectionsHtml.push(`
+            <div style="width:100%; position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:6px;">
+              <iframe src="https://www.youtube.com/embed/${videoId}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none; border-radius:6px;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+          `);
+        }
+      }
+
+      // 5. 3D Model
+      const model3dUrl = items.model3dUrl || (media.mediaType === '3d' ? media.mediaUrl : '') || '';
+      if (model3dUrl && !model3dUrl.startsWith('{')) {
+        const cleanUrl = model3dUrl.startsWith('http') ? model3dUrl : window.location.origin + model3dUrl;
+        sectionsHtml.push(`
+          <div style="width:100%; height:320px; border-radius:6px; overflow:hidden; background:rgba(0,0,0,0.25);">
+            <model-viewer src="${cleanUrl}" alt="${media.title || '3D Model'}" auto-rotate camera-controls style="width:100%; height:100%;"></model-viewer>
+          </div>
+        `);
+      }
+
+      // 6. PDF
+      const pdfUrl = items.pdfUrl || (media.mediaType === 'pdf' ? media.mediaUrl : '') || '';
+      if (pdfUrl && !pdfUrl.startsWith('{')) {
+        const cleanUrl = pdfUrl.startsWith('http') ? pdfUrl : window.location.origin + pdfUrl;
+        sectionsHtml.push(`
+          <div style="width:100%;">
+            <iframe src="${cleanUrl}" style="width:100%; height:45vh; border:none; border-radius:6px; background:white;"></iframe>
+            <div style="margin-top:6px; text-align:right;">
+              <a href="${cleanUrl}" target="_blank" style="color:#60a5fa; font-size:12px; text-decoration:underline;">🔗 Mở PDF toàn màn hình</a>
+            </div>
+          </div>
+        `);
+      }
+
+      // 7. Facebook
+      const fbUrl = items.facebookUrl || (media.mediaType === 'facebook' ? media.mediaUrl : '') || '';
+      if (fbUrl && !fbUrl.startsWith('{')) {
+        sectionsHtml.push(`
+          <div style="text-align:center; padding:12px; background:rgba(24,119,242,0.15); border:1px solid rgba(24,119,242,0.3); border-radius:8px;">
+            <p style="margin-bottom:8px; font-size:13px; color:#93c5fd;">👍 Bài viết / Video Facebook</p>
+            <a href="${fbUrl}" target="_blank" class="btn btn-small" style="background:#1877f2; color:white; text-decoration:none; display:inline-block;">Mở liên kết Facebook ↗</a>
+          </div>
+        `);
+      }
+
+      // 8. Web link
+      const webUrl = items.webUrl || (media.mediaType === 'web' ? media.mediaUrl : '') || '';
+      if (webUrl && !webUrl.startsWith('{')) {
+        sectionsHtml.push(`
+          <div style="text-align:center; padding:12px; background:rgba(37,99,235,0.15); border:1px solid rgba(37,99,235,0.3); border-radius:8px;">
+            <p style="margin-bottom:8px; font-size:13px; color:#93c5fd;">🌐 Trang web liên kết: <strong style="color:white;">${webUrl}</strong></p>
+            <a href="${webUrl}" target="_blank" class="btn btn-small btn-primary" style="text-decoration:none; display:inline-block;">Mở trang web ↗</a>
+          </div>
+        `);
+      }
+
+      if (sectionsHtml.length === 0) {
+        sectionsHtml.push('<div style="color:var(--text-muted); text-align:center; padding:20px;">Tư liệu này chưa có nội dung.</div>');
+      }
+
+      body.innerHTML = `<div style="display:flex; flex-direction:column; gap:16px;">${sectionsHtml.join('')}</div>`;
       modal.classList.add('active');
     };
 

@@ -425,6 +425,16 @@ async function initApp() {
       switchRoom: switchRoom
     });
 
+    // Fetch custom icons config first so hotspots have access to icons immediately
+    try {
+      const res = await fetch("/api/custom-icons").then(r => r.json());
+      if (res && res.success) {
+        window.customIcons = res.config || {};
+      }
+    } catch (err) {
+      console.warn("⚠️ Cannot load custom icons config:", err);
+    }
+
     const rooms = await fetchRooms();
     if (!rooms || rooms.length === 0) {
       alert("Chưa có phòng nào");
@@ -471,16 +481,6 @@ async function initApp() {
       getPano: () => pano,
       addHotspots: addHotspots
     });
-
-    // Fetch custom icons config
-    try {
-      const res = await fetch("/api/custom-icons").then(r => r.json());
-      if (res && res.success) {
-        window.customIcons = res.config || {};
-      }
-    } catch (err) {
-      console.warn("⚠️ Cannot load custom icons config:", err);
-    }
   } catch (err) {
     console.error("LOAD ERROR:", err);
   }

@@ -115,61 +115,23 @@ function close3DModal() {
 }
 
 // Create media overlay as a Marzipano hotspot
+// Create media overlay as a Marzipano hotspot
 export function createMediaHotspotOverlay(media, container, yaw, pitch) {
-  // 3D: show as full-screen fixed modal instead
-  if (media.mediaType === "3d") {
-    show3DModal(media);
-    return;
-  }
-
   // Close existing overlay if any
   if (activeMediaHotspotOverlay) {
     container.destroyHotspot(activeMediaHotspotOverlay);
     activeMediaHotspotOverlay = null;
   }
 
-  const url = normalizeMediaUrl(media.mediaUrl);
-
-  
-  // Create overlay element
-  const overlayEl = document.createElement("div");
-  overlayEl.className = "media-hotspot-overlay";
-  
-  // Header
-  const header = document.createElement("div");
-  header.className = "media-overlay-header";
-  
-  const title = document.createElement("h3");
-  title.className = "media-overlay-title";
-  title.textContent = media.title || "Tư liệu";
-  
-  const closeBtn = document.createElement("button");
-  closeBtn.className = "media-overlay-close-btn";
-  closeBtn.textContent = "×";
-  closeBtn.onclick = (e) => {
-    e.stopPropagation();
-    container.destroyHotspot(activeMediaHotspotOverlay);
-    activeMediaHotspotOverlay = null;
-  };
-  
-  header.appendChild(title);
-  header.appendChild(closeBtn);
-  overlayEl.appendChild(header);
-  
-  // Description
-  if (media.description) {
-    const desc = document.createElement("p");
-    desc.className = "media-overlay-description";
-    desc.textContent = media.description;
-    overlayEl.appendChild(desc);
+  // Parse mediaItems and legacy values
+  let items = media.mediaItems || {};
+  if (typeof items === 'string') {
+    try { items = JSON.parse(items); } catch {}
   }
-  
-  // Content
-  const content = document.createElement("div");
-  content.className = "media-overlay-content";
-  
+
   // Helper to extract YouTube video ID
   function getYouTubeVideoId(url) {
+    if (!url) return null;
     const patterns = [
       /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
       /youtube\.com\/embed\/([^?&\n]+)/
@@ -180,122 +142,185 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
     }
     return null;
   }
-  
-  // Helper to extract Facebook video ID
-  function getFacebookEmbedUrl(url) {
-    // Facebook videos can be embedded directly using iframe
-    return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false`;
-  }
-  
-  if (media.mediaType === "image") {
-    const img = new Image();
-    img.src = url;
-    img.alt = media.title || "Media";
-    content.appendChild(img);
-  } else if (media.mediaType === "3d") {
-    const model = document.createElement("model-viewer");
-    model.src = url;
-    model.alt = media.title || "3D Model";
-    model.autoRotate = true;
-    model.cameraControls = true;
-    model.style.width = "100%";
-    model.style.height = "320px";
-    model.style.background = "linear-gradient(#ffffff, #ada996)"; 
-    ["mousedown", "pointerdown", "touchstart", "wheel"].forEach((eventName) => {
-      model.addEventListener(eventName, (e) => e.stopPropagation(), { passive: false });
-    });
-    content.appendChild(model);
-  } else if (media.mediaType === "gallery") {
-    let urls = [];
-    if (media.gallery && Array.isArray(media.gallery)) {
-      urls = media.gallery;
-    } else if (media.mediaUrl) {
-      urls = media.mediaUrl.split(',').map(u => u.trim()).filter(u => u);
-    }
-    
-    if (urls.length > 0) {
-      let currentIndex = 0;
-      
-      const galleryWrapper = document.createElement("div");
-      galleryWrapper.style.position = "relative";
-      galleryWrapper.style.width = "100%";
-      galleryWrapper.style.height = "320px";
-      galleryWrapper.style.display = "flex";
-      galleryWrapper.style.alignItems = "center";
-      galleryWrapper.style.justifyContent = "center";
-      galleryWrapper.style.background = "#000";
-      
-      const img = new Image();
-      img.src = normalizeMediaUrl(urls[0]);
-      img.style.maxHeight = "100%";
-      img.style.maxWidth = "100%";
-      img.style.objectFit = "contain";
-      
-      galleryWrapper.appendChild(img);
-      
-      if (urls.length > 1) {
-        const createBtn = (text, isPrev) => {
-          const btn = document.createElement("button");
-          btn.textContent = text;
-          btn.style.position = "absolute";
-          btn.style[isPrev ? 'left' : 'right'] = "10px";
-          btn.style.background = "rgba(0,0,0,0.5)";
-          btn.style.color = "white";
-          btn.style.border = "none";
-          btn.style.borderRadius = "50%";
-          btn.style.width = "40px";
-          btn.style.height = "40px";
-          btn.style.cursor = "pointer";
-          btn.style.zIndex = "10";
-          return btn;
-        };
 
-        const prevBtn = createBtn("◀", true);
-        prevBtn.onclick = (e) => {
-          e.stopPropagation();
-          currentIndex = (currentIndex - 1 + urls.length) % urls.length;
-          img.src = normalizeMediaUrl(urls[currentIndex]);
-        };
-        
-        const nextBtn = createBtn("▶", false);
-        nextBtn.onclick = (e) => {
-          e.stopPropagation();
-          currentIndex = (currentIndex + 1) % urls.length;
-          img.src = normalizeMediaUrl(urls[currentIndex]);
-        };
-        
-        galleryWrapper.appendChild(prevBtn);
-        galleryWrapper.appendChild(nextBtn);
-      }
-      content.appendChild(galleryWrapper);
-    } else {
-      const err = document.createElement("div");
-      err.textContent = "Gallery trống";
-      content.appendChild(err);
+  // Create overlay element
+  const overlayEl = document.createElement("div");
+  overlayEl.className = "media-hotspot-overlay";
+  overlayEl.onclick = (e) => e.stopPropagation();
+  
+  // Header
+  const header = document.createElement("div");
+  header.className = "media-overlay-header";
+  
+  const headerLeft = document.createElement("div");
+  headerLeft.style.display = "flex";
+  headerLeft.style.alignItems = "center";
+  headerLeft.style.gap = "8px";
+  headerLeft.style.flex = "1";
+
+  const customIconUrl = media.iconUrl || (window.customIcons && window.customIcons['media_' + media.mediaType]) || (window.customIcons && window.customIcons['media_doc']);
+  if (customIconUrl) {
+    const iconImg = document.createElement("img");
+    iconImg.src = customIconUrl;
+    iconImg.alt = "Icon";
+    iconImg.style.width = "22px";
+    iconImg.style.height = "22px";
+    iconImg.style.objectFit = "contain";
+    iconImg.style.borderRadius = "4px";
+    headerLeft.appendChild(iconImg);
+  }
+
+  const title = document.createElement("h3");
+  title.className = "media-overlay-title";
+  title.textContent = media.title || "Tư liệu";
+  headerLeft.appendChild(title);
+  
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "media-overlay-close-btn";
+  closeBtn.textContent = "×";
+  closeBtn.onclick = (e) => {
+    e.stopPropagation();
+    if (activeMediaHotspotOverlay) {
+      container.destroyHotspot(activeMediaHotspotOverlay);
+      activeMediaHotspotOverlay = null;
     }
-  } else if (media.mediaType === "video") {
+  };
+  
+  header.appendChild(headerLeft);
+  header.appendChild(closeBtn);
+  overlayEl.appendChild(header);
+
+  // Content container
+  const content = document.createElement("div");
+  content.className = "media-overlay-content";
+  content.style.display = "flex";
+  content.style.flexDirection = "column";
+  content.style.gap = "14px";
+
+  let hasAnyContent = false;
+
+  // 1. Description / Note
+  if (media.description && media.description.trim()) {
+    hasAnyContent = true;
+    const desc = document.createElement("div");
+    desc.className = "media-overlay-description";
+    desc.style.whiteSpace = "pre-wrap";
+    desc.style.lineHeight = "1.6";
+    desc.style.fontSize = "13px";
+    desc.textContent = media.description;
+    content.appendChild(desc);
+  }
+
+  // 2. Images / Gallery
+  let images = items.images || [];
+  if (!images.length && (media.mediaType === "image" || media.mediaType === "gallery") && media.mediaUrl && !media.mediaUrl.startsWith("{")) {
+    images = media.mediaUrl.split(',').map(u => u.trim()).filter(Boolean);
+  }
+  if (images.length > 0) {
+    hasAnyContent = true;
+    const galleryWrapper = document.createElement("div");
+    galleryWrapper.style.position = "relative";
+    galleryWrapper.style.width = "100%";
+    galleryWrapper.style.maxHeight = "210px";
+    galleryWrapper.style.display = "flex";
+    galleryWrapper.style.alignItems = "center";
+    galleryWrapper.style.justifyContent = "center";
+    galleryWrapper.style.background = "rgba(0,0,0,0.35)";
+    galleryWrapper.style.borderRadius = "8px";
+    galleryWrapper.style.overflow = "hidden";
+
+    let currentIndex = 0;
+    const img = new Image();
+    img.src = normalizeMediaUrl(images[0]);
+    img.style.maxHeight = "210px";
+    img.style.maxWidth = "100%";
+    img.style.objectFit = "contain";
+    img.style.borderRadius = "6px";
+    img.style.cursor = "pointer";
+    img.onclick = () => window.open(normalizeMediaUrl(images[currentIndex]), '_blank');
+    galleryWrapper.appendChild(img);
+
+    if (images.length > 1) {
+      const counter = document.createElement("div");
+      counter.style.position = "absolute";
+      counter.style.bottom = "6px";
+      counter.style.right = "6px";
+      counter.style.background = "rgba(0,0,0,0.7)";
+      counter.style.color = "#fff";
+      counter.style.fontSize = "11px";
+      counter.style.padding = "2px 6px";
+      counter.style.borderRadius = "8px";
+      counter.textContent = `1 / ${images.length}`;
+      galleryWrapper.appendChild(counter);
+
+      const createBtn = (text, isPrev) => {
+        const btn = document.createElement("button");
+        btn.textContent = text;
+        btn.style.position = "absolute";
+        btn.style[isPrev ? 'left' : 'right'] = "6px";
+        btn.style.background = "rgba(0,0,0,0.6)";
+        btn.style.color = "white";
+        btn.style.border = "none";
+        btn.style.borderRadius = "50%";
+        btn.style.width = "28px";
+        btn.style.height = "28px";
+        btn.style.cursor = "pointer";
+        btn.style.zIndex = "10";
+        btn.style.display = "flex";
+        btn.style.alignItems = "center";
+        btn.style.justifyContent = "center";
+        return btn;
+      };
+
+      const prevBtn = createBtn("◀", true);
+      prevBtn.onclick = (e) => {
+        e.stopPropagation();
+        currentIndex = (currentIndex - 1 + images.length) % images.length;
+        img.src = normalizeMediaUrl(images[currentIndex]);
+        counter.textContent = `${currentIndex + 1} / ${images.length}`;
+      };
+
+      const nextBtn = createBtn("▶", false);
+      nextBtn.onclick = (e) => {
+        e.stopPropagation();
+        currentIndex = (currentIndex + 1) % images.length;
+        img.src = normalizeMediaUrl(images[currentIndex]);
+        counter.textContent = `${currentIndex + 1} / ${images.length}`;
+      };
+
+      galleryWrapper.appendChild(prevBtn);
+      galleryWrapper.appendChild(nextBtn);
+    }
+    content.appendChild(galleryWrapper);
+  }
+
+  // 3. Video
+  const videoUrl = items.videoUrl || (media.mediaType === "video" ? media.mediaUrl : null);
+  if (videoUrl && !videoUrl.startsWith("{")) {
+    hasAnyContent = true;
     const video = document.createElement("video");
     video.controls = true;
-    video.src = url;
-    video.style.maxHeight = "320px";
+    video.src = normalizeMediaUrl(videoUrl);
+    video.style.width = "100%";
+    video.style.maxHeight = "200px";
+    video.style.borderRadius = "8px";
     content.appendChild(video);
-  } else if (media.mediaType === "pdf") {
-    const iframe = document.createElement("iframe");
-    iframe.src = url;
-    iframe.title = media.title || "PDF";
-    iframe.height = "320";
-    content.appendChild(iframe);
-  } else if (media.mediaType === "youtube") {
-    const videoId = getYouTubeVideoId(media.mediaUrl);
+  }
+
+  // 4. YouTube
+  const ytUrl = items.youtubeUrl || (media.mediaType === "youtube" ? media.mediaUrl : null);
+  if (ytUrl && !ytUrl.startsWith("{")) {
+    const videoId = getYouTubeVideoId(ytUrl);
     if (videoId) {
+      hasAnyContent = true;
       const iframeWrapper = document.createElement("div");
       iframeWrapper.style.width = "100%";
       iframeWrapper.style.position = "relative";
-      iframeWrapper.style.paddingBottom = "56.25%"; // 16:9 aspect ratio
+      iframeWrapper.style.paddingBottom = "56.25%";
       iframeWrapper.style.height = "0";
       iframeWrapper.style.overflow = "hidden";
-      iframeWrapper.style.borderRadius = "6px";
-      
+      iframeWrapper.style.borderRadius = "8px";
+
       const iframe = document.createElement("iframe");
       iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=0`;
       iframe.title = media.title || "YouTube Video";
@@ -304,186 +329,195 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
       iframe.style.left = "0";
       iframe.style.width = "100%";
       iframe.style.height = "100%";
-      iframe.style.borderRadius = "6px";
-      iframe.frameBorder = "0";
+      iframe.style.border = "none";
       iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
       iframe.allowFullscreen = true;
-      
+
       iframeWrapper.appendChild(iframe);
       content.appendChild(iframeWrapper);
-    } else {
-      const note = document.createElement("div");
-      note.style.color = "#d7d7d7";
-      note.style.fontSize = "13px";
-      note.textContent = "❌ URL YouTube không hợp lệ. Nhấn 🔗 để mở trong tab mới.";
-      content.appendChild(note);
     }
-  } else if (media.mediaType === "facebook") {
-    // Facebook doesn't allow profile/page embeds, show a nice preview with cover image
-    const fbPreview = document.createElement("div");
-    fbPreview.style.background = "linear-gradient(135deg, #1877f2 0%, #0a66c2 100%)";
-    fbPreview.style.padding = "24px";
-    fbPreview.style.borderRadius = "6px";
-    fbPreview.style.textAlign = "center";
-    fbPreview.style.color = "white";
-    fbPreview.style.minHeight = "200px";
-    fbPreview.style.display = "flex";
-    fbPreview.style.flexDirection = "column";
-    fbPreview.style.justifyContent = "center";
-    fbPreview.style.alignItems = "center";
-    fbPreview.style.gap = "12px";
-    fbPreview.style.backgroundSize = "cover";
-    fbPreview.style.backgroundPosition = "center";
-    fbPreview.style.position = "relative";
-    
-    // Create overlay for text
-    const overlay = document.createElement("div");
-    overlay.style.position = "absolute";
-    overlay.style.inset = "0";
-    overlay.style.background = "linear-gradient(135deg, rgba(24, 119, 242, 0.95) 0%, rgba(10, 102, 194, 0.95) 100%)";
-    overlay.style.borderRadius = "6px";
-    overlay.style.zIndex = "1";
-    fbPreview.appendChild(overlay);
-    
-    // Content wrapper
-    const contentWrapper = document.createElement("div");
-    contentWrapper.style.position = "relative";
-    contentWrapper.style.zIndex = "2";
-    contentWrapper.style.display = "flex";
-    contentWrapper.style.flexDirection = "column";
-    contentWrapper.style.alignItems = "center";
-    contentWrapper.style.gap = "12px";
-    
-    // Try to load thumbnail from Facebook
-    const url = media.mediaUrl;
-    const thumbUrl = url.includes('facebook.com/') ? 
-      `https://www.facebook.com/favicon.ico` : url;
-    
-    // Extract username from URL for better matching
-    const usernameMatch = url.match(/facebook\.com\/([a-zA-Z0-9._-]+)/);
-    const username = usernameMatch ? usernameMatch[1] : null;
-    
-    // Create decorative image container with Facebook icon
-    const imageContainer = document.createElement("div");
-    imageContainer.style.width = "100px";
-    imageContainer.style.height = "100px";
-    imageContainer.style.borderRadius = "50%";
-    imageContainer.style.background = "rgba(255, 255, 255, 0.2)";
-    imageContainer.style.display = "flex";
-    imageContainer.style.alignItems = "center";
-    imageContainer.style.justifyContent = "center";
-    imageContainer.style.fontSize = "48px";
-    imageContainer.style.border = "3px solid white";
-    imageContainer.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
-    
-    // Try to load actual avatar
-    const avatar = document.createElement("img");
-    avatar.style.width = "100%";
-    avatar.style.height = "100%";
-    avatar.style.borderRadius = "50%";
-    avatar.style.objectFit = "cover";
-    avatar.src = `https://graph.facebook.com/v18.0/${username || 'facebook'}/picture?width=100&height=100&access_token=`;
-    
-    avatar.onerror = () => {
-      avatar.style.display = "none";
-      imageContainer.textContent = "f";
-      imageContainer.style.background = "#1877f2";
-      imageContainer.style.fontSize = "50px";
-      imageContainer.style.fontWeight = "bold";
-      imageContainer.style.color = "white";
-      imageContainer.style.fontFamily = "Arial, sans-serif";
-      imageContainer.style.textAlign = "center"
+  }
+
+  // 5. 3D Model
+  const model3dUrl = items.model3dUrl || (media.mediaType === "3d" ? media.mediaUrl : null);
+  if (model3dUrl && !model3dUrl.startsWith("{")) {
+    hasAnyContent = true;
+    const modelWrapper = document.createElement("div");
+    modelWrapper.style.position = "relative";
+    modelWrapper.style.width = "100%";
+    modelWrapper.style.height = "200px";
+    modelWrapper.style.borderRadius = "8px";
+    modelWrapper.style.overflow = "hidden";
+    modelWrapper.style.background = "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)";
+
+    const model = document.createElement("model-viewer");
+    model.src = normalizeMediaUrl(model3dUrl);
+    model.alt = media.title || "3D Model";
+    model.setAttribute("auto-rotate", "");
+    model.setAttribute("camera-controls", "");
+    model.style.width = "100%";
+    model.style.height = "100%";
+    ["mousedown", "pointerdown", "touchstart", "wheel"].forEach((ev) => {
+      model.addEventListener(ev, (e) => e.stopPropagation(), { passive: false });
+    });
+
+    const fullBtn = document.createElement("button");
+    fullBtn.textContent = "⛶ Toàn màn hình";
+    fullBtn.style.position = "absolute";
+    fullBtn.style.bottom = "6px";
+    fullBtn.style.right = "6px";
+    fullBtn.style.background = "rgba(0,0,0,0.65)";
+    fullBtn.style.color = "white";
+    fullBtn.style.border = "1px solid rgba(255,255,255,0.2)";
+    fullBtn.style.borderRadius = "4px";
+    fullBtn.style.padding = "3px 6px";
+    fullBtn.style.fontSize = "11px";
+    fullBtn.style.cursor = "pointer";
+    fullBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (model.requestFullscreen) model.requestFullscreen();
     };
-    
-    avatar.onload = () => {
-      // Image loaded successfully
-    };
-    
-    imageContainer.appendChild(avatar);
-    contentWrapper.appendChild(imageContainer);
-    
+
+    modelWrapper.appendChild(model);
+    modelWrapper.appendChild(fullBtn);
+    content.appendChild(modelWrapper);
+  }
+
+  // 6. PDF
+  const pdfUrl = items.pdfUrl || (media.mediaType === "pdf" ? media.mediaUrl : null);
+  if (pdfUrl && !pdfUrl.startsWith("{")) {
+    hasAnyContent = true;
+    const pdfCard = document.createElement("div");
+    pdfCard.style.background = "rgba(239, 68, 68, 0.12)";
+    pdfCard.style.border = "1px solid rgba(239, 68, 68, 0.35)";
+    pdfCard.style.padding = "10px 12px";
+    pdfCard.style.borderRadius = "8px";
+    pdfCard.style.display = "flex";
+    pdfCard.style.alignItems = "center";
+    pdfCard.style.justifyContent = "space-between";
+    pdfCard.style.gap = "8px";
+
+    const pdfInfo = document.createElement("div");
+    pdfInfo.style.display = "flex";
+    pdfInfo.style.alignItems = "center";
+    pdfInfo.style.gap = "8px";
+    pdfInfo.style.overflow = "hidden";
+
+    const pdfIcon = document.createElement("span");
+    pdfIcon.textContent = "📄";
+    pdfIcon.style.fontSize = "18px";
+    pdfInfo.appendChild(pdfIcon);
+
+    const pdfText = document.createElement("span");
+    pdfText.style.fontSize = "12px";
+    pdfText.style.fontWeight = "600";
+    pdfText.style.color = "#fca5a5";
+    pdfText.style.overflow = "hidden";
+    pdfText.style.textOverflow = "ellipsis";
+    pdfText.style.whiteSpace = "nowrap";
+    const pdfFileName = pdfUrl.split('/').pop().replace(/^media_\d+_/, '') || "Tài liệu PDF";
+    pdfText.textContent = decodeURIComponent(pdfFileName);
+    pdfInfo.appendChild(pdfText);
+
+    const pdfBtn = document.createElement("a");
+    pdfBtn.href = normalizeMediaUrl(pdfUrl);
+    pdfBtn.target = "_blank";
+    pdfBtn.className = "btn-primary";
+    pdfBtn.style.padding = "5px 10px";
+    pdfBtn.style.fontSize = "11px";
+    pdfBtn.style.whiteSpace = "nowrap";
+    pdfBtn.style.textDecoration = "none";
+    pdfBtn.style.background = "#dc2626";
+    pdfBtn.textContent = "Xem PDF ↗";
+
+    pdfCard.appendChild(pdfInfo);
+    pdfCard.appendChild(pdfBtn);
+    content.appendChild(pdfCard);
+  }
+
+  // 7. Facebook
+  const fbUrl = items.facebookUrl || (media.mediaType === "facebook" ? media.mediaUrl : null);
+  if (fbUrl && !fbUrl.startsWith("{")) {
+    hasAnyContent = true;
+    const fbCard = document.createElement("div");
+    fbCard.style.background = "linear-gradient(135deg, #1877f2 0%, #0a66c2 100%)";
+    fbCard.style.padding = "16px";
+    fbCard.style.borderRadius = "8px";
+    fbCard.style.textAlign = "center";
+    fbCard.style.color = "white";
+
     const fbTitle = document.createElement("div");
-    fbTitle.style.fontSize = "16px";
     fbTitle.style.fontWeight = "600";
-    fbTitle.textContent = media.title || "Facebook";
-    contentWrapper.appendChild(fbTitle);
-    
-    const fbDesc = document.createElement("div");
-    fbDesc.style.fontSize = "13px";
-    fbDesc.style.opacity = "0.95";
-    fbDesc.textContent = "Nhấn nút dưới để mở trang Facebook";
-    contentWrapper.appendChild(fbDesc);
-    
-    fbPreview.appendChild(contentWrapper);
-    content.appendChild(fbPreview);
-  } else if (media.mediaType === "web") {
-    const iframe = document.createElement("iframe");
-    iframe.src = url;
-    iframe.title = media.title || "Web";
-    iframe.height = "600";
-    iframe.style.width = "100%";
-    iframe.style.border = "none";
-    iframe.style.borderRadius = "6px";
-    content.appendChild(iframe);
-  } else {
-    const note = document.createElement("div");
-    note.style.color = "#d7d7d7";
-    note.style.fontSize = "13px";
-    note.textContent = "Không thể xem trực tiếp. Nhấn 🔗 để mở trong tab mới.";
-    content.appendChild(note);
+    fbTitle.style.fontSize = "13px";
+    fbTitle.style.marginBottom = "8px";
+    fbTitle.textContent = "👍 Bài viết / Trang Facebook";
+
+    const fbLink = document.createElement("a");
+    fbLink.href = fbUrl;
+    fbLink.target = "_blank";
+    fbLink.style.display = "inline-block";
+    fbLink.style.padding = "6px 14px";
+    fbLink.style.background = "white";
+    fbLink.style.color = "#1877f2";
+    fbLink.style.fontWeight = "700";
+    fbLink.style.fontSize = "12px";
+    fbLink.style.borderRadius = "6px";
+    fbLink.style.textDecoration = "none";
+    fbLink.textContent = "Mở liên kết Facebook ↗";
+
+    fbCard.appendChild(fbTitle);
+    fbCard.appendChild(fbLink);
+    content.appendChild(fbCard);
   }
-  
-  overlayEl.appendChild(content);
-  
-  // Link/Button section
-  const buttonSection = document.createElement("div");
-  buttonSection.style.display = "flex";
-  buttonSection.style.gap = "8px";
-  buttonSection.style.marginTop = "12px";
-  
-  if (url) {
-    const link = document.createElement("a");
-    link.href = url;
-    link.target = "_blank";
-    link.className = "media-overlay-link";
-    link.textContent = "🔗 Mở trong tab mới";
-    buttonSection.appendChild(link);
+
+  // 8. Web Link
+  const webUrl = items.webUrl || (media.mediaType === "web" ? media.mediaUrl : null);
+  if (webUrl && !webUrl.startsWith("{")) {
+    hasAnyContent = true;
+    const webCard = document.createElement("div");
+    webCard.style.background = "rgba(37,99,235,0.15)";
+    webCard.style.border = "1px solid rgba(37,99,235,0.3)";
+    webCard.style.padding = "14px";
+    webCard.style.borderRadius = "8px";
+    webCard.style.display = "flex";
+    webCard.style.alignItems = "center";
+    webCard.style.justifyContent = "space-between";
+    webCard.style.gap = "10px";
+
+    const webText = document.createElement("span");
+    webText.style.fontSize = "12px";
+    webText.style.color = "#93c5fd";
+    webText.style.overflow = "hidden";
+    webText.style.textOverflow = "ellipsis";
+    webText.style.whiteSpace = "nowrap";
+    webText.textContent = `🌐 ${webUrl}`;
+
+    const webLink = document.createElement("a");
+    webLink.href = normalizeMediaUrl(webUrl);
+    webLink.target = "_blank";
+    webLink.className = "btn-primary";
+    webLink.style.padding = "6px 12px";
+    webLink.style.fontSize = "11px";
+    webLink.style.whiteSpace = "nowrap";
+    webLink.style.textDecoration = "none";
+    webLink.textContent = "Mở trang ↗";
+
+    webCard.appendChild(webText);
+    webCard.appendChild(webLink);
+    content.appendChild(webCard);
   }
-  
-  // For Facebook, add "Mở Facebook" button
-  if (media.mediaType === "facebook") {
-    const fbButton = document.createElement("button");
-    fbButton.style.flex = "1";
-    fbButton.style.padding = "8px 12px";
-    fbButton.style.background = "#1877f2";
-    fbButton.style.color = "white";
-    fbButton.style.border = "none";
-    fbButton.style.borderRadius = "6px";
-    fbButton.style.fontSize = "12px";
-    fbButton.style.fontWeight = "600";
-    fbButton.style.cursor = "pointer";
-    fbButton.style.transition = "background 0.2s ease";
-    fbButton.textContent = "👍 Mở Facebook";
-    
-    fbButton.onmouseover = () => fbButton.style.background = "#165bc0";
-    fbButton.onmouseout = () => fbButton.style.background = "#1877f2";
-    
-    fbButton.onclick = () => {
-      window.open(media.mediaUrl, '_blank');
-    };
-    
-    buttonSection.appendChild(fbButton);
+
+  if (hasAnyContent) {
+    overlayEl.appendChild(content);
   }
-  
-  if (buttonSection.childNodes.length > 0) {
-    overlayEl.appendChild(buttonSection);
-  }
-  
+
   // Create hotspot using Marzipano positioning
   activeMediaHotspotOverlay = container.createHotspot(overlayEl, {
     yaw: yaw,
     pitch: pitch
   });
+
+  return overlayEl;
 }
 
 export function hideMediaOverlay() {
@@ -700,20 +734,26 @@ export function createMediaHotspotElement(media, onClickHandler) {
   const iconWrap = document.createElement("div");
   iconWrap.className = "info-hotspot-icon-wrapper";
 
-  if (hasCustomIcon) {
-    const icon = document.createElement("img");
-    icon.className = "info-hotspot-icon";
-    icon.src = window.customIcons[customIconKey];
-    icon.alt = media.mediaType;
-    iconWrap.appendChild(icon);
-  } else if (media.iconUrl) {
+  if (media.iconUrl) {
     const icon = document.createElement("img");
     icon.className = "info-hotspot-icon";
     icon.src = media.iconUrl;
-    icon.alt = media.mediaType;
+    icon.alt = "Icon";
+    iconWrap.appendChild(icon);
+  } else if (hasCustomIcon) {
+    const icon = document.createElement("img");
+    icon.className = "info-hotspot-icon";
+    icon.src = window.customIcons[customIconKey];
+    icon.alt = media.mediaType || "media";
+    iconWrap.appendChild(icon);
+  } else if (window.customIcons && window.customIcons['media_doc']) {
+    const icon = document.createElement("img");
+    icon.className = "info-hotspot-icon";
+    icon.src = window.customIcons['media_doc'];
+    icon.alt = "doc";
     iconWrap.appendChild(icon);
   } else {
-    iconWrap.innerHTML = getMediaIconSVG(media.mediaType);
+    iconWrap.innerHTML = getMediaIconSVG(media.mediaType || "doc");
   }
 
   const titleWrap = document.createElement("div");
@@ -800,24 +840,27 @@ function getMediaDefaultTitle(type) {
   return titles[type] || "Tư liệu";
 }
 
-function getMediaIconSVG(type) {
+export function getMediaIconSVG(type) {
   switch (type) {
     case "pdf":
-      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#e53e3e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;
     case "image":
     case "gallery":
-      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#3182ce" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
     case "video":
-      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#dd6b20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="15" height="16" rx="2"/><polygon points="17 9 22 6 22 18 17 15" fill="#dd6b20"/></svg>`;
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="15" height="16" rx="2"/><polygon points="17 9 22 6 22 18 17 15" fill="#f59e0b"/></svg>`;
     case "3d":
-      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#805ad5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`;
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`;
     case "web":
-      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#319795" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
     case "facebook":
       return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`;
     case "note":
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`;
+    case "all":
+    case "doc":
     default:
-      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#4a5568" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
   }
 }
 

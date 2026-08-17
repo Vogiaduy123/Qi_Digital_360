@@ -77,15 +77,35 @@ module.exports = {
         initialYaw: h.initial_yaw !== null && h.initial_yaw !== undefined ? Number(h.initial_yaw) : undefined,
         initialPitch: h.initial_pitch !== null && h.initial_pitch !== undefined ? Number(h.initial_pitch) : undefined
       })),
-      mediaHotspots: (r.media_hotspots || []).map(m => ({
-        yaw: Number(m.yaw),
-        pitch: Number(m.pitch),
-        title: m.title,
-        description: m.description,
-        mediaUrl: m.media_url,
-        mediaType: m.media_type,
-        highlightPolygon: m.highlight_polygon
-      })),
+      mediaHotspots: (r.media_hotspots || []).map(m => {
+        let mediaItems = null;
+        let iconUrl = m.icon_url || null;
+        let mediaUrl = m.media_url || '';
+        let mediaType = m.media_type || 'all';
+
+        if (mediaUrl && typeof mediaUrl === 'string' && (mediaUrl.startsWith('{') || mediaUrl.startsWith('{"'))) {
+          try {
+            const parsed = JSON.parse(mediaUrl);
+            mediaItems = parsed.mediaItems || parsed;
+            if (parsed.iconUrl) iconUrl = parsed.iconUrl;
+            if (parsed.mediaType) mediaType = parsed.mediaType;
+            if (parsed.mediaUrl) mediaUrl = parsed.mediaUrl;
+          } catch {}
+        }
+
+        return {
+          id: m.id,
+          yaw: Number(m.yaw),
+          pitch: Number(m.pitch),
+          title: m.title,
+          description: m.description,
+          mediaUrl: mediaUrl,
+          mediaType: mediaType,
+          iconUrl: iconUrl,
+          mediaItems: mediaItems,
+          highlightPolygon: m.highlight_polygon
+        };
+      }),
       mailHotspots: (r.mail_hotspots || []).map(ma => ({
         title: ma.title,
         recipient: ma.recipient,

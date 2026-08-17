@@ -604,17 +604,26 @@ router.post("/media/upload", uploadMediaWithJsonError, async (req, res) => {
 // Add media hotspot to room
 router.post("/rooms/:roomId/media-hotspots", async (req, res) => {
   const roomId = Number(req.params.roomId);
-  const { yaw, pitch, title, description, mediaUrl, mediaType, highlightPolygon } = req.body;
+  const { yaw, pitch, title, description, mediaUrl, mediaType, highlightPolygon, iconUrl, mediaItems } = req.body;
 
   if (yaw === undefined || yaw === null || yaw === "" ||
-      pitch === undefined || pitch === null || pitch === "" ||
-      title === undefined || title === null || title === "" ||
-      mediaType === undefined || mediaType === null || mediaType === "") {
-    return res.status(400).json({ success: false, error: "Missing required fields" });
+      pitch === undefined || pitch === null || pitch === "") {
+    return res.status(400).json({ success: false, error: "Tọa độ yaw và pitch là bắt buộc" });
   }
 
-  if (mediaType !== 'note' && (mediaUrl === undefined || mediaUrl === null || mediaUrl === "")) {
-    return res.status(400).json({ success: false, error: "mediaUrl is required for this media type" });
+  const cleanTitle = (title || "Tư liệu").trim();
+  const effectiveMediaType = mediaType || "all";
+
+  // Build composite payload if mediaItems or iconUrl are present
+  let finalMediaUrl = mediaUrl || null;
+  if (mediaItems || iconUrl) {
+    const payload = {
+      ...(mediaItems || {}),
+      iconUrl: iconUrl || undefined,
+      mediaUrl: mediaUrl || undefined,
+      mediaType: effectiveMediaType
+    };
+    finalMediaUrl = JSON.stringify(payload);
   }
 
   try {
@@ -627,10 +636,10 @@ router.post("/rooms/:roomId/media-hotspots", async (req, res) => {
       room_id: roomId,
       yaw: Number(yaw),
       pitch: Number(pitch),
-      title: title,
+      title: cleanTitle,
       description: description || "",
-      media_url: mediaUrl || null,
-      media_type: mediaType,
+      media_url: finalMediaUrl,
+      media_type: effectiveMediaType,
       highlight_polygon: highlightPolygon || null
     });
 
@@ -639,21 +648,10 @@ router.post("/rooms/:roomId/media-hotspots", async (req, res) => {
     await syncRoomToLocalJson(roomId);
 
     const user = req.user?.username || 'Admin';
-    const typeLabel = {
-      note: 'Ghi chú',
-      image: 'Hình ảnh',
-      pdf: 'PDF',
-      video: 'Video',
-      '3d': 'Model 3D',
-      gallery: 'Bộ sưu tập',
-      youtube: 'Youtube',
-      web: 'Trang web'
-    }[mediaType] || mediaType;
-
     await createNotification(
       'media_add',
       'Thêm điểm tư liệu',
-      `${user} đã thêm điểm tư liệu dạng ${typeLabel} với tiêu đề '${title}' tại phòng '${room.name}'`,
+      `${user} đã thêm điểm tư liệu với tiêu đề '${cleanTitle}' tại phòng '${room.name}'`,
       user
     ).catch(err => console.error("Error creating media hotspot notification:", err));
 
@@ -687,7 +685,7 @@ router.get("/rooms/:roomId/media-hotspots", async (req, res) => {
 router.patch("/rooms/:roomId/media-hotspots/:index", async (req, res) => {
   const roomId = Number(req.params.roomId);
   const index = Number(req.params.index);
-  const { yaw, pitch, title, description, mediaUrl, mediaType, highlightPolygon } = req.body;
+  const { yaw, pitch, title, description, mediaUrl, mediaType, highlightPolygon, iconUrl, mediaItems } = req.body;
 
   try {
     await ensureRoomHotspotsSynced(roomId);
@@ -711,8 +709,25 @@ router.patch("/rooms/:roomId/media-hotspots/:index", async (req, res) => {
     const mediaId = dbMedias[index].id;
     const oldMediaUrl = dbMedias[index].media_url;
 
+    // Build composite payload if mediaItems or iconUrl are present
+    let finalMediaUrl = mediaUrl;
+    if (mediaItems !== undefined || iconUrl !== undefined) {
+      let basePayload = {};
+      if (oldMediaUrl && typeof oldMediaUrl === 'string' && (oldMediaUrl.startsWith('{') || oldMediaUrl.startsWith('{"'))) {
+        try { basePayload = JSON.parse(oldMediaUrl); } catch {}
+      }
+      const payload = {
+        ...basePayload,
+        ...(mediaItems || {}),
+        ...(iconUrl !== undefined ? { iconUrl: iconUrl || undefined } : {}),
+        ...(mediaUrl !== undefined ? { mediaUrl: mediaUrl || undefined } : {}),
+        mediaType: mediaType || basePayload.mediaType || "all"
+      };
+      finalMediaUrl = JSON.stringify(payload);
+    }
+
     // Delete old file from Cloud Storage if updated with a new one
-    if (mediaUrl !== undefined && mediaUrl !== oldMediaUrl && oldMediaUrl) {
+    if (finalMediaUrl !== undefined && finalMediaUrl !== oldMediaUrl && oldMediaUrl && !oldMediaUrl.startsWith('{')) {
       const relativeCloudPath = oldMediaUrl.split(`/storage/v1/object/public/${BUCKET_NAME}/`)[1];
       if (relativeCloudPath) {
         await db.supabase.storage.from(BUCKET_NAME).remove([relativeCloudPath]).catch(() => {});
@@ -724,7 +739,7 @@ router.patch("/rooms/:roomId/media-hotspots/:index", async (req, res) => {
     if (pitch !== undefined) updates.pitch = Number(pitch);
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
-    if (mediaUrl !== undefined) updates.media_url = mediaUrl;
+    if (finalMediaUrl !== undefined) updates.media_url = finalMediaUrl;
     if (mediaType !== undefined) updates.media_type = mediaType;
     if (highlightPolygon !== undefined) updates.highlight_polygon = highlightPolygon;
 

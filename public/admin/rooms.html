@@ -491,64 +491,125 @@
 
   <!-- Media Hotspot Modal -->
   <div class="modal" id="mediaHotspotModal">
-    <div class="modal-content" style="max-width:600px;">
+    <div class="modal-content" style="max-width:680px;max-height:90vh;overflow-y:auto;">
       <div class="modal-header">
-        <h3>📁 Thêm Tư liệu</h3>
+        <h3 id="mediaModalTitle">📁 Thêm Tư liệu</h3>
         <button class="close-modal" type="button" onclick="closeMediaHotspotModal()">&times;</button>
       </div>
 
       <form id="mediaHotspotForm">
         <div class="form-group">
-          <label>Tiêu đề:</label>
-          <input type="text" id="mediaTitle" placeholder="Ví dụ: Tranh sơn mài..." required>
+          <label style="font-weight:600;">Tiêu đề tư liệu:</label>
+          <input type="text" id="mediaTitle" placeholder="Ví dụ: Tranh sơn mài, Giới thiệu phòng..." required>
         </div>
+        
         <div class="form-group">
-          <label>Mô tả:</label>
-          <textarea id="mediaDescription" rows="2" placeholder="Thông tin chi tiết..."></textarea>
-        </div>
-        <div class="form-group">
-          <label>Loại tư liệu:</label>
-          <select id="mediaType" required onchange="updateMediaUploadHint()">
-            <option value="">-- Chọn loại --</option>
-            <option value="image">🖼️ Hình ảnh</option>
-            <option value="pdf">📄 PDF</option>
-            <option value="video">🎥 Video</option>
-            <option value="3d">🧊 Mô hình 3D</option>
-            <option value="youtube">▶️ YouTube</option>
-            <option value="facebook">👍 Facebook</option>
-            <option value="web">🌐 Trang web</option>
-            <option value="note">ℹ️ Ghi chú</option>
-          </select>
+          <label style="font-weight:600;">Mô tả / Nội dung chi tiết:</label>
+          <textarea id="mediaDescription" rows="3" placeholder="Nội dung giới thiệu, ghi chú, thuyết minh..."></textarea>
         </div>
 
-        <div id="fileUploadSection" class="form-group">
-          <label>Upload file:</label>
-          <div style="background:rgba(255,255,255,0.04);border:2px dashed rgba(37,99,235,0.4);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:border-color 0.2s;" onclick="document.getElementById('mediaFileInput').click()" onmouseover="this.style.borderColor='rgba(37,99,235,0.7)'" onmouseout="this.style.borderColor='rgba(37,99,235,0.4)'">
-            <div style="font-size:28px;margin-bottom:8px;">📁</div>
-            <div id="mediaUploadHint" style="color:var(--accent-light);font-weight:600;font-size:13px;">Chọn file</div>
-            <div id="mediaFileInfo" style="color:var(--text-muted);font-size:11px;margin-top:6px;"></div>
+        <!-- Custom Icon Section -->
+        <div class="form-group" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px;margin-bottom:15px;">
+          <label style="font-weight:600;display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:6px;">
+            🖼️ Icon Hotspot tùy chỉnh (Tải ảnh từ máy hoặc dán link URL):
+          </label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="mediaHotspotIconUrl" placeholder="https://... hoặc tải ảnh từ file..." style="flex:1;font-size:13px;">
+            <label class="btn btn-small btn-edit" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;" title="Tải icon từ máy tính">
+              📁 Tải icon
+              <input type="file" id="mediaHotspotIconFile" accept="image/*" style="display:none;" onchange="handleMediaIconFileSelect(event)">
+            </label>
+            <button type="button" class="btn btn-small" id="mediaClearIconBtn" onclick="clearMediaHotspotIcon()" style="margin:0;display:none;background:#ef4444;color:#fff;padding:8px 12px;" title="Xóa icon tùy chỉnh">✕</button>
           </div>
-          <input type="file" id="mediaFileInput" style="display:none;" onchange="handleMediaFileSelect(event)">
+          <div id="mediaIconPreviewContainer" style="display:none;align-items:center;gap:10px;margin-top:8px;padding:6px 10px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:6px;">
+            <img id="mediaIconPreview" src="" alt="Icon preview" style="width:28px;height:28px;object-fit:contain;border-radius:4px;background:#ffffff;">
+            <span id="mediaIconFileInfo" style="font-size:12px;color:var(--text-muted);"></span>
+          </div>
         </div>
 
-        <div id="linkInputSection" class="form-group" style="display:none;">
-          <label>Link URL:</label>
-          <input type="text" id="mediaUrl" placeholder="https://www.youtube.com/watch?v=...">
+        <div style="font-weight:700;color:var(--accent-light);font-size:13px;margin:15px 0 10px 0;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:6px;">
+          📂 ĐÍNH KÈM TƯ LIỆU ĐA PHƯƠNG TIỆN <span style="font-size:11px;font-weight:400;color:var(--text-muted);">(Mục nào để trống sẽ tự động không hiển thị)</span>
         </div>
 
-        <!-- Hidden Yaw and Pitch fields for media hotspots as they are edited via drag and drop now -->
+        <!-- 1. Image / Gallery Section -->
+        <div class="form-group" style="margin-bottom:14px;">
+          <label style="font-size:13px;font-weight:600;">🖼️ Hình ảnh / Bộ sưu tập ảnh:</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+            <input type="text" id="mediaImagesUrl" placeholder="Link ảnh hoặc nhiều link cách nhau bởi dấu phẩy..." style="flex:1;font-size:13px;">
+            <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;" title="Tải nhiều ảnh từ máy">
+              📁 Tải ảnh
+              <input type="file" id="mediaImagesFilesInput" accept="image/*" multiple style="display:none;" onchange="handleMediaImagesSelect(event)">
+            </label>
+          </div>
+          <div id="mediaImagesListInfo" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+        </div>
+
+        <!-- 2. PDF Document Section -->
+        <div class="form-group" style="margin-bottom:14px;">
+          <label style="font-size:13px;font-weight:600;">📄 Tài liệu PDF:</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+            <input type="text" id="mediaPdfUrl" placeholder="https://.../document.pdf hoặc tải file..." style="flex:1;font-size:13px;">
+            <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;">
+              📁 Tải PDF
+              <input type="file" id="mediaPdfFileInput" accept=".pdf,application/pdf" style="display:none;" onchange="handleMediaPdfSelect(event)">
+            </label>
+          </div>
+          <div id="mediaPdfFileInfo" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+        </div>
+
+        <!-- 3. Video Section -->
+        <div class="form-group" style="margin-bottom:14px;">
+          <label style="font-size:13px;font-weight:600;">🎥 Video (MP4 / WebM):</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+            <input type="text" id="mediaVideoUrl" placeholder="https://.../video.mp4 hoặc tải file..." style="flex:1;font-size:13px;">
+            <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;">
+              📁 Tải Video
+              <input type="file" id="mediaVideoFileInput" accept="video/mp4,video/webm,video/*" style="display:none;" onchange="handleMediaVideoSelect(event)">
+            </label>
+          </div>
+          <div id="mediaVideoFileInfo" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+        </div>
+
+        <!-- 4. YouTube Section -->
+        <div class="form-group" style="margin-bottom:14px;">
+          <label style="font-size:13px;font-weight:600;">▶️ Link Video YouTube:</label>
+          <input type="text" id="mediaYoutubeUrl" placeholder="https://www.youtube.com/watch?v=... hoặc https://youtu.be/..." style="font-size:13px;">
+        </div>
+
+        <!-- 5. 3D Model Section -->
+        <div class="form-group" style="margin-bottom:14px;">
+          <label style="font-size:13px;font-weight:600;">🧊 Mô hình 3D (.glb, .gltf):</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+            <input type="text" id="media3dUrl" placeholder="https://.../model.glb hoặc tải file..." style="flex:1;font-size:13px;">
+            <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;">
+              📁 Tải 3D (.glb)
+              <input type="file" id="media3dFileInput" accept=".glb,.gltf" style="display:none;" onchange="handleMedia3dSelect(event)">
+            </label>
+          </div>
+          <div id="media3dFileInfo" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+        </div>
+
+        <!-- 6. Facebook Section -->
+        <div class="form-group" style="margin-bottom:14px;">
+          <label style="font-size:13px;font-weight:600;">👍 Link Facebook (Bài viết / Video / Trang):</label>
+          <input type="text" id="mediaFacebookUrl" placeholder="https://www.facebook.com/..." style="font-size:13px;">
+        </div>
+
+        <!-- 7. Web Link Section -->
+        <div class="form-group" style="margin-bottom:16px;">
+          <label style="font-size:13px;font-weight:600;">🌐 Liên kết Trang web / Iframe ngoài:</label>
+          <input type="text" id="mediaWebUrl" placeholder="https://example.com/..." style="font-size:13px;">
+        </div>
+
+        <!-- Hidden Yaw and Pitch fields -->
         <div style="display: none;">
-          <div class="form-group">
-            <label>Góc Yaw (-180 - 180°):</label>
-            <input type="number" id="mediaYaw" min="-180" max="180" step="0.01">
-          </div>
-          <div class="form-group">
-            <label>Góc Pitch (-90 - 90°):</label>
-            <input type="number" id="mediaPitch" min="-90" max="90" step="0.01">
-          </div>
+          <input type="number" id="mediaYaw" min="-180" max="180" step="0.01" value="0">
+          <input type="number" id="mediaPitch" min="-90" max="90" step="0.01" value="0">
+          <input type="hidden" id="mediaType" value="all">
+          <input type="hidden" id="mediaUrl" value="">
         </div>
 
-        <div id="polygonHighlightSection" style="display:none;margin-bottom:16px;">
+        <div id="polygonHighlightSection" style="margin-bottom:16px;">
           <label style="display:block;margin-bottom:6px;font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">
             🔷 Vùng Highlight 3D (tùy chọn)
           </label>
