@@ -54,11 +54,14 @@
       }
     }
 
-    function applyCustomIconToHotspotElement(element, type) {
+    function applyCustomIconToHotspotElement(element, type, directIconUrl) {
       if (!element) return;
-      const key = type === 'nav' ? 'nav_arrow' : 'media_' + type;
-      const iconKey = (type === 'sensor' || type === 'camera') ? type : key;
-      const customIcon = customIcons && customIcons[iconKey];
+      let customIcon = directIconUrl;
+      if (!customIcon) {
+        const key = type === 'nav' ? 'nav_arrow' : 'media_' + type;
+        const iconKey = (type === 'sensor' || type === 'camera') ? type : key;
+        customIcon = customIcons && customIcons[iconKey];
+      }
       if (customIcon) {
         element.style.setProperty('background', 'none', 'important');
         element.style.backgroundImage = `url(${customIcon})`;
@@ -1846,7 +1849,8 @@
         const bg = isCamera ? '#2196f3' : '#FF6B6B';
 
         const customIconKey = isCamera ? 'camera' : 'sensor';
-        const customIconUrl = customIcons && customIcons[customIconKey];
+        const sensorSpecificIcon = !isCamera ? (sensor.iconUrl || sensor.sensors?.iconUrl) : null;
+        const customIconUrl = sensorSpecificIcon || (customIcons && customIcons[customIconKey]);
         const defaultIcon = isCamera ? (isWebcam ? '💻' : '📹') : '🌡️';
         const iconHtml = customIconUrl
           ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;">`
@@ -1864,7 +1868,7 @@
             div.innerHTML = `<span style="background: #ffffff; color: #1f2937; border: 1px solid rgba(0,0,0,0.08); border-left: 4px solid ${bg}; padding: 8px 12px; border-radius: 6px; font-size: 12px; display: inline-flex; align-items: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">${iconHtml}${labelText}</span>`;
             const parent = div.parentElement;
             if (parent) {
-              applyCustomIconToHotspotElement(parent, isCamera ? 'camera' : 'sensor');
+              applyCustomIconToHotspotElement(parent, isCamera ? 'camera' : 'sensor', sensorSpecificIcon);
             }
           },
           clickHandlerFunc: function () {
@@ -3001,6 +3005,7 @@
       sensorModalTitle.textContent = '🌡️ Thêm Thiết bị IoT';
 
       sensorForm.reset();
+      clearSensorIcon();
       await loadAllDbSensors();
       const telemetryInfo = document.getElementById('dbTelemetryInfo');
       if (telemetryInfo) {
@@ -3438,6 +3443,60 @@
     const sensorModalTitle = document.getElementById('sensorModalTitle');
     let currentRoomApiConfig = null;
 
+    const sensorIconUrlInput = document.getElementById('sensorIconUrl');
+    const sensorIconFileInput = document.getElementById('sensorIconFile');
+    const sensorIconPreviewContainer = document.getElementById('sensorIconPreviewContainer');
+    const sensorIconPreview = document.getElementById('sensorIconPreview');
+    const sensorIconFileInfo = document.getElementById('sensorIconFileInfo');
+    const sensorClearIconBtn = document.getElementById('sensorClearIconBtn');
+    let selectedSensorIconFile = null;
+
+    function updateSensorIconPreview(url, fileName) {
+      if (url) {
+        if (sensorIconPreview) sensorIconPreview.src = url;
+        if (sensorIconPreviewContainer) sensorIconPreviewContainer.style.display = 'flex';
+        if (sensorIconFileInfo) sensorIconFileInfo.textContent = fileName ? `File: ${fileName}` : 'Đang dùng icon tùy chỉnh';
+        if (sensorClearIconBtn) sensorClearIconBtn.style.display = 'inline-block';
+      } else {
+        if (sensorIconPreview) sensorIconPreview.src = '';
+        if (sensorIconPreviewContainer) sensorIconPreviewContainer.style.display = 'none';
+        if (sensorIconFileInfo) sensorIconFileInfo.textContent = '';
+        if (sensorClearIconBtn) sensorClearIconBtn.style.display = 'none';
+      }
+    }
+
+    function clearSensorIcon() {
+      selectedSensorIconFile = null;
+      if (sensorIconFileInput) sensorIconFileInput.value = '';
+      if (sensorIconUrlInput) sensorIconUrlInput.value = '';
+      updateSensorIconPreview('', '');
+    }
+    window.clearSensorIcon = clearSensorIcon;
+
+    if (sensorIconFileInput) {
+      sensorIconFileInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          selectedSensorIconFile = file;
+          const objectUrl = URL.createObjectURL(file);
+          updateSensorIconPreview(objectUrl, file.name);
+        }
+      });
+    }
+
+    if (sensorIconUrlInput) {
+      sensorIconUrlInput.addEventListener('input', () => {
+        const url = (sensorIconUrlInput.value || '').trim();
+        if (url) {
+          selectedSensorIconFile = null;
+          if (sensorIconFileInput) sensorIconFileInput.value = '';
+          updateSensorIconPreview(url, '');
+        } else if (!selectedSensorIconFile) {
+          updateSensorIconPreview('', '');
+        }
+      });
+    }
+
     const cameraStreamUrlInput = document.getElementById('cameraStreamUrl');
     if (cameraStreamUrlInput) {
       cameraStreamUrlInput.addEventListener('change', () => {
@@ -3526,7 +3585,8 @@
         } else {
           // Render environment sensor
           const defaultIcon = '🌡️';
-          const customIconUrl = customIcons && customIcons.sensor;
+          const sensorSpecificIcon = sensor.iconUrl || sensor.sensors?.iconUrl;
+          const customIconUrl = sensorSpecificIcon || (customIcons && customIcons.sensor);
           const iconHtml = customIconUrl 
             ? `<img src="${customIconUrl}" style="width:16px;height:16px;object-fit:contain;vertical-align:middle;margin-right:6px;border-radius:4px;">` 
             : defaultIcon + ' ';
@@ -3666,6 +3726,10 @@
             document.getElementById('sensorGrafanaUrl').value = sensor.sensors.grafanaUrl;
           }
 
+          const iconUrl = sensor.iconUrl || sensor.sensors?.iconUrl || '';
+          if (sensorIconUrlInput) sensorIconUrlInput.value = iconUrl;
+          updateSensorIconPreview(iconUrl, '');
+
           telemetryInfo.innerHTML = parts.length > 0
             ? parts.join('<br>') + `<div style="font-size:11px;color:#64748b;margin-top:6px;">⏰ Lần cập nhật cuối: ${sensor.lastUpdate ? new Date(sensor.lastUpdate).toLocaleString('vi-VN') : 'Mới khởi tạo'}</div>`
             : '<span style="color:#64748b;">Thiết bị này chưa gửi dữ liệu telemetry. Khi thiết bị đo đạc từ bên ngoài, dữ liệu sẽ tự động hiển thị.</span>';
@@ -3679,6 +3743,7 @@
       selectedDbSensorId = null;
       setAddSensorPositionMode(false);
       sensorForm.reset();
+      clearSensorIcon();
       const dbSelect = document.getElementById('dbSensorSelect');
       if (dbSelect) dbSelect.value = '';
       const telemetryInfo = document.getElementById('dbTelemetryInfo');
@@ -3701,6 +3766,20 @@
       const sensorType = document.getElementById('sensorType').value;
       console.log('📝 Sensor Type:', sensorType);
 
+      let sensorIconUrl = sensorIconUrlInput ? sensorIconUrlInput.value.trim() : '';
+      if (sensorType === 'environment' && selectedSensorIconFile) {
+        if (sensorIconFileInfo) sensorIconFileInfo.textContent = 'Đang tải icon lên...';
+        try {
+          sensorIconUrl = await uploadHotspotIconFile(selectedSensorIconFile);
+          if (sensorIconUrlInput) sensorIconUrlInput.value = sensorIconUrl;
+          if (sensorIconFileInfo) sensorIconFileInfo.textContent = `Đã upload: ${selectedSensorIconFile.name}`;
+        } catch (uploadErr) {
+          alert('Tải ảnh icon cảm biến thất bại: ' + uploadErr.message);
+          if (sensorIconFileInfo) sensorIconFileInfo.textContent = '';
+          return;
+        }
+      }
+
       let sensorData = {
         name: document.getElementById('sensorName').value,
         roomId: selectedRoomId,
@@ -3708,7 +3787,8 @@
         position: {
           yaw: Number(document.getElementById('sensorYaw').value || 0),
           pitch: Number(document.getElementById('sensorPitch').value || 0)
-        }
+        },
+        iconUrl: sensorType === 'environment' ? (sensorIconUrl || null) : null
       };
 
       const selectedDbVal = document.getElementById('dbSensorSelect')?.value;
@@ -3811,6 +3891,7 @@
       toggleSensorFields();
 
       if (sensor.type === 'camera') {
+        clearSensorIcon();
         // Fill camera fields
         const isWebcam = sensor.camera?.streamUrl === 'webcam://0';
         document.getElementById('useWebcam').checked = isWebcam;
@@ -3828,6 +3909,10 @@
         }
       } else {
         // Fill environment sensor telemetry preview
+        const iconUrl = sensor.iconUrl || sensor.sensors?.iconUrl || '';
+        if (sensorIconUrlInput) sensorIconUrlInput.value = iconUrl;
+        updateSensorIconPreview(iconUrl, '');
+
         const telemetryInfo = document.getElementById('dbTelemetryInfo');
         if (telemetryInfo) {
           const temp = sensor.sensors?.temperature?.value ?? sensor.sensors?.temperature;

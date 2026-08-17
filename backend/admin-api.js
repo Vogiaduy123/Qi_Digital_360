@@ -1145,6 +1145,16 @@ router.delete("/users/:id", requireRole("admin"), async (req, res) => {
 });
 
 /* ===== INVITATION ROUTES (ADMIN ONLY) ===== */
+function getInviteBaseUrl(req) {
+  const customUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL;
+  if (customUrl) {
+    return customUrl.replace(/\/+$/, "");
+  }
+  const protocol = req.protocol || "http";
+  const host = req.get("host") || "localhost:3000";
+  return `${protocol}://${host}`;
+}
+
 router.get("/invitations", requireRole("admin"), async (req, res) => {
   try {
     const list = await db.getInvitations();
@@ -1182,9 +1192,8 @@ router.post("/invitations", requireRole("admin"), async (req, res) => {
     invitations.push(newInvite);
     await db.saveInvitations(invitations);
 
-    const protocol = req.protocol || "http";
-    const host = req.get("host") || "localhost:3000";
-    const inviteLink = `${protocol}://${host}/admin/invite-register.html?token=${token}`;
+    const baseUrl = getInviteBaseUrl(req);
+    const inviteLink = `${baseUrl}/admin/invite-register.html?token=${token}`;
 
     let emailSent = false;
     let emailError = null;
@@ -1254,9 +1263,8 @@ router.post("/invitations/:id/resend", requireRole("admin"), async (req, res) =>
     inv.used = false;
     await db.saveInvitations(invitations);
 
-    const protocol = req.protocol || "http";
-    const host = req.get("host") || "localhost:3000";
-    const inviteLink = `${protocol}://${host}/admin/invite-register.html?token=${inv.token}`;
+    const baseUrl = getInviteBaseUrl(req);
+    const inviteLink = `${baseUrl}/admin/invite-register.html?token=${inv.token}`;
 
     let emailSent = false;
     let emailError = null;

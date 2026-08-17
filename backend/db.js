@@ -213,7 +213,8 @@ module.exports = {
           pitch: Number(s.pitch)
         },
         lastUpdate: s.last_update,
-        color: s.color || undefined
+        color: s.color || undefined,
+        iconUrl: s.icon_url || s.data?.iconUrl || null
       };
       
       // Parse sensors value or camera data
@@ -221,13 +222,20 @@ module.exports = {
         result.camera = s.data || {};
       } else {
         result.sensors = s.data || {};
+        if (s.data?.iconUrl) {
+          result.iconUrl = s.data.iconUrl;
+        }
       }
       return result;
     });
   },
 
   async insertSensor(sensor) {
-    const data = sensor.type === 'camera' ? sensor.camera : sensor.sensors;
+    const rawData = sensor.type === 'camera' ? sensor.camera : sensor.sensors;
+    const data = {
+      ...(rawData || {}),
+      ...(sensor.iconUrl ? { iconUrl: sensor.iconUrl } : {})
+    };
     const { error } = await supabase.from('sensors').insert({
       id: Number(sensor.id),
       name: sensor.name,
@@ -254,8 +262,18 @@ module.exports = {
     if (sensor.lastUpdate !== undefined) mapped.last_update = sensor.lastUpdate;
     if (sensor.color !== undefined) mapped.color = sensor.color;
     
-    const data = sensor.type === 'camera' ? sensor.camera : sensor.sensors;
-    if (data !== undefined) mapped.data = data;
+    const rawData = sensor.type === 'camera' ? sensor.camera : sensor.sensors;
+    if (rawData !== undefined || sensor.iconUrl !== undefined) {
+      const dataObj = (typeof rawData === 'object' && rawData !== null) ? { ...rawData } : {};
+      if (sensor.iconUrl !== undefined) {
+        if (sensor.iconUrl) {
+          dataObj.iconUrl = sensor.iconUrl;
+        } else {
+          delete dataObj.iconUrl;
+        }
+      }
+      mapped.data = dataObj;
+    }
 
     console.log(`🔄 [db.updateSensor] Updating sensor ID=${id} with mapped data:`, mapped);
 

@@ -669,8 +669,9 @@ export function addSensorHotspots(roomId) {
     const iconEl = document.createElement("span");
     iconEl.className = "sensor-hotspot-icon";
     
+    const sensorSpecificIcon = !isCamera ? (sensor.iconUrl || sensor.sensors?.iconUrl) : null;
     const customCameraIcon = window.customIcons && window.customIcons.camera;
-    const customSensorIcon = window.customIcons && window.customIcons.sensor;
+    const customSensorIcon = sensorSpecificIcon || (window.customIcons && window.customIcons.sensor);
 
     if (isCamera && customCameraIcon) {
       iconEl.textContent = "";

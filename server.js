@@ -16,6 +16,7 @@ const { getNotifications, createNotification } = require("./backend/notification
 const adminRoutes = require("./backend/admin-api");
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 3000;
 const DEFAULT_UPLOADS_DIR = path.join(__dirname, "uploads");
 const RAW_UPLOAD_DIR = String(process.env.UPLOAD_DIR || "").trim();
@@ -872,7 +873,7 @@ app.get("/api/sensors/:id", async (req, res) => {
 
 app.put("/api/sensors/:id", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const sensorId = req.params.id;
-  const { name, roomId, position, sensors: envSensors, type, camera } = req.body;
+  const { name, roomId, position, sensors: envSensors, type, camera, iconUrl } = req.body;
 
   try {
     const allSensors = await getSensors();
@@ -884,13 +885,14 @@ app.put("/api/sensors/:id", authMiddleware, requireRole("admin", "collaborator")
     if (name) updates.name = name;
     if (roomId !== undefined) updates.roomId = roomId;
     if (position) { updates.position = position; }
+    if (iconUrl !== undefined) updates.iconUrl = iconUrl;
     if (isCamera && camera) updates.camera = camera;
     else if (!isCamera && envSensors) updates.sensors = envSensors;
     updates.lastUpdate = new Date().toISOString();
 
     await db.updateSensor(sensorId, updates);
     await broadcastSensors();
-    const updated = (await getSensors()).find(s => Number(s.id) === sensorId);
+    const updated = (await getSensors()).find(s => String(s.id) === String(sensorId) || Number(s.id) === Number(sensorId));
     res.json({ success: true, sensor: updated });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -898,7 +900,7 @@ app.put("/api/sensors/:id", authMiddleware, requireRole("admin", "collaborator")
 });
 
 app.post("/api/sensors", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
-  const { name, roomId, position, sensors, type, camera } = req.body;
+  const { name, roomId, position, sensors, type, camera, iconUrl } = req.body;
   if (!name || !roomId) return res.status(400).json({ success: false, error: "Missing required fields" });
 
   try {
@@ -909,6 +911,7 @@ app.post("/api/sensors", authMiddleware, requireRole("admin", "collaborator"), a
       position: position || { yaw: 0, pitch: 0 },
       lastUpdate: new Date().toISOString(),
       color: type === "camera" ? "#2196F3" : "#4CAF50",
+      iconUrl: iconUrl || null,
       ...(type === "camera" ? { camera: camera || {} } : { sensors: sensors || {} })
     };
     await db.insertSensor(newSensor);
