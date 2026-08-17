@@ -195,7 +195,7 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
   content.className = "media-overlay-content";
   content.style.display = "flex";
   content.style.flexDirection = "column";
-  content.style.gap = "14px";
+  content.style.gap = "8px";
 
   let hasAnyContent = false;
 
@@ -205,8 +205,11 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
     const desc = document.createElement("div");
     desc.className = "media-overlay-description";
     desc.style.whiteSpace = "pre-wrap";
-    desc.style.lineHeight = "1.6";
-    desc.style.fontSize = "13px";
+    desc.style.lineHeight = "1.5";
+    desc.style.fontSize = "12px";
+    desc.style.maxHeight = "80px";
+    desc.style.overflowY = "auto";
+    desc.style.padding = "6px 10px";
     desc.textContent = media.description;
     content.appendChild(desc);
   }
@@ -221,18 +224,19 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
     const galleryWrapper = document.createElement("div");
     galleryWrapper.style.position = "relative";
     galleryWrapper.style.width = "100%";
-    galleryWrapper.style.maxHeight = "210px";
+    galleryWrapper.style.maxHeight = "150px";
+    galleryWrapper.style.height = "150px";
     galleryWrapper.style.display = "flex";
     galleryWrapper.style.alignItems = "center";
     galleryWrapper.style.justifyContent = "center";
-    galleryWrapper.style.background = "rgba(0,0,0,0.35)";
+    galleryWrapper.style.background = "rgba(0,0,0,0.4)";
     galleryWrapper.style.borderRadius = "8px";
     galleryWrapper.style.overflow = "hidden";
 
     let currentIndex = 0;
     const img = new Image();
     img.src = normalizeMediaUrl(images[0]);
-    img.style.maxHeight = "210px";
+    img.style.maxHeight = "150px";
     img.style.maxWidth = "100%";
     img.style.objectFit = "contain";
     img.style.borderRadius = "6px";
@@ -245,11 +249,11 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
       counter.style.position = "absolute";
       counter.style.bottom = "6px";
       counter.style.right = "6px";
-      counter.style.background = "rgba(0,0,0,0.7)";
+      counter.style.background = "rgba(0,0,0,0.75)";
       counter.style.color = "#fff";
-      counter.style.fontSize = "11px";
+      counter.style.fontSize = "10px";
       counter.style.padding = "2px 6px";
-      counter.style.borderRadius = "8px";
+      counter.style.borderRadius = "6px";
       counter.textContent = `1 / ${images.length}`;
       galleryWrapper.appendChild(counter);
 
@@ -262,8 +266,8 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
         btn.style.color = "white";
         btn.style.border = "none";
         btn.style.borderRadius = "50%";
-        btn.style.width = "28px";
-        btn.style.height = "28px";
+        btn.style.width = "26px";
+        btn.style.height = "26px";
         btn.style.cursor = "pointer";
         btn.style.zIndex = "10";
         btn.style.display = "flex";
@@ -302,7 +306,7 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
     video.controls = true;
     video.src = normalizeMediaUrl(videoUrl);
     video.style.width = "100%";
-    video.style.maxHeight = "200px";
+    video.style.maxHeight = "150px";
     video.style.borderRadius = "8px";
     content.appendChild(video);
   }
@@ -315,18 +319,14 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
       hasAnyContent = true;
       const iframeWrapper = document.createElement("div");
       iframeWrapper.style.width = "100%";
-      iframeWrapper.style.position = "relative";
-      iframeWrapper.style.paddingBottom = "56.25%";
-      iframeWrapper.style.height = "0";
+      iframeWrapper.style.height = "150px";
       iframeWrapper.style.overflow = "hidden";
       iframeWrapper.style.borderRadius = "8px";
+      iframeWrapper.style.position = "relative";
 
       const iframe = document.createElement("iframe");
       iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=0`;
       iframe.title = media.title || "YouTube Video";
-      iframe.style.position = "absolute";
-      iframe.style.top = "0";
-      iframe.style.left = "0";
       iframe.style.width = "100%";
       iframe.style.height = "100%";
       iframe.style.border = "none";
@@ -345,7 +345,7 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
     const modelWrapper = document.createElement("div");
     modelWrapper.style.position = "relative";
     modelWrapper.style.width = "100%";
-    modelWrapper.style.height = "200px";
+    modelWrapper.style.height = "150px";
     modelWrapper.style.borderRadius = "8px";
     modelWrapper.style.overflow = "hidden";
     modelWrapper.style.background = "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)";

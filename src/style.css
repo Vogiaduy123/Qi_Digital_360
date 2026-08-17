@@ -835,25 +835,26 @@ body.admin #pano>* {
 /* Overlay media hotspot (theo cơ chế định vị của Marzipano) */
 .media-hotspot-overlay {
   position: relative;
-  width: min(390px, 88vw);
-  max-width: 410px;
-  background: rgba(15, 23, 42, 0.94);
+  width: min(340px, 85vw);
+  max-width: 350px;
+  background: rgba(15, 23, 42, 0.96);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   color: #f8fafc;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 18px rgba(37, 99, 235, 0.25);
-  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 16px rgba(37, 99, 235, 0.25);
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   pointer-events: auto;
   z-index: 50;
-  max-height: min(460px, 75vh);
+  max-height: min(360px, 55vh);
   overflow-y: auto;
+  box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 .media-hotspot-overlay::-webkit-scrollbar {
@@ -863,7 +864,7 @@ body.admin #pano>* {
   background: transparent;
 }
 .media-hotspot-overlay::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.3);
   border-radius: 4px;
 }
 
@@ -871,13 +872,13 @@ body.admin #pano>* {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .media-overlay-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #fff;
   margin: 0;
@@ -887,14 +888,16 @@ body.admin #pano>* {
 }
 
 .media-overlay-description {
-  font-size: 13px;
+  font-size: 12px;
   color: #cbd5e1;
   margin: 0;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  line-height: 1.5;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  line-height: 1.4;
+  max-height: 80px;
+  overflow-y: auto;
 }
 
 .media-overlay-content {
