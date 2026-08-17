@@ -625,18 +625,19 @@ body.admin #pano>* {
 .media-doc-hotspot .info-hotspot-header {
   min-width: 42px;
   height: 42px;
-  border-radius: 24px !important;
-  background: rgba(15, 23, 42, 0.88);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 2px solid rgba(59, 130, 246, 0.65);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 10px rgba(59, 130, 246, 0.3);
+  border-radius: 50% !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
   display: flex;
   align-items: center;
-  padding: 2px;
+  padding: 0 !important;
+  box-sizing: border-box;
 }
 
 .mobile .info-hotspot .info-hotspot-header,
@@ -649,7 +650,11 @@ body.admin #pano>* {
 .mobile .media-doc-hotspot .info-hotspot-header {
   min-width: 46px;
   height: 46px;
-  border-radius: 24px !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 
 .desktop.no-touch .info-hotspot .info-hotspot-header:hover,
@@ -663,9 +668,9 @@ body.admin #pano>* {
 .desktop.no-touch .media-doc-hotspot .info-hotspot-header:hover {
   width: 260px;
   border-radius: 24px !important;
-  border-color: #60a5fa;
-  background: rgba(15, 23, 42, 0.96);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(59, 130, 246, 0.6);
+  background: rgba(15, 23, 42, 0.92) !important;
+  border: none !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
   transform: scale(1.05);
 }
 
@@ -695,10 +700,10 @@ body.admin #pano>* {
 }
 
 .media-doc-hotspot .info-hotspot-icon-wrapper {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 50% !important;
-  background: rgba(59, 130, 246, 0.15) !important;
+  background: transparent !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -713,9 +718,25 @@ body.admin #pano>* {
   height: 50px;
 }
 
-.info-hotspot .info-hotspot-icon,
-.note-hotspot .info-hotspot-icon,
-.media-doc-hotspot .info-hotspot-icon {
+.mobile .media-doc-hotspot .info-hotspot-icon-wrapper {
+  width: 46px;
+  height: 46px;
+}
+
+.info-hotspot img.info-hotspot-icon,
+.note-hotspot img.info-hotspot-icon,
+.media-doc-hotspot img.info-hotspot-icon {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
+  display: block;
+}
+
+.info-hotspot svg.info-hotspot-icon,
+.note-hotspot svg.info-hotspot-icon,
+.media-doc-hotspot svg.info-hotspot-icon {
   width: 22px !important;
   height: 22px !important;
   margin: 0 !important;
@@ -1538,6 +1559,15 @@ body.admin #pano>* {
   font-size: 20px;
   line-height: 1;
   pointer-events: none;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.sensor-hotspot-icon img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
 }
 
 .sensor-hotspot-badge {
