@@ -999,6 +999,96 @@ router.post("/buildings", async (req, res) => {
   }
 });
 
+// UPDATE building (name)
+const updateBuildingHandler = async (req, res) => {
+  const bldgId = req.params.id;
+  const { name } = req.body;
+  if (!name || String(name).trim() === "") {
+    return res.status(400).json({ success: false, error: "Building name is required" });
+  }
+
+  try {
+    const buildings = await db.getBuildings();
+    const bldg = buildings.find(b => b.id === bldgId);
+    if (!bldg) {
+      return res.status(404).json({ success: false, error: "Building not found" });
+    }
+
+    const updatedName = String(name).trim();
+    await db.updateBuilding(bldgId, { name: updatedName });
+
+    const user = req.user?.username || 'Admin';
+    await createNotification(
+      'building_update',
+      'Đổi tên phân khu',
+      `${user} đã đổi tên phân khu '${bldg.name}' thành '${updatedName}'`,
+      user
+    ).catch(err => console.error("Error creating building update notification:", err));
+
+    res.json({ success: true, building: { ...bldg, name: updatedName } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+router.put("/buildings/:id", updateBuildingHandler);
+router.patch("/buildings/:id", updateBuildingHandler);
+
+// ASSIGN rooms to building
+router.post("/buildings/:id/assign-rooms", async (req, res) => {
+  const bldgId = req.params.id;
+  const rawRoomIds = req.body.roomIds;
+
+  if (!Array.isArray(rawRoomIds)) {
+    return res.status(400).json({ success: false, error: "roomIds must be an array" });
+  }
+
+  const targetRoomIds = new Set(rawRoomIds.map(id => Number(id)));
+
+  try {
+    const buildings = await db.getBuildings();
+    const bldg = buildings.find(b => b.id === bldgId);
+    if (!bldg) {
+      return res.status(404).json({ success: false, error: "Building not found" });
+    }
+
+    const allRooms = await db.getRooms();
+    const errors = [];
+
+    for (const room of allRooms) {
+      const roomId = Number(room.id);
+      const isSelected = targetRoomIds.has(roomId);
+      const currentlyInBldg = room.buildingId === bldgId;
+
+      if (isSelected && !currentlyInBldg) {
+        try {
+          await db.updateRoom(roomId, { buildingId: bldgId });
+        } catch (err) {
+          errors.push(`Phòng "${room.name}": ${err.message}`);
+        }
+      } else if (!isSelected && currentlyInBldg) {
+        try {
+          await db.updateRoom(roomId, { buildingId: null });
+        } catch (err) {
+          errors.push(`Phòng "${room.name}": ${err.message}`);
+        }
+      }
+    }
+
+    const user = req.user?.username || 'Admin';
+    await createNotification(
+      'building_assign',
+      'Gán phòng vào phân khu',
+      `${user} đã cập nhật danh sách phòng cho phân khu '${bldg.name}'`,
+      user
+    ).catch(err => console.error("Error creating building assign notification:", err));
+
+    res.json({ success: true, errors: errors.length > 0 ? errors : undefined });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // DELETE building
 router.delete("/buildings/:id", async (req, res) => {
   const bldgId = req.params.id;
@@ -1007,6 +1097,14 @@ router.delete("/buildings/:id", async (req, res) => {
     const buildings = await db.getBuildings();
     const bldg = buildings.find(b => b.id === bldgId);
     const bldgName = bldg ? bldg.name : bldgId;
+
+    // Unassign rooms from this building
+    const allRooms = await db.getRooms();
+    for (const room of allRooms) {
+      if (room.buildingId === bldgId) {
+        await db.updateRoom(room.id, { buildingId: null }).catch(() => {});
+      }
+    }
 
     await db.deleteBuilding(bldgId);
 

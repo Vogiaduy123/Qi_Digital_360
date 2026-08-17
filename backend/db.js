@@ -204,6 +204,17 @@ module.exports = {
     if (error) throw error;
   },
 
+  async updateBuilding(id, updates) {
+    const mapped = {};
+    if (updates.name !== undefined) mapped.name = String(updates.name).trim();
+
+    const { error } = await supabase
+      .from('buildings')
+      .update(mapped)
+      .eq('id', id);
+    if (error) throw error;
+  },
+
   async deleteBuilding(id) {
     const { error } = await supabase
       .from('buildings')
