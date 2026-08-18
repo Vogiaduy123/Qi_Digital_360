@@ -574,6 +574,12 @@ body {
   opacity: 0;
   transition: opacity 0.15s;
   padding: 0 4px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.room-drag-handle svg {
+  pointer-events: none;
 }
 
 .room-drag-handle:active {

@@ -937,16 +937,16 @@
               return;
             }
 
-            const allItems = [...list.querySelectorAll('.room-item')];
-            const srcIdx = allItems.indexOf(globalDragSrc);
-            const dstIdx = allItems.indexOf(this);
-
-            if (srcIdx === -1 || dstIdx === -1) return;
-
-            // Lấy building key và danh sách phòng trong building đó (theo thứ tự hiện tại trong DOM)
             const buildingKey = list.dataset.building;
             const bRooms = [...rooms.filter(r => (buildingKey === '__none__' ? !r.buildingId : r.buildingId === buildingKey))];
             
+            const srcId = Number(globalDragSrc.dataset.roomId);
+            const dstId = Number(this.dataset.roomId);
+            const srcIdx = bRooms.findIndex(r => r.id === srcId);
+            const dstIdx = bRooms.findIndex(r => r.id === dstId);
+
+            if (srcIdx === -1 || dstIdx === -1) return;
+
             // Áp dụng thay đổi thứ tự trong building
             const [moved] = bRooms.splice(srcIdx, 1);
             bRooms.splice(dstIdx, 0, moved);
@@ -976,9 +976,13 @@
 
     async function saveRoomOrder(orderedIds) {
       try {
+        const token = sessionStorage.getItem('vt_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
         const res = await fetch('/api/rooms/reorder', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ orderedIds })
         });
         const data = await res.json();

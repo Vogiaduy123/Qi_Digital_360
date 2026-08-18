@@ -86,7 +86,8 @@ CREATE TABLE IF NOT EXISTS minimap_markers (
     floor_id INTEGER REFERENCES minimaps(floor_id) ON DELETE CASCADE,
     room_id BIGINT REFERENCES rooms(id) ON DELETE CASCADE,
     x DOUBLE PRECISION NOT NULL,
-    y DOUBLE PRECISION NOT NULL
+    y DOUBLE PRECISION NOT NULL,
+    rotation DOUBLE PRECISION DEFAULT 0 -- Góc xoay hướng radar (0-360 độ)
 );
 
 -- 9. Bảng app_configs (Cấu hình hệ thống: api_config, tour_scenario)

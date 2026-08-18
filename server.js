@@ -489,6 +489,28 @@ app.get("/api/rooms", async (req, res) => {
   res.json(safeRooms);
 });
 
+// REORDER ROOMS
+app.post("/api/rooms/reorder", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
+  const { orderedIds } = req.body;
+  if (!Array.isArray(orderedIds)) {
+    return res.status(400).json({ success: false, error: "orderedIds must be an array" });
+  }
+
+  try {
+    await Promise.all(
+      orderedIds.map((roomId, index) => db.updateRoomOrder(Number(roomId), index))
+    );
+
+    if (global.broadcastRooms) {
+      await global.broadcastRooms().catch(err => console.error("Error broadcasting rooms:", err));
+    }
+
+    res.json({ success: true, message: "Room order updated successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET SENSORS
 app.get("/api/sensors", async (req, res) => {
   try {

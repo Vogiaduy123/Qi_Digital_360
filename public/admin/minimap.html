@@ -8,7 +8,9 @@
   <script src="/js/auth-guard.js"></script>
   <!-- Bootstrap 5 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Marzipano 360 Viewer -->
+  <script src="https://unpkg.com/marzipano@0.10.2/dist/marzipano.js"></script>
   <script src="/js/admin-runtime-config.js"></script>
   <script src="/js/admin-api-base.js"></script>
   <link rel="stylesheet" href="/css/admin-header.css">
@@ -24,10 +26,10 @@
 
     .container {
       display: grid;
-      grid-template-columns: 320px 1fr;
+      grid-template-columns: 340px 1fr;
       gap: 20px;
       padding: 20px;
-      max-width: 1400px;
+      max-width: 1440px;
       margin: 0 auto;
     }
     .floor-selector {
@@ -124,7 +126,7 @@
       background: #111;
       border-radius: 12px;
       overflow: hidden;
-      min-height: 400px;
+      min-height: 440px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -142,8 +144,8 @@
     }
     .marker {
       position: absolute;
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       background: #ff5722;
       border: 3px solid #fff;
@@ -155,20 +157,52 @@
       align-items: center;
       justify-content: center;
       transform: translate(-50%, -50%);
-      cursor: pointer;
+      cursor: grab;
       pointer-events: auto;
       user-select: none;
       transition: box-shadow 0.15s ease;
+      z-index: 5;
     }
-    .marker:hover {
-      box-shadow: 0 10px 20px rgba(0,0,0,0.45);
+    .marker:hover, .marker.active {
+      box-shadow: 0 0 0 4px #2196f3, 0 8px 20px rgba(0,0,0,0.45);
+      z-index: 10;
     }
     .marker.dragging {
       opacity: 0.9;
       box-shadow: 0 12px 24px rgba(0,0,0,0.55);
+      cursor: grabbing;
+      z-index: 20;
+    }
+    .marker-radar {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+      transform-origin: center center;
+    }
+    .marker-radar-cone {
+      position: absolute;
+      top: -50px;
+      left: -35px;
+      width: 70px;
+      height: 50px;
+      background: radial-gradient(circle at 50% 100%, rgba(33, 150, 243, 0.6) 0%, rgba(33, 150, 243, 0.05) 75%, transparent 100%);
+      clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+    }
+    .marker-radar-pointer {
+      position: absolute;
+      top: -26px;
+      left: -4px;
+      width: 8px;
+      height: 14px;
+      background: #ffeb3b;
+      clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
     }
     .marker-list {
-      max-height: 260px;
+      max-height: 400px;
       overflow-y: auto;
       border: 1px solid #eee;
       border-radius: 8px;
@@ -176,16 +210,83 @@
       background: #fafafa;
     }
     .marker-item {
-      padding: 10px;
-      border-radius: 6px;
+      padding: 12px;
+      border-radius: 8px;
       background: white;
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #eef0f3;
+      transition: all 0.2s ease;
+    }
+    .marker-item:hover, .marker-item.active {
+      border-color: #2B3278;
+      box-shadow: 0 4px 12px rgba(43,50,120,0.12);
+    }
+    .marker-item-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 6px;
+    }
+    .radar-control-box {
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #f8fafc;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+    .radar-control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 4px;
+    }
+    .radar-slider-row {
+      display: flex;
+      align-items: center;
       gap: 8px;
-      font-size: 13px;
+    }
+    .radar-slider-row input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      accent-color: #2B3278;
+      cursor: pointer;
+    }
+    .radar-num-input {
+      width: 54px;
+      padding: 3px 4px;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      color: #1e293b;
+    }
+    .quick-angle-buttons {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .btn-quick-angle {
+      flex: 1;
+      padding: 2px 0;
+      font-size: 11px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      color: #475569;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .btn-quick-angle:hover {
+      background: #2B3278;
+      color: white;
+      border-color: #2B3278;
     }
     .badge {
       display: inline-block;
@@ -196,7 +297,77 @@
       color: white;
       background: #4caf50;
     }
-    .flex-row { display: flex; gap: 8px; align-items: center; }
+    .flex-row { display: flex; gap: 6px; align-items: center; }
+
+    /* Modal Crosshair & Calibration */
+    .calib-crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      width: 44px;
+      height: 44px;
+      z-index: 10;
+    }
+    .crosshair-v {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 1.5px;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.75);
+      transform: translateX(-50%);
+    }
+    .crosshair-h {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      height: 1.5px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.75);
+      transform: translateY(-50%);
+    }
+    .crosshair-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid rgba(255, 255, 255, 0.75);
+      border-radius: 50%;
+    }
+    .calib-stats-badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: white;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 10;
+    }
+    .calib-hint-badge {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      right: 14px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #94a3b8;
+      font-size: 11.5px;
+      z-index: 10;
+    }
   </style>
 </head>
 <body>
@@ -234,9 +405,9 @@
         </select>
       </div>
       <button class="btn btn-secondary" id="btnToggleAdd">➕ Chế độ thêm: TẮT</button>
-      <p class="muted" style="margin-top: 8px;">Bật chế độ thêm, sau đó click lên minimap để đặt marker. Kéo thả marker để chỉnh vị trí.</p>
+      <p class="muted" style="margin-top: 8px;">Bật chế độ thêm, sau đó click lên minimap để đặt marker. Kéo thả marker để chỉnh vị trí, chỉnh góc xoay rada bên dưới.</p>
 
-      <h2 style="margin-top: 24px;">Danh sách marker</h2>
+      <h2 style="margin-top: 24px;">Danh sách marker & Hướng Rada</h2>
       <div id="markerList" class="marker-list">
         <p class="muted">Chưa có marker</p>
       </div>
@@ -253,12 +424,98 @@
     </div>
   </div>
 
+  <!-- ===== MODAL CĂN CHỈNH GÓC NHÌN 360 ===== -->
+  <div class="modal fade" id="calibrateModal" tabindex="-1" aria-labelledby="calibrateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.45);">
+        <div class="modal-header" style="background: #2B3278; color: white; padding: 14px 20px;">
+          <h5 class="modal-title" id="calibrateModalLabel" style="font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; margin: 0;">
+            <span>🧭 Căn chỉnh hướng Rada theo ảnh 360</span>
+            <span id="calibRoomName" class="badge" style="background: rgba(255,255,255,0.2); font-size: 13px; font-weight: 500;">Phòng</span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        
+        <div class="modal-body" style="padding: 0; background: #0f172a;">
+          <div style="display: grid; grid-template-columns: 1fr 340px; height: 540px;">
+            <!-- 360 Panorama Viewer with crosshair & compass -->
+            <div style="position: relative; width: 100%; height: 100%; background: #000; overflow: hidden;">
+              <div id="calibPano" style="width: 100%; height: 100%;"></div>
+              
+              <!-- Crosshair center sight -->
+              <div class="calib-crosshair">
+                <div class="crosshair-v"></div>
+                <div class="crosshair-h"></div>
+                <div class="crosshair-circle"></div>
+              </div>
+              
+              <!-- Floating overlay stats -->
+              <div class="calib-stats-badge">
+                <div>🎯 Hướng nhìn camera 360: <strong id="calibCamYaw" style="color:#38bdf8;">0°</strong></div>
+                <div>🧭 Hướng nón rada minimap: <strong id="calibRadarHeading" style="color: #4ade80;">0°</strong></div>
+              </div>
+              
+              <div class="calib-hint-badge">
+                💡 <em>Xoay ảnh 360 đến một vị trí chuẩn (ví dụ: cửa chính), sau đó chỉnh góc lệch bù sao cho nón rada chỉ đúng hướng cửa trên bản đồ.</em>
+              </div>
+            </div>
+            
+            <!-- Control & Minimap Preview Sidebar -->
+            <div style="background: #1e293b; color: #f1f5f9; padding: 18px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto;">
+              <div>
+                <div style="font-weight: 700; font-size: 12px; margin-bottom: 8px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Bản đồ & Nón rada thời gian thực</div>
+                <div style="position: relative; width: 100%; height: 190px; background: #090d16; border-radius: 8px; overflow: hidden; border: 1px solid #334155; display: flex; align-items: center; justify-content: center;">
+                  <img id="calibMapImage" style="max-width: 100%; max-height: 100%; object-fit: contain; pointer-events: none; user-select: none;">
+                  <canvas id="calibMapCanvas" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+                </div>
+              </div>
+
+              <!-- Offset Adjustment Controls -->
+              <div style="background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <span style="font-size: 13px; font-weight: 600; color: #cbd5e1;">Góc lệch bù (Offset):</span>
+                  <span id="calibOffsetDisplay" style="font-size: 14px; font-weight: 700; color: #38bdf8;">0°</span>
+                </div>
+                
+                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px;">
+                  <input type="range" id="calibOffsetSlider" min="0" max="360" step="1" value="0" style="flex: 1; accent-color: #38bdf8; cursor: pointer;">
+                  <input type="number" id="calibOffsetNum" min="0" max="360" value="0" style="width: 58px; background: #1e293b; color: white; border: 1px solid #475569; border-radius: 4px; padding: 2px 6px; text-align: center; font-size: 12px; font-weight: 700;">
+                </div>
+
+                <div style="font-size: 11px; color: #94a3b8; margin-bottom: 6px;">Căn nhanh theo hướng nhìn 360 hiện tại:</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                  <button type="button" class="btn btn-sm btn-outline-info" id="btnAlignNorth" style="font-size: 11px; padding: 4px;">↑ Khớp về Bắc (0°)</button>
+                  <button type="button" class="btn btn-sm btn-outline-info" id="btnAlignEast" style="font-size: 11px; padding: 4px;">→ Khớp về Đông (90°)</button>
+                  <button type="button" class="btn btn-sm btn-outline-info" id="btnAlignSouth" style="font-size: 11px; padding: 4px;">↓ Khớp về Nam (180°)</button>
+                  <button type="button" class="btn btn-sm btn-outline-info" id="btnAlignWest" style="font-size: 11px; padding: 4px;">← Khớp về Tây (270°)</button>
+                </div>
+              </div>
+
+              <!-- Action buttons -->
+              <div style="margin-top: auto; display: flex; gap: 8px;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="flex: 1; font-size: 13px;">Đóng</button>
+                <button type="button" class="btn btn-primary" id="btnApplyCalib" style="flex: 2; background: #0284c7; border: none; font-size: 13px; font-weight: 600;">💾 Áp dụng góc này</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     let rooms = [];
-    let minimapData = { floors: [] }; // New structure
+    let minimapData = { floors: [] };
     let currentFloorId = 1;
     let addMode = false;
     let dragState = null;
+
+    // Calibration state
+    let calibViewer = null;
+    let calibScene = null;
+    let calibMarkerIdx = null;
+    let calibCurrentYawRad = 0;
+    let calibOffsetDeg = 0;
 
     const minimapFile = document.getElementById('minimapFile');
     const btnUpload = document.getElementById('btnUpload');
@@ -275,6 +532,18 @@
     const floorNameInput = document.getElementById('floorNameInput');
     const btnRenameFloor = document.getElementById('btnRenameFloor');
 
+    // Calibration elements
+    const calibOffsetSlider = document.getElementById('calibOffsetSlider');
+    const calibOffsetNum = document.getElementById('calibOffsetNum');
+    const calibOffsetDisplay = document.getElementById('calibOffsetDisplay');
+    const calibMapImage = document.getElementById('calibMapImage');
+    const calibMapCanvas = document.getElementById('calibMapCanvas');
+    const btnApplyCalib = document.getElementById('btnApplyCalib');
+    const btnAlignNorth = document.getElementById('btnAlignNorth');
+    const btnAlignEast = document.getElementById('btnAlignEast');
+    const btnAlignSouth = document.getElementById('btnAlignSouth');
+    const btnAlignWest = document.getElementById('btnAlignWest');
+
     init();
 
     async function init() {
@@ -282,6 +551,7 @@
       await loadMinimap();
       renderFloorTabs();
       bindUI();
+      bindCalibUI();
     }
 
     function bindUI() {
@@ -293,6 +563,48 @@
       btnAddFloor.addEventListener('click', addNewFloor);
       mapImage.addEventListener('load', renderMarkers);
       mapContainer.addEventListener('click', handleAddMarker);
+    }
+
+    function bindCalibUI() {
+      calibOffsetSlider.addEventListener('input', (e) => {
+        setCalibOffset(Number(e.target.value));
+      });
+
+      calibOffsetNum.addEventListener('input', (e) => {
+        let val = Number(e.target.value) || 0;
+        val = ((val % 360) + 360) % 360;
+        setCalibOffset(val);
+      });
+
+      btnAlignNorth.addEventListener('click', () => alignCalibToAngle(0));
+      btnAlignEast.addEventListener('click', () => alignCalibToAngle(90));
+      btnAlignSouth.addEventListener('click', () => alignCalibToAngle(180));
+      btnAlignWest.addEventListener('click', () => alignCalibToAngle(270));
+
+      btnApplyCalib.addEventListener('click', () => {
+        if (calibMarkerIdx !== null) {
+          updateMarkerRotation(calibMarkerIdx, calibOffsetDeg);
+          const modalEl = document.getElementById('calibrateModal');
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+        }
+      });
+    }
+
+    function setCalibOffset(val) {
+      calibOffsetDeg = val;
+      calibOffsetDisplay.textContent = `${val}°`;
+      if (Number(calibOffsetSlider.value) !== val) calibOffsetSlider.value = val;
+      if (Number(calibOffsetNum.value) !== val) calibOffsetNum.value = val;
+      updateCalibDisplays();
+    }
+
+    function alignCalibToAngle(targetAngleDeg) {
+      let currentYawDeg = Math.round((calibCurrentYawRad * 180 / Math.PI) % 360);
+      if (currentYawDeg < 0) currentYawDeg += 360;
+
+      let newOffset = ((targetAngleDeg - currentYawDeg) % 360 + 360) % 360;
+      setCalibOffset(newOffset);
     }
 
     function getCurrentFloor() {
@@ -504,7 +816,7 @@
       const rect = mapContainer.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
-      floor.markers.push({ x, y, roomId });
+      floor.markers.push({ x, y, roomId, rotation: 0 });
       renderMarkers();
       renderMarkerList();
     }
@@ -517,11 +829,25 @@
         const el = document.createElement('div');
         el.className = 'marker';
         el.dataset.index = idx;
-        el.textContent = idx + 1;
         el.style.left = (m.x * 100) + '%';
         el.style.top = (m.y * 100) + '%';
+
+        const rot = m.rotation || 0;
+        el.innerHTML = `
+          <div class="marker-radar" style="transform: rotate(${rot}deg);">
+            <div class="marker-radar-cone"></div>
+            <div class="marker-radar-pointer"></div>
+          </div>
+          <span>${idx + 1}</span>
+        `;
+
         markerLayer.appendChild(el);
         makeDraggable(el);
+
+        el.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          focusMarker(idx);
+        });
       });
     }
 
@@ -533,42 +859,130 @@
       }
       markerList.innerHTML = floor.markers.map((m, idx) => {
         const room = rooms.find(r => r.id === m.roomId);
+        const rot = m.rotation || 0;
         return `
-          <div class="marker-item">
-            <div>
-              <div class="flex-row"><span class="badge">#${idx + 1}</span> <strong>${room ? room.name : 'Chưa gán phòng'}</strong></div>
-              <div class="muted">x: ${(m.x*100).toFixed(1)}% | y: ${(m.y*100).toFixed(1)}%</div>
+          <div class="marker-item" data-idx="${idx}" id="marker-item-${idx}">
+            <div class="marker-item-header">
+              <div class="flex-row">
+                <span class="badge">#${idx + 1}</span>
+                <strong>${room ? room.name : 'Chưa gán phòng'}</strong>
+              </div>
+              <div class="flex-row">
+                <button class="btn btn-secondary btn-sm" data-action="calib" data-idx="${idx}" style="background:#0284c7;color:white;border:none;padding: 4px 8px; font-size: 12px;" title="Căn chỉnh trực tiếp với ảnh 360">📷 Căn 360</button>
+                <button class="btn btn-secondary btn-sm" data-action="focus" data-idx="${idx}" style="padding: 4px 8px; font-size: 12px;">Tới</button>
+                <button class="btn btn-danger btn-sm" data-action="delete" data-idx="${idx}" style="background:#f44336;color:white;border:none;padding: 4px 8px; font-size: 12px;">Xóa</button>
+              </div>
             </div>
-            <div class="flex-row">
-              <button class="btn btn-secondary" data-action="focus" data-idx="${idx}">Tới</button>
-              <button class="btn btn-danger" data-action="delete" data-idx="${idx}" style="background:#f44336;color:white;border:none;">Xóa</button>
+            <div class="muted" style="font-size: 11px;">Tọa độ: x: ${(m.x*100).toFixed(1)}% | y: ${(m.y*100).toFixed(1)}%</div>
+            
+            <div class="radar-control-box">
+              <div class="radar-control-header">
+                <span>🧭 Hướng rada (Góc xoay):</span>
+                <span class="radar-val-display" id="radar-val-${idx}" style="color:#2B3278; font-weight:700;">${rot}°</span>
+              </div>
+              <div class="radar-slider-row">
+                <input type="range" class="radar-range" min="0" max="360" step="1" value="${rot}" data-idx="${idx}">
+                <input type="number" class="radar-num-input" min="0" max="360" value="${rot}" data-idx="${idx}">
+              </div>
+              <div class="quick-angle-buttons">
+                <button type="button" class="btn-quick-angle" data-idx="${idx}" data-angle="0">0° ↑ Bắc</button>
+                <button type="button" class="btn-quick-angle" data-idx="${idx}" data-angle="90">90° → Đông</button>
+                <button type="button" class="btn-quick-angle" data-idx="${idx}" data-angle="180">180° ↓ Nam</button>
+                <button type="button" class="btn-quick-angle" data-idx="${idx}" data-angle="270">270° ← Tây</button>
+              </div>
             </div>
           </div>
         `;
       }).join('');
 
+      // Bind rotation change events
+      markerList.querySelectorAll('.radar-range').forEach(range => {
+        range.addEventListener('input', (e) => {
+          const idx = Number(e.target.dataset.idx);
+          const val = Number(e.target.value);
+          updateMarkerRotation(idx, val);
+        });
+      });
+
+      markerList.querySelectorAll('.radar-num-input').forEach(numInput => {
+        numInput.addEventListener('input', (e) => {
+          const idx = Number(e.target.dataset.idx);
+          let val = Number(e.target.value) || 0;
+          val = ((val % 360) + 360) % 360;
+          updateMarkerRotation(idx, val);
+        });
+      });
+
+      markerList.querySelectorAll('.btn-quick-angle').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = Number(btn.dataset.idx);
+          const angle = Number(btn.dataset.angle);
+          updateMarkerRotation(idx, angle);
+        });
+      });
+
+      markerList.querySelectorAll('button[data-action="calib"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.dataset.idx);
+          openCalibrateModal(idx);
+        });
+      });
+
       markerList.querySelectorAll('button[data-action="delete"]').forEach(btn => {
         btn.addEventListener('click', () => {
           const idx = Number(btn.dataset.idx);
-          floor.markers.splice(idx,1);
+          floor.markers.splice(idx, 1);
           renderMarkers();
           renderMarkerList();
         });
       });
+
       markerList.querySelectorAll('button[data-action="focus"]').forEach(btn => {
         btn.addEventListener('click', () => {
           const idx = Number(btn.dataset.idx);
-          const marker = floor.markers[idx];
-          const el = markerLayer.querySelector(`[data-index="${idx}"]`);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-            el.style.boxShadow = '0 0 0 4px rgba(33,150,243,0.5)';
-            setTimeout(()=>{
-              el.style.boxShadow = '';
-            }, 1200);
-          }
+          focusMarker(idx);
         });
       });
+    }
+
+    function updateMarkerRotation(idx, val) {
+      const floor = getCurrentFloor();
+      if (!floor || !floor.markers || !floor.markers[idx]) return;
+
+      floor.markers[idx].rotation = val;
+
+      const valDisplay = document.getElementById(`radar-val-${idx}`);
+      if (valDisplay) valDisplay.textContent = `${val}°`;
+
+      const rangeInput = markerList.querySelector(`.radar-range[data-idx="${idx}"]`);
+      if (rangeInput && Number(rangeInput.value) !== val) rangeInput.value = val;
+
+      const numInput = markerList.querySelector(`.radar-num-input[data-idx="${idx}"]`);
+      if (numInput && Number(numInput.value) !== val) numInput.value = val;
+
+      const el = markerLayer.querySelector(`[data-index="${idx}"]`);
+      if (el) {
+        const radarEl = el.querySelector('.marker-radar');
+        if (radarEl) {
+          radarEl.style.transform = `rotate(${val}deg)`;
+        }
+      }
+    }
+
+    function focusMarker(idx) {
+      const el = markerLayer.querySelector(`[data-index="${idx}"]`);
+      if (el) {
+        markerLayer.querySelectorAll('.marker').forEach(m => m.classList.remove('active'));
+        el.classList.add('active');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      }
+
+      markerList.querySelectorAll('.marker-item').forEach(it => it.classList.remove('active'));
+      const itemEl = document.getElementById(`marker-item-${idx}`);
+      if (itemEl) {
+        itemEl.classList.add('active');
+        itemEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
 
     function makeDraggable(el) {
@@ -605,6 +1019,142 @@
       });
     }
 
+    /* ===== CALIBRATION MODAL LOGIC ===== */
+    function openCalibrateModal(idx) {
+      calibMarkerIdx = idx;
+      const floor = getCurrentFloor();
+      if (!floor || !floor.markers || !floor.markers[idx]) return;
+      const marker = floor.markers[idx];
+      const room = rooms.find(r => r.id === marker.roomId);
+      if (!room || !room.image) {
+        alert('Phòng này chưa có ảnh panorama 360 để căn chỉnh');
+        return;
+      }
+
+      calibOffsetDeg = marker.rotation || 0;
+      document.getElementById('calibRoomName').textContent = room.name;
+      setCalibOffset(calibOffsetDeg);
+
+      const calibModalEl = document.getElementById('calibrateModal');
+      const modal = new bootstrap.Modal(calibModalEl);
+      modal.show();
+
+      // Load minimap image for sidebar preview
+      if (floor.image) {
+        calibMapImage.src = floor.image;
+      }
+
+      calibModalEl.addEventListener('shown.bs.modal', () => {
+        initCalibViewer(room, marker);
+        drawCalibMinimap();
+      }, { once: true });
+    }
+
+    function initCalibViewer(room, marker) {
+      const panoEl = document.getElementById('calibPano');
+      panoEl.innerHTML = '';
+
+      if (calibViewer) {
+        try { calibViewer.destroy(); } catch (e) {}
+        calibViewer = null;
+      }
+
+      calibViewer = new Marzipano.Viewer(panoEl);
+      const imageUrl = (room.image && room.image.startsWith('http')) 
+        ? room.image 
+        : (room.image ? window.location.origin + room.image : '');
+
+      const source = Marzipano.ImageUrlSource.fromString(imageUrl);
+      const geometry = new Marzipano.EquirectGeometry([{ width: 4000 }]);
+      const view = new Marzipano.RectilinearView({ fov: Math.PI / 2 });
+      calibScene = calibViewer.createScene({ source, geometry, view });
+      calibScene.switchTo();
+
+      view.addEventListener('change', () => {
+        calibCurrentYawRad = view.yaw();
+        updateCalibDisplays();
+      });
+
+      calibCurrentYawRad = view.yaw();
+      updateCalibDisplays();
+    }
+
+    function updateCalibDisplays() {
+      let yawDeg = Math.round((calibCurrentYawRad * 180 / Math.PI) % 360);
+      if (yawDeg < 0) yawDeg += 360;
+
+      let headingDeg = Math.round((yawDeg + calibOffsetDeg) % 360);
+      
+      document.getElementById('calibCamYaw').textContent = `${yawDeg}°`;
+      document.getElementById('calibRadarHeading').textContent = `${headingDeg}°`;
+
+      drawCalibMinimap();
+    }
+
+    function drawCalibMinimap() {
+      const floor = getCurrentFloor();
+      if (!floor || !calibMapCanvas || calibMarkerIdx === null) return;
+      const marker = floor.markers[calibMarkerIdx];
+      if (!marker) return;
+
+      const container = calibMapCanvas.parentElement;
+      calibMapCanvas.width = container.clientWidth || 300;
+      calibMapCanvas.height = container.clientHeight || 190;
+
+      const ctx = calibMapCanvas.getContext('2d');
+      ctx.clearRect(0, 0, calibMapCanvas.width, calibMapCanvas.height);
+
+      const x = marker.x * calibMapCanvas.width;
+      const y = marker.y * calibMapCanvas.height;
+
+      // Draw radar cone
+      const markerRotRad = (calibOffsetDeg * Math.PI) / 180;
+      const radarOffset = -Math.PI / 2 + markerRotRad;
+      const fov = Math.PI / 2;
+      const startRad = calibCurrentYawRad - (fov / 2) + radarOffset;
+      const endRad = calibCurrentYawRad + (fov / 2) + radarOffset;
+      const radius = 60;
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.arc(x, y, radius, startRad, endRad);
+      ctx.lineTo(x, y);
+      
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+      gradient.addColorStop(0, 'rgba(56, 189, 248, 0.6)');
+      gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+      
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      ctx.closePath();
+
+      // Pulsing halo
+      ctx.beginPath();
+      ctx.arc(x, y, 12, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+      ctx.fill();
+
+      // Dot
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, 2 * Math.PI);
+      ctx.fillStyle = '#0284c7';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Direction pointer line
+      const centerRad = calibCurrentYawRad + radarOffset;
+      const px = x + Math.cos(centerRad) * 22;
+      const py = y + Math.sin(centerRad) * 22;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(px, py);
+      ctx.strokeStyle = '#ffeb3b';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+
     async function saveMinimap() {
       const floor = getCurrentFloor();
       if (!floor || !floor.image) {
@@ -624,7 +1174,9 @@
         const data = await res.json();
         if (data.success) {
           minimapData = data.minimap;
-          alert('Đã lưu minimap');
+          renderMarkers();
+          renderMarkerList();
+          alert('✅ Đã lưu minimap và hướng rada thành công!');
         } else {
           alert(data.error || 'Lưu minimap thất bại');
         }

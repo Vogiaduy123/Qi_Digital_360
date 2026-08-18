@@ -179,6 +179,28 @@ router.get("/rooms", async (req, res) => {
   }
 });
 
+/* ===== REORDER ROOMS ===== */
+router.post("/rooms/reorder", async (req, res) => {
+  const { orderedIds } = req.body;
+  if (!Array.isArray(orderedIds)) {
+    return res.status(400).json({ success: false, error: "orderedIds must be an array" });
+  }
+
+  try {
+    await Promise.all(
+      orderedIds.map((roomId, index) => db.updateRoomOrder(Number(roomId), index))
+    );
+
+    if (global.broadcastRooms) {
+      await global.broadcastRooms().catch(err => console.error("Error broadcasting rooms:", err));
+    }
+
+    res.json({ success: true, message: "Room order updated successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 /* ===== UPLOAD PANORAMA ===== */
 router.post("/upload-panorama", uploadPanorama.single("panorama"), async (req, res) => {
   try {
@@ -920,18 +942,49 @@ router.put("/minimap/floor/:id", async (req, res) => {
       .eq('floor_id', floorId);
     if (delErr) throw delErr;
 
-    // 3. Insert new markers
+    // 3. Insert new markers & save rotations
     if (markers && markers.length > 0) {
+      const LOCAL_ROT_FILE = path.join(__dirname, '..', 'data', 'minimap-rotations.json');
+      let currentRotations = {};
+      try {
+        if (fs.existsSync(LOCAL_ROT_FILE)) {
+          currentRotations = JSON.parse(fs.readFileSync(LOCAL_ROT_FILE, 'utf8')) || {};
+        }
+      } catch {}
+
+      markers.forEach(m => {
+        const rot = Number(m.rotation) || 0;
+        currentRotations[`${floorId}_${m.roomId}`] = rot;
+        currentRotations[m.roomId] = rot;
+      });
+
+      try {
+        const dataDir = path.join(__dirname, '..', 'data');
+        if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+        fs.writeFileSync(LOCAL_ROT_FILE, JSON.stringify(currentRotations, null, 2), 'utf8');
+        await db.saveAppConfig('minimap_rotations', currentRotations);
+      } catch (e) {
+        console.warn('⚠️ [Admin API] Error saving rotations to app_configs:', e.message);
+      }
+
       const insertMarkers = markers.map(m => ({
         floor_id: floorId,
         room_id: Number(m.roomId),
         x: Number(m.x),
-        y: Number(m.y)
+        y: Number(m.y),
+        rotation: Number(m.rotation) || 0
       }));
-      const { error: insErr } = await db.supabase
+      let { error: insErr } = await db.supabase
         .from('minimap_markers')
         .insert(insertMarkers);
-      if (insErr) throw insErr;
+      if (insErr && insErr.message && (insErr.message.includes('rotation') || insErr.code === '42703' || insErr.code === 'PGRST204')) {
+        console.warn('⚠️ [Admin API] rotation column missing in minimap_markers, inserting without rotation');
+        const fallbackMarkers = insertMarkers.map(({ rotation, ...rest }) => rest);
+        const fallbackRes = await db.supabase.from('minimap_markers').insert(fallbackMarkers);
+        if (fallbackRes.error) throw fallbackRes.error;
+      } else if (insErr) {
+        throw insErr;
+      }
     }
 
     const minimap = await getMinimap();

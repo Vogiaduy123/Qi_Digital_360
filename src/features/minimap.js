@@ -312,13 +312,20 @@ function handleMinimapHover(e) {
 
   const hoverIndex = getMarkerAtPosition(x, y);
   minimapViewport.style.cursor = hoverIndex !== -1 ? 'pointer' : 'grab';
+  if (hoverIndex !== -1) {
+    const marker = floor.markers[hoverIndex];
+    const room = marker.roomId ? env.getRoomsData()[marker.roomId] : null;
+    minimapViewport.title = room ? room.name : '';
+  } else {
+    minimapViewport.title = '';
+  }
 }
 
 function getMarkerAtPosition(x, y) {
   const floor = getCurrentFloor();
   if (!floor || !floor.markers) return -1;
 
-  const tolerance = 20 / userMinimapCanvas.width;
+  const tolerance = 15 / userMinimapCanvas.width;
 
   for (let i = floor.markers.length - 1; i >= 0; i--) {
     const marker = floor.markers[i];
@@ -344,12 +351,11 @@ export function drawUserMinimap() {
 
   if (!floor.markers || floor.markers.length === 0) return;
 
-  floor.markers.forEach((marker, index) => {
+  floor.markers.forEach((marker) => {
     const x = marker.x * userMinimapCanvas.width;
     const y = marker.y * userMinimapCanvas.height;
 
     const isCurrentRoom = marker.roomId === env.getCurrentRoomId();
-    const room = env.getRoomsData()[marker.roomId];
 
     if (isCurrentRoom) {
       // Get yaw and fov from the panorama viewer
@@ -359,14 +365,14 @@ export function drawUserMinimap() {
         let currentYaw = view.yaw(); // Radians (0 is front)
         let currentFov = view.fov(); // Radians
         
-        // Define radar offset (typically north is top => -90 degrees / -PI/2)
-        // If rooms have specific rotations, an offset could be added here in the future
-        const radarOffset = -Math.PI / 2;
+        // Define radar offset (typically north is top => -90 degrees / -PI/2) + marker rotation offset
+        const markerRotRad = ((marker.rotation || 0) * Math.PI) / 180;
+        const radarOffset = -Math.PI / 2 + markerRotRad;
         
         // Ensure angle boundaries
         const startRad = currentYaw - (currentFov / 2) + radarOffset;
         const endRad = currentYaw + (currentFov / 2) + radarOffset;
-        const radius = 60; // Size of the cone
+        const radius = 50; // Size of the cone
         
         // Draw the radar cone
         minimapCtx.beginPath();
@@ -375,23 +381,24 @@ export function drawUserMinimap() {
         minimapCtx.lineTo(x, y);
         
         const gradient = minimapCtx.createRadialGradient(x, y, 0, x, y, radius);
-        gradient.addColorStop(0, 'rgba(43, 50, 120, 0.5)'); // Slightly more opaque near the center
-        gradient.addColorStop(1, 'rgba(43, 50, 120, 0.0)'); // Fades out completely
+        gradient.addColorStop(0, 'rgba(43, 50, 120, 0.45)');
+        gradient.addColorStop(1, 'rgba(43, 50, 120, 0.0)');
         
         minimapCtx.fillStyle = gradient;
         minimapCtx.fill();
         minimapCtx.closePath();
       }
 
-      // Draw the pulsing active dot underneath the radar
+      // Draw the pulsing active dot halo underneath the radar
       minimapCtx.beginPath();
-      minimapCtx.arc(x, y, 18, 0, 2 * Math.PI);
+      minimapCtx.arc(x, y, 11, 0, 2 * Math.PI);
       minimapCtx.fillStyle = 'rgba(43, 50, 120, 0.3)';
       minimapCtx.fill();
     }
 
+    // Draw marker dot
     minimapCtx.beginPath();
-    minimapCtx.arc(x, y, 12, 0, 2 * Math.PI);
+    minimapCtx.arc(x, y, 6, 0, 2 * Math.PI);
 
     if (isCurrentRoom) {
       minimapCtx.fillStyle = '#2B3278';
@@ -401,20 +408,8 @@ export function drawUserMinimap() {
 
     minimapCtx.fill();
     minimapCtx.strokeStyle = '#fff';
-    minimapCtx.lineWidth = 3;
+    minimapCtx.lineWidth = 2;
     minimapCtx.stroke();
-
-    minimapCtx.fillStyle = '#fff';
-    minimapCtx.font = 'bold 12px Arial';
-    minimapCtx.textAlign = 'center';
-    minimapCtx.textBaseline = 'middle';
-    minimapCtx.fillText(index + 1, x, y);
-
-    if (room) {
-      minimapCtx.fillStyle = isCurrentRoom ? '#2B3278' : '#000';
-      minimapCtx.font = isCurrentRoom ? 'bold 11px Arial' : '11px Arial';
-      minimapCtx.fillText(room.name, x, y + 22);
-    }
   });
 }
 

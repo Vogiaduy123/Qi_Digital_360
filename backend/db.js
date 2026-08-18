@@ -390,6 +390,22 @@ module.exports = {
       return { floors: floors.map(f => ({ id: f.floor_id, name: f.floor_name, image: f.image_url, markers: [] })) };
     }
 
+    // Đọc rotations dự phòng từ app_configs & local file
+    const LOCAL_ROT_FILE = path.join(__dirname, '..', 'data', 'minimap-rotations.json');
+    let savedRotations = {};
+    try {
+      if (fs.existsSync(LOCAL_ROT_FILE)) {
+        savedRotations = JSON.parse(fs.readFileSync(LOCAL_ROT_FILE, 'utf8')) || {};
+      }
+    } catch {}
+
+    try {
+      const configData = await this.getAppConfig('minimap_rotations');
+      if (configData && typeof configData === 'object') {
+        savedRotations = { ...savedRotations, ...configData };
+      }
+    } catch {}
+
     return {
       floors: floors.map(f => ({
         id: Number(f.floor_id),
@@ -397,20 +413,39 @@ module.exports = {
         image: f.image_url,
         markers: markers
           .filter(m => Number(m.floor_id) === Number(f.floor_id))
-          .map(m => ({
-            x: Number(m.x),
-            y: Number(m.y),
-            roomId: Number(m.room_id)
-          }))
+          .map(m => {
+            const rotKey = `${f.floor_id}_${m.room_id}`;
+            let rot = 0;
+            if (m.rotation !== undefined && m.rotation !== null && !isNaN(Number(m.rotation)) && Number(m.rotation) !== 0) {
+              rot = Number(m.rotation);
+            } else if (savedRotations[rotKey] !== undefined) {
+              rot = Number(savedRotations[rotKey]);
+            } else if (savedRotations[m.room_id] !== undefined) {
+              rot = Number(savedRotations[m.room_id]);
+            }
+            return {
+              x: Number(m.x),
+              y: Number(m.y),
+              roomId: Number(m.room_id),
+              rotation: rot
+            };
+          })
       }))
     };
   },
 
   async saveMinimap(minimapData) {
-    // Để an toàn, chúng ta truncate và ghi lại cấu hình minimap
-    // Đây là schema đơn giản cho cấu hình
     const floors = minimapData.floors || [];
     
+    // Cập nhật rotations map
+    const LOCAL_ROT_FILE = path.join(__dirname, '..', 'data', 'minimap-rotations.json');
+    let currentRotations = {};
+    try {
+      if (fs.existsSync(LOCAL_ROT_FILE)) {
+        currentRotations = JSON.parse(fs.readFileSync(LOCAL_ROT_FILE, 'utf8')) || {};
+      }
+    } catch {}
+
     // Lưu các tầng
     for (const floor of floors) {
       const { error: floorErr } = await supabase
@@ -431,17 +466,44 @@ module.exports = {
 
       // Chèn markers mới
       if (floor.markers && floor.markers.length > 0) {
+        floor.markers.forEach(m => {
+          const rot = Number(m.rotation) || 0;
+          currentRotations[`${floor.id}_${m.roomId}`] = rot;
+          currentRotations[m.roomId] = rot;
+        });
+
         const insertMarkers = floor.markers.map(m => ({
           floor_id: Number(floor.id),
           room_id: Number(m.roomId),
           x: Number(m.x),
-          y: Number(m.y)
+          y: Number(m.y),
+          rotation: Number(m.rotation) || 0
         }));
-        const { error: insErr } = await supabase
+
+        let { error: insErr } = await supabase
           .from('minimap_markers')
           .insert(insertMarkers);
-        if (insErr) throw insErr;
+        
+        // Fallback nếu column rotation chưa tồn tại trên DB hiện tại
+        if (insErr && insErr.message && (insErr.message.includes('rotation') || insErr.code === '42703' || insErr.code === 'PGRST204')) {
+          console.warn('⚠️ [Supabase DB] rotation column missing in minimap_markers, inserting without rotation');
+          const fallbackMarkers = insertMarkers.map(({ rotation, ...rest }) => rest);
+          const fallbackRes = await supabase.from('minimap_markers').insert(fallbackMarkers);
+          if (fallbackRes.error) throw fallbackRes.error;
+        } else if (insErr) {
+          throw insErr;
+        }
       }
+    }
+
+    // Ghi file local và lưu app_configs
+    try {
+      const dataDir = path.join(__dirname, '..', 'data');
+      if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+      fs.writeFileSync(LOCAL_ROT_FILE, JSON.stringify(currentRotations, null, 2), 'utf8');
+      await this.saveAppConfig('minimap_rotations', currentRotations);
+    } catch (e) {
+      console.warn('⚠️ [Supabase DB] Error saving minimap_rotations config:', e.message);
     }
   },
 
