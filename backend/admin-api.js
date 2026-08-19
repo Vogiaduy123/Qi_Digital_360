@@ -9,6 +9,7 @@ const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const crypto = require("crypto");
+const sharp = require("sharp");
 const mailHelper = require("./mail-helper");
 const { generateCubeTiles } = require("../generate-tiles");
 const db = require("./db");
@@ -251,10 +252,21 @@ router.post("/upload-panorama", uploadPanorama.single("panorama"), async (req, r
       console.log("✅ Tiles generated successfully!");
       console.log("📁 Output tiles temp directory:", outputDir);
 
-      // 1. Upload ảnh gốc panorama lên Supabase Storage và lấy Public Cloud URL
+      // 1. Tối ưu nén ảnh Panorama (chuẩn JPEG chất lượng cao, giảm dung lượng từ 15-30MB xuống 2-3MB mà không giảm chất lượng)
+      const optimizedRawPath = path.join(path.dirname(rawPath), 'opt_' + path.basename(rawPath));
+      await sharp(rawPath)
+        .resize({ width: 6000, withoutEnlargement: true })
+        .jpeg({ quality: 85, progressive: true })
+        .toFile(optimizedRawPath);
+
       const destPanoramaPath = imageRelPath.replace(/^\//, ''); 
-      console.log(`📤 Uploading panorama to Storage: ${destPanoramaPath}`);
-      const cloudImageUrl = await storage.uploadFile(rawPath, destPanoramaPath);
+      console.log(`📤 Uploading optimized panorama to Storage: ${destPanoramaPath}`);
+      const cloudImageUrl = await storage.uploadFile(optimizedRawPath, destPanoramaPath);
+
+      // Xóa file tối ưu tạm
+      if (fs.existsSync(optimizedRawPath)) {
+        fs.unlinkSync(optimizedRawPath);
+      }
 
       // 2. Upload thư mục Tiles lên Storage (tự động xóa đĩa local)
       console.log(`📤 Uploading tiles folder to Storage: ${tilesRelPath}`);

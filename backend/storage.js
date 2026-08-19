@@ -67,6 +67,24 @@ function sanitizePath(filePath) {
     .replace(/[^a-zA-Z0-9\/\.\-_]/g, '');
 }
 
+let bucketChecked = false;
+async function ensureBucket() {
+  if (bucketChecked) return;
+  try {
+    const { data: buckets, error } = await supabase.storage.listBuckets();
+    if (!error && Array.isArray(buckets)) {
+      const exists = buckets.some(b => b.name === BUCKET_NAME || b.id === BUCKET_NAME);
+      if (!exists) {
+        await supabase.storage.createBucket(BUCKET_NAME, { public: true });
+        console.log(`✅ [Storage] Created public bucket '${BUCKET_NAME}' in Supabase`);
+      }
+      bucketChecked = true;
+    }
+  } catch (err) {
+    console.warn('⚠️ [Storage] Failed to auto-check bucket:', err.message);
+  }
+}
+
 module.exports = {
   sanitizePath,
   /**
@@ -79,6 +97,8 @@ module.exports = {
     if (!fs.existsSync(localFilePath)) {
       throw new Error(`File local không tồn tại: ${localFilePath}`);
     }
+
+    await ensureBucket();
 
     const cleanDestPath = sanitizePath(destStoragePath.replace(/^\//, '')); // Loại bỏ dấu gạch chéo đầu và chuẩn hóa ký tự
     const fileBuffer = fs.readFileSync(localFilePath);
@@ -119,7 +139,7 @@ module.exports = {
     console.log(`🚀 Bắt đầu upload folder: ${localFolderPath} (${files.length} tệp)`);
 
     // Cấu hình kích thước lô (batch size) để upload song song (tối ưu hóa tốc độ)
-    const BATCH_SIZE = 30;
+    const BATCH_SIZE = 50;
     
     for (let i = 0; i < files.length; i += BATCH_SIZE) {
       const batch = files.slice(i, i + BATCH_SIZE);

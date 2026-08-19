@@ -52,7 +52,6 @@ async function generateEquirectangularTiles(inputPath, outputDir) {
     const levelWidth = levels[z].width;
     const levelHeight = levels[z].height;
     
-    // Marzipano uses 1-based indexing for levels by default, but we will use 1-based indexing for folders here.
     const levelDir = path.join(outputDir, String(z + 1));
     console.log(`📦 Generating level ${z + 1}/${levels.length} (${levelWidth}x${levelHeight})...`);
     
@@ -66,6 +65,8 @@ async function generateEquirectangularTiles(inputPath, outputDir) {
     const cols = Math.ceil(levelWidth / tileSize);
     const rows = Math.ceil(levelHeight / tileSize);
     
+    const tileTasks = [];
+
     for (let row = 0; row < rows; row++) {
       const rowDir = path.join(levelDir, String(row));
       if (!fs.existsSync(rowDir)) fs.mkdirSync(rowDir, { recursive: true });
@@ -79,22 +80,22 @@ async function generateEquirectangularTiles(inputPath, outputDir) {
         // Skip invalid dimensions
         if (extractWidth <= 0 || extractHeight <= 0) continue;
 
-        try {
-          await sharp(levelImageBuffer)
+        tileTasks.push(
+          sharp(levelImageBuffer)
             .extract({ 
               left: col * tileSize, 
               top: row * tileSize, 
               width: extractWidth, 
               height: extractHeight 
             })
-            .jpeg({ quality: 85, mozjpeg: true })
-            .toFile(tilePath);
-        } catch (err) {
-          console.error(`❌ Error generating tile (z/y/x = ${z+1}/${row}/${col}):`, err.message);
-          throw err;
-        }
+            .jpeg({ quality: 80, progressive: false })
+            .toFile(tilePath)
+        );
       }
     }
+
+    // Process all tiles in this level in parallel across CPU cores
+    await Promise.all(tileTasks);
   }
 
   const config = {
