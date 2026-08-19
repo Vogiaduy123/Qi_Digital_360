@@ -317,14 +317,18 @@ app.use(cookieParser());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
-app.use(express.static("dist"));
-app.use("/uploads", express.static(UPLOADS_DIR));
+const staticMediaOptions = {
+  maxAge: '7d',
+  immutable: true
+};
+app.use(express.static("public", { maxAge: '1h' }));
+app.use(express.static("dist", { maxAge: '1d' }));
+app.use("/uploads", express.static(UPLOADS_DIR, staticMediaOptions));
 if (path.resolve(LEGACY_UPLOADS_DIR) !== path.resolve(UPLOADS_DIR)) {
   // Backward-compatibility: keep serving old files previously saved in local uploads.
-  app.use("/uploads", express.static(LEGACY_UPLOADS_DIR));
+  app.use("/uploads", express.static(LEGACY_UPLOADS_DIR, staticMediaOptions));
 }
-app.use("/backend/tiles", express.static("backend/tiles"));
+app.use("/backend/tiles", express.static("backend/tiles", staticMediaOptions));
 
 /* ===== EMAIL ENDPOINTS ===== */
 app.post(["/api/mail/send", "/api/send-mail"], async (req, res) => {

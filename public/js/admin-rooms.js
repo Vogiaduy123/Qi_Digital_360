@@ -746,6 +746,30 @@
       }
     }
 
+    const preloadedImages = new Set();
+    function preloadRoomImage(imageUrl) {
+      if (!imageUrl || preloadedImages.has(imageUrl)) return;
+      preloadedImages.add(imageUrl);
+      const cleanUrl = imageUrl.startsWith('http') ? imageUrl : window.location.origin + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl);
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = cleanUrl;
+    }
+
+    function preloadAllRoomImages() {
+      if (!Array.isArray(rooms)) return;
+      const doPreload = () => {
+        rooms.forEach(r => {
+          if (r.image) preloadRoomImage(r.image);
+        });
+      };
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(doPreload, { timeout: 2500 });
+      } else {
+        setTimeout(doPreload, 500);
+      }
+    }
+
     async function loadRooms() {
       try {
         if (adminBuildings.length === 0) await loadBuildings();
@@ -753,6 +777,7 @@
         rooms = await res.json();
         renderRooms();
         updateTargetRoomSelect();
+        preloadAllRoomImages();
 
         const selectedRoomStillExists = selectedRoomId && rooms.some(room => room.id === selectedRoomId);
         if (rooms.length > 0 && !selectedRoomStillExists) {

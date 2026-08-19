@@ -1,5 +1,6 @@
 const scenes = {};
 const roomsData = {};
+const preloadedImages = new Set();
 
 let env = {
   getViewer: () => null,
@@ -16,6 +17,31 @@ export function getScenes() {
 
 export function getRoomsData() { 
   return roomsData; 
+}
+
+export function preloadPanoramaImage(imageUrl) {
+  if (!imageUrl || preloadedImages.has(imageUrl)) return;
+  preloadedImages.add(imageUrl);
+  const cleanUrl = (imageUrl && imageUrl.startsWith('http')) 
+    ? imageUrl 
+    : (imageUrl ? window.location.origin + (imageUrl.startsWith('/') ? imageUrl : '/' + imageUrl) : '');
+  if (!cleanUrl) return;
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = cleanUrl;
+}
+
+export function preloadConnectedRooms(roomId) {
+  const room = roomsData[roomId];
+  if (!room) return;
+  if (Array.isArray(room.hotspots)) {
+    room.hotspots.forEach(hs => {
+      const targetRoom = roomsData[hs.target];
+      if (targetRoom && targetRoom.image) {
+        preloadPanoramaImage(targetRoom.image);
+      }
+    });
+  }
 }
 
 export function initRooms(rooms, roomSelectEl) {
@@ -56,6 +82,20 @@ export function initRooms(rooms, roomSelectEl) {
       roomSelectEl.appendChild(option);
     }
   });
+
+  // Preload all tour panorama images in the background using requestIdleCallback
+  if (typeof window !== 'undefined') {
+    const doPreload = () => {
+      rooms.forEach(r => {
+        if (r.image) preloadPanoramaImage(r.image);
+      });
+    };
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(doPreload, { timeout: 2500 });
+    } else {
+      setTimeout(doPreload, 800);
+    }
+  }
 
   // Add change event listener via onchange to prevent duplicate listeners
   if (roomSelectEl) {

@@ -41,7 +41,7 @@ window.customIcons = {};
 import { degToRad, radToDeg, parseJsonResponse } from './core/utils.js';
 import { fetchRooms, fetchBuildings } from './core/api.js';
 import { initViewer, initZoomControl, getViewer } from './core/viewer.js';
-import { initScenesFeature, initRooms, getScenes, getRoomsData } from './core/scenes.js';
+import { initScenesFeature, initRooms, getScenes, getRoomsData, preloadConnectedRooms } from './core/scenes.js';
 import { initMinimap, loadMinimap, updateMinimapHighlight, drawUserMinimap } from './features/minimap.js';
 import { initSensors, loadSensors, updateSensorWidget, renderCameraPanel, addSensorHotspots, startSensorRealTimeUpdates, closeCameraModal } from './features/sensors.js';
 import { initMailFeature, resolveMailPointToPanorama, createPanoramaMailHotspot, clearFixedMailHotspots, closeMailComposer } from './features/mail.js';
@@ -628,6 +628,7 @@ function switchRoom(roomId, initialYaw, initialPitch) {
 
   addHotspots(roomId);
   addSensorHotspots(roomId);
+  preloadConnectedRooms(roomId);
   updateMinimapHighlight();
   hideMediaOverlay();
   closeCameraModal();
