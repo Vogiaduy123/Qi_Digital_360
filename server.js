@@ -321,8 +321,8 @@ const staticMediaOptions = {
   maxAge: '7d',
   immutable: true
 };
-app.use(express.static("public", { maxAge: '1h' }));
-app.use(express.static("dist", { maxAge: '1d' }));
+app.use(express.static("public", { maxAge: '1h', index: false }));
+app.use(express.static("dist", { maxAge: '1d', index: false }));
 app.use("/uploads", express.static(UPLOADS_DIR, staticMediaOptions));
 if (path.resolve(LEGACY_UPLOADS_DIR) !== path.resolve(UPLOADS_DIR)) {
   // Backward-compatibility: keep serving old files previously saved in local uploads.
@@ -357,35 +357,39 @@ app.post(["/api/mail/send", "/api/send-mail"], async (req, res) => {
   }
 });
 
-// Serve built frontend (dist/index.html) or show error if not built
-app.get("/", (req, res) => {
-  const indexFile = path.join(__dirname, "dist", "index.html");
-  if (fs.existsSync(indexFile)) {
-    return res.sendFile(indexFile);
+// Serve root route: check database setup & authentication
+app.get("/", async (req, res) => {
+  try {
+    const users = await db.getUsers();
+    const hasAdmin = Array.isArray(users) && users.some(u => u.role === 'admin');
+
+    // 1. Nếu chưa có tài khoản admin nào trong database -> chuyển hướng tới trang đăng ký admin đầu tiên
+    if (!hasAdmin) {
+      return res.redirect("/admin/setup.html");
+    }
+
+    // 2. Nếu đã có admin, kiểm tra phiên đăng nhập hiện tại
+    const token = req.cookies?.vt_token || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
+    if (!token) {
+      return res.redirect("/admin/login.html");
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.redirect("/admin/login.html");
+    }
+
+    // 3. Người dùng đã đăng nhập hợp lệ -> phục vụ giao diện Virtual Tour (dist/index.html)
+    const indexFile = path.join(__dirname, "dist", "index.html");
+    if (fs.existsSync(indexFile)) {
+      return res.sendFile(indexFile);
+    }
+
+    return res.redirect("/admin/login.html");
+  } catch (err) {
+    console.error("Root route error:", err);
+    return res.redirect("/admin/login.html");
   }
-  // dist/index.html not found â€” likely not built yet
-  res.status(503).send(`
-    <!DOCTYPE html>
-    <html lang="vi">
-    <head>
-      <meta charset="utf-8">
-      <title>Virtual Tour - ChÆ°a build</title>
-      <style>
-        body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #f0f4f8; margin: 0; color: #333; }
-        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; max-width: 500px; }
-        h1 { margin-top: 0; color: #e74c3c; }
-        code { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-      </style>
-    </head>
-    <body>
-      <div class="card">
-        <h1>âš ï¸  Frontend chÆ°a Ä‘Æ°á»£c build</h1>
-        <p>KhĂ´ng tĂ¬m tháº¥y <code>dist/index.html</code>.</p>
-        <p>HĂ£y cháº¡y <code>npm run build:ui</code> trÆ°á»›c khi khá»Ÿi Ä‘á»™ng server.</p>
-      </div>
-    </body>
-    </html>
-  `);
 });
 
 /* ===== INIT FOLDERS ===== */
@@ -1534,7 +1538,8 @@ app.post("/api/custom-icons/save", authMiddleware, requireRole("admin"), async (
 app.get("/api/auth/setup-status", async (req, res) => {
   try {
     const users = await db.getUsers();
-    res.json({ success: true, isSetup: users.length > 0 });
+    const hasAdmin = Array.isArray(users) && users.some(u => u.role === 'admin');
+    res.json({ success: true, isSetup: hasAdmin });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -1543,8 +1548,9 @@ app.get("/api/auth/setup-status", async (req, res) => {
 app.post("/api/auth/setup", async (req, res) => {
   try {
     const users = await db.getUsers();
-    if (users.length > 0) {
-      return res.status(400).json({ success: false, error: "Setup already completed" });
+    const hasAdmin = Array.isArray(users) && users.some(u => u.role === 'admin');
+    if (hasAdmin) {
+      return res.status(400).json({ success: false, error: "Hệ thống đã có tài khoản quản trị viên (Admin)." });
     }
 
     const { username, password, displayName } = req.body;

@@ -172,7 +172,19 @@ function filterRoomsByBuilding(buildingId, isInitial = false) {
 
 async function initApp() {
   try {
-    // Kiểm tra quyền hạn và chuyển hướng (Redirect Gate)
+    // 1. Kiểm tra trạng thái Setup của hệ thống (đã đăng ký admin nào chưa)
+    try {
+      const statusRes = await fetch('/api/auth/setup-status').then(r => r.json());
+      const isSetup = statusRes && statusRes.success && statusRes.isSetup;
+      if (!isSetup) {
+        window.location.href = '/admin/setup.html';
+        return;
+      }
+    } catch (e) {
+      console.warn('Cannot check setup status:', e);
+    }
+
+    // 2. Kiểm tra quyền hạn và phiên đăng nhập hiện tại
     try {
       const meRes = await fetch('/api/auth/me').then(r => r.json());
       if (meRes && meRes.success) {
