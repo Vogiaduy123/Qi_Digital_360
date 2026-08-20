@@ -468,6 +468,101 @@
       border: 1px solid rgba(231, 76, 60, 0.3);
     }
 
+    .file-card-order-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #4338ca;
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(67, 56, 202, 0.25);
+    }
+
+    .file-card-actions {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .file-action-btn {
+      background: #f1f5f9;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.15s ease;
+      color: #334155;
+    }
+
+    .file-action-btn:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+    }
+
+    .file-action-btn.delete:hover {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #dc2626;
+    }
+
+    .files-list-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 15px;
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .files-list-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .files-list-tools {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-sm-tool {
+      font-size: 11px;
+      padding: 5px 9px;
+      border-radius: 5px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-sm-tool:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
+
     @media (max-width: 900px) {
       .upload-shell { grid-template-columns: 1fr; }
       .upload-hero h2 { font-size: 24px; }
@@ -677,6 +772,46 @@
       }
     };
 
+    window.moveFileUp = function(index) {
+      if (index <= 0 || index >= selectedFiles.length) return;
+      const temp = selectedFiles[index];
+      selectedFiles[index] = selectedFiles[index - 1];
+      selectedFiles[index - 1] = temp;
+      renderSelectedFiles();
+    };
+
+    window.moveFileDown = function(index) {
+      if (index < 0 || index >= selectedFiles.length - 1) return;
+      const temp = selectedFiles[index];
+      selectedFiles[index] = selectedFiles[index + 1];
+      selectedFiles[index + 1] = temp;
+      renderSelectedFiles();
+    };
+
+    window.removeFile = function(index) {
+      selectedFiles.splice(index, 1);
+      renderSelectedFiles();
+    };
+
+    window.sortFilesAlphabetically = function() {
+      const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+      selectedFiles.sort((a, b) => collator.compare(a.file.name, b.file.name));
+      renderSelectedFiles();
+    };
+
+    window.reverseFiles = function() {
+      selectedFiles.reverse();
+      renderSelectedFiles();
+    };
+
+    window.clearAllFiles = function() {
+      if (confirm('Bạn có chắc muốn xóa tất cả ảnh đã chọn?')) {
+        selectedFiles = [];
+        fileInput.value = '';
+        renderSelectedFiles();
+      }
+    };
+
     function renderSelectedFiles() {
       const container = document.getElementById('selectedFilesList');
       container.innerHTML = '';
@@ -688,10 +823,32 @@
 
       uploadBtn.disabled = false;
 
+      // Toolbar
+      const toolbar = document.createElement('div');
+      toolbar.className = 'files-list-toolbar';
+      toolbar.innerHTML = `
+        <div class="files-list-title">
+          📋 Thứ tự tải lên: <strong>${selectedFiles.length} ảnh</strong> (từ #1 đến #${selectedFiles.length})
+        </div>
+        <div class="files-list-tools">
+          <button type="button" class="btn-sm-tool" onclick="sortFilesAlphabetically()" title="Sắp xếp tự nhiên theo tên file A-Z">🔤 Xếp A-Z</button>
+          <button type="button" class="btn-sm-tool" onclick="reverseFiles()" title="Đảo ngược danh sách">🔃 Đảo ngược</button>
+          <button type="button" class="btn-sm-tool" onclick="clearAllFiles()" title="Xóa toàn bộ ảnh đã chọn" style="color:#e74c3c;">🗑️ Xóa hết</button>
+        </div>
+      `;
+      container.appendChild(toolbar);
+
       selectedFiles.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'file-card';
         card.id = `file-card-${index}`;
+
+        // Order badge
+        const badge = document.createElement('div');
+        badge.className = 'file-card-order-badge';
+        badge.textContent = `#${index + 1}`;
+        badge.title = `Thứ tự vị trí phòng: ${index + 1}`;
+        card.appendChild(badge);
 
         // Preview thumbnail
         const img = document.createElement('img');
@@ -704,6 +861,7 @@
           img.src = e.target.result;
         };
         reader.readAsDataURL(item.file);
+        card.appendChild(img);
 
         // Details
         const details = document.createElement('div');
@@ -725,6 +883,40 @@
           <input type="text" class="file-room-name" value="${item.name}" placeholder="Tên phòng..." oninput="updateFileName(${index}, this.value)">
         `;
         details.appendChild(inputRow);
+        card.appendChild(details);
+
+        // Actions: Move up/down, Delete
+        const actions = document.createElement('div');
+        actions.className = 'file-card-actions';
+
+        const upBtn = document.createElement('button');
+        upBtn.type = 'button';
+        upBtn.className = 'file-action-btn';
+        upBtn.innerHTML = '⬆️';
+        upBtn.title = 'Di chuyển lên';
+        upBtn.disabled = (index === 0 || item.status === 'uploading' || item.status === 'success');
+        upBtn.onclick = () => moveFileUp(index);
+
+        const downBtn = document.createElement('button');
+        downBtn.type = 'button';
+        downBtn.className = 'file-action-btn';
+        downBtn.innerHTML = '⬇️';
+        downBtn.title = 'Di chuyển xuống';
+        downBtn.disabled = (index === selectedFiles.length - 1 || item.status === 'uploading' || item.status === 'success');
+        downBtn.onclick = () => moveFileDown(index);
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'file-action-btn delete';
+        delBtn.innerHTML = '❌';
+        delBtn.title = 'Xóa ảnh này khỏi danh sách';
+        delBtn.disabled = (item.status === 'uploading' || item.status === 'success');
+        delBtn.onclick = () => removeFile(index);
+
+        actions.appendChild(upBtn);
+        actions.appendChild(downBtn);
+        actions.appendChild(delBtn);
+        card.appendChild(actions);
 
         // Status
         const status = document.createElement('div');
@@ -734,10 +926,7 @@
         else if (item.status === 'success') status.textContent = 'Hoàn thành';
         else if (item.status === 'error') status.textContent = item.error || 'Lỗi';
 
-        card.appendChild(img);
-        card.appendChild(details);
         card.appendChild(status);
-
         container.appendChild(card);
       });
     }
@@ -760,13 +949,30 @@
       uploadBtn.disabled = true;
       progressSection.classList.add('active');
       consoleOutput.classList.add('active');
-      consoleOutput.innerHTML = `<pre class="info">⏳ Bắt đầu upload và xử lý ${selectedFiles.length} ảnh...</pre>`;
+      consoleOutput.innerHTML = `<pre class="info">⏳ Bắt đầu upload và xử lý ${selectedFiles.length} ảnh theo đúng thứ tự...</pre>`;
+
+      // Lấy max order_index hiện tại từ server
+      let baseOrderIndex = 0;
+      try {
+        const roomsRes = await fetch('/api/admin/rooms');
+        const roomsData = await roomsRes.json();
+        if (roomsData && roomsData.rooms && Array.isArray(roomsData.rooms)) {
+          baseOrderIndex = roomsData.rooms.reduce((max, r) => Math.max(max, r.orderIndex || 0), 0);
+        }
+      } catch (err) {
+        console.warn('Cannot fetch current max orderIndex:', err);
+      }
 
       let totalSuccess = 0;
       let totalFailed = 0;
 
       for (let i = 0; i < selectedFiles.length; i++) {
         const item = selectedFiles[i];
+        if (item.status === 'success') {
+          totalSuccess++;
+          continue;
+        }
+
         item.status = 'uploading';
         renderSelectedFiles();
 
@@ -774,13 +980,15 @@
         progressFill.style.width = `${progressPercent}%`;
         progressText.textContent = `Đang xử lý file ${i + 1}/${selectedFiles.length}: ${item.file.name}...`;
 
-        consoleOutput.innerHTML += `<pre class="info">⏳ [${i + 1}/${selectedFiles.length}] Đang upload & tạo tiles: ${item.name} (${item.file.name})...</pre>`;
+        consoleOutput.innerHTML += `<pre class="info">⏳ [${i + 1}/${selectedFiles.length}] Đang upload & tạo tiles (#${i + 1}): ${item.name} (${item.file.name})...</pre>`;
         consoleOutput.scrollTop = consoleOutput.scrollHeight;
 
+        const currentOrderIndex = baseOrderIndex + i + 1;
         const formData = new FormData();
         formData.append('panorama', item.file);
         formData.append('name', item.name);
         formData.append('floor', roomFloor.value);
+        formData.append('orderIndex', currentOrderIndex);
         if (roomBuilding.value) {
           formData.append('buildingId', roomBuilding.value);
         }
@@ -803,7 +1011,7 @@
 
           item.status = 'success';
           totalSuccess++;
-          consoleOutput.innerHTML += `<pre class="success">✅ [${i + 1}/${selectedFiles.length}] Xử lý thành công phòng: ${item.name}</pre>`;
+          consoleOutput.innerHTML += `<pre class="success">✅ [${i + 1}/${selectedFiles.length}] Xử lý thành công phòng #${i + 1}: ${item.name}</pre>`;
         } catch (err) {
           item.status = 'error';
           item.error = err.message || 'Lỗi xử lý';

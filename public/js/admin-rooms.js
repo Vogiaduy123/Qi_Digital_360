@@ -892,6 +892,17 @@
       renderRooms();
     };
 
+    window.sortRoomsAlphabetically = async function() {
+      if (!rooms || rooms.length === 0) return;
+      if (!confirm('Bạn có muốn tự động sắp xếp lại danh sách tất cả các phòng theo thứ tự tên A-Z (1, 2, 3...) không?')) return;
+      
+      const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+      rooms.sort((a, b) => collator.compare(a.name, b.name));
+      renderRooms();
+      await saveRoomOrder(rooms.map(r => r.id));
+      alert('✅ Đã cập nhật và lưu thứ tự phòng theo tên A-Z thành công!');
+    };
+
     window.openAddRoomModal = function() {
       window.location.href = '/admin/upload.html';
     };

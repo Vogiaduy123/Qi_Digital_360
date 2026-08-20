@@ -41,6 +41,7 @@ module.exports = {
       .from('rooms')
       .select('*, hotspots(*), media_hotspots(*), mail_hotspots(*)')
       .order('order_index', { ascending: true })
+      .order('id', { ascending: true })
       .order('id', { foreignTable: 'hotspots', ascending: true })
       .order('id', { foreignTable: 'media_hotspots', ascending: true })
       .order('id', { foreignTable: 'mail_hotspots', ascending: true });
@@ -50,6 +51,7 @@ module.exports = {
       result = await supabase
         .from('rooms')
         .select('*, hotspots(*), media_hotspots(*), mail_hotspots(*)')
+        .order('id', { ascending: true })
         .order('id', { foreignTable: 'hotspots', ascending: true })
         .order('id', { foreignTable: 'media_hotspots', ascending: true })
         .order('id', { foreignTable: 'mail_hotspots', ascending: true });

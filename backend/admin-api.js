@@ -285,6 +285,13 @@ router.post("/upload-panorama", uploadPanorama.single("panorama"), async (req, r
       const cloudTilesUrl = tileUrlData.publicUrl;
 
       // 4. Lưu thông tin phòng vào Database
+      let orderIndex = req.body.orderIndex !== undefined && req.body.orderIndex !== '' ? Number(req.body.orderIndex) : undefined;
+      if (orderIndex === undefined || isNaN(orderIndex)) {
+        const existingRooms = await db.getRooms();
+        const maxOrder = existingRooms.reduce((max, r) => Math.max(max, r.orderIndex || 0), 0);
+        orderIndex = maxOrder + 1;
+      }
+
       const room = {
         id: timestamp,
         name: roomNameInput,
@@ -292,6 +299,7 @@ router.post("/upload-panorama", uploadPanorama.single("panorama"), async (req, r
         tilesPath: cloudTilesUrl,   // Full Supabase Storage URL
         tilesConfig: config,
         floor: req.body.floor ? Number(req.body.floor) : 1,
+        orderIndex: orderIndex,
         hotspots: []
       };
       

@@ -85,6 +85,7 @@
           <div class="rooms-meta-row">
             <span class="rooms-count" id="roomsCountLabel">0 phòng</span>
             <div style="display:flex;gap:6px;align-items:center;">
+              <button type="button" class="btn-sort-rooms" onclick="sortRoomsAlphabetically()" title="Sắp xếp tự động tất cả phòng theo tên A-Z (1, 2...)" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--text);font-size:11px;padding:4px 8px;outline:none;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:3px;">🔤 Xếp A-Z</button>
               <select id="filterBuilding" onchange="renderRooms()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--text);font-size:11px;padding:4px 8px;outline:none;cursor:pointer;font-family:inherit;">
                 <option value="">Tất cả tòa nhà</option>
                 <option value="none">Phòng rời</option>
