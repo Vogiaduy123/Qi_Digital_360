@@ -547,6 +547,7 @@ try {
     await loadBuildingsData();
     initBuildingSelector(allRooms, allBuildings);
     initRooms(rooms, roomSelect);
+    await loadMinimap();
     // Keep current room if still exists; otherwise switch to first
     const exists = rooms.find(r => r.id === currentRoomId);
     if (exists) {

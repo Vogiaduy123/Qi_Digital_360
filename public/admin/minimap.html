@@ -754,6 +754,11 @@
         return;
       }
 
+      if (!currentBuildingId) {
+        alert('Vui lòng chọn một phân khu trước');
+        return;
+      }
+
       const bldg = buildings.find(b => b.id === currentBuildingId);
       const bldgName = bldg ? bldg.name : (currentBuildingId === '__unassigned__' ? 'Chưa phân khu' : 'Phân khu');
 
@@ -772,14 +777,9 @@
         const data = await res.json();
         if (data.success) {
           minimapData = data.minimap;
-          const currentMap = getCurrentMinimap();
-          if (currentMap && currentMap.image) {
-            mapPlaceholder.style.display = 'none';
-            mapImage.src = currentMap.image;
-          }
+          minimapFile.value = '';
           renderBuildingSelector();
-          renderMarkers();
-          renderMarkerList();
+          switchBuilding(currentBuildingId);
           alert(`✅ Upload ảnh sơ đồ cho "${bldgName}" thành công!`);
         } else {
           alert(data.error || 'Upload thất bại');
@@ -1166,6 +1166,10 @@
         alert('Không tìm thấy thông tin sơ đồ');
         return;
       }
+      if (!currentBuildingId) {
+        alert('Vui lòng chọn một phân khu trước');
+        return;
+      }
       const bldg = buildings.find(b => b.id === currentBuildingId);
       const bldgName = bldg ? bldg.name : (currentBuildingId === '__unassigned__' ? 'Chưa phân khu' : 'Phân khu');
 
@@ -1185,8 +1189,7 @@
         if (data.success) {
           minimapData = data.minimap;
           renderBuildingSelector();
-          renderMarkers();
-          renderMarkerList();
+          switchBuilding(currentBuildingId);
           alert(`✅ Đã lưu sơ đồ và hướng rada cho "${bldgName}" thành công!`);
         } else {
           alert(data.error || 'Lưu sơ đồ thất bại');

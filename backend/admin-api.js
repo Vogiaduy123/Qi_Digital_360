@@ -874,6 +874,47 @@ router.get("/minimap", async (req, res) => {
   }
 });
 
+// Helper function to safely sync minimap data to Supabase minimaps/markers tables
+async function syncMinimapToSupabase(floorIdNum, buildingName, imageUrl, buildingId, markers) {
+  try {
+    const upsertData = {
+      floor_id: floorIdNum,
+      floor_name: buildingName,
+      image_url: imageUrl || ""
+    };
+    if (buildingId && buildingId !== '__unassigned__') {
+      upsertData.building_id = buildingId;
+    }
+    
+    const { error: floorErr } = await db.supabase.from('minimaps').upsert(upsertData);
+    if (floorErr) {
+      // Fallback without building_id if column doesn't exist in Supabase schema
+      const fallbackData = {
+        floor_id: floorIdNum,
+        floor_name: buildingName,
+        image_url: imageUrl || ""
+      };
+      await db.supabase.from('minimaps').upsert(fallbackData);
+    }
+
+    if (Array.isArray(markers)) {
+      await db.supabase.from('minimap_markers').delete().eq('floor_id', floorIdNum);
+      if (markers.length > 0) {
+        const insertMarkers = markers.map(m => ({
+          floor_id: floorIdNum,
+          room_id: Number(m.roomId),
+          x: Number(m.x),
+          y: Number(m.y),
+          rotation: Number(m.rotation) || 0
+        }));
+        await db.supabase.from('minimap_markers').insert(insertMarkers);
+      }
+    }
+  } catch (e) {
+    console.warn('Sync to minimaps table error:', e.message);
+  }
+}
+
 // Upload minimap image for specific building/floor
 router.post("/minimap/upload-image", uploadMinimap.single("minimap"), async (req, res) => {
   if (!req.file) {
@@ -914,22 +955,14 @@ router.post("/minimap/upload-image", uploadMinimap.single("minimap"), async (req
     await db.saveAppConfig('building_minimaps', buildingMinimapsConfig);
 
     // 4. Đồng bộ vào bảng minimaps
-    try {
-      const buildings = await db.getBuildings();
-      const bldgIndex = Array.isArray(buildings) ? buildings.findIndex(b => b.id === buildingId) : -1;
-      const floorIdNum = bldgIndex >= 0 ? bldgIndex + 1 : 1;
+    const buildings = await db.getBuildings();
+    const bldgIndex = Array.isArray(buildings) ? buildings.findIndex(b => b.id === buildingId) : -1;
+    const floorIdNum = bldgIndex >= 0 ? bldgIndex + 1 : 1;
+    await syncMinimapToSupabase(floorIdNum, buildingName, cloudUrl, buildingId);
 
-      const upsertData = {
-        floor_id: floorIdNum,
-        floor_name: buildingName,
-        image_url: cloudUrl
-      };
-      if (buildingId && buildingId !== '__unassigned__') {
-        upsertData.building_id = buildingId;
-      }
-      await db.supabase.from('minimaps').upsert(upsertData);
-    } catch (e) {
-      console.warn('Sync to minimaps table error:', e.message);
+    // 5. Broadcast SSE
+    if (global.broadcastRooms) {
+      await global.broadcastRooms().catch(err => console.error("Error broadcasting rooms on minimap upload:", err));
     }
 
     const minimap = await getMinimap();
@@ -982,35 +1015,15 @@ router.put("/minimap/building/:id", async (req, res) => {
     await db.saveAppConfig('minimap_rotations', currentRotations);
 
     // 2. Đồng bộ DB
-    try {
-      const buildings = await db.getBuildings();
-      const bldgIndex = Array.isArray(buildings) ? buildings.findIndex(b => b.id === buildingId) : -1;
-      const floorIdNum = bldgIndex >= 0 ? bldgIndex + 1 : 1;
+    const buildings = await db.getBuildings();
+    const bldgIndex = Array.isArray(buildings) ? buildings.findIndex(b => b.id === buildingId) : -1;
+    const floorIdNum = bldgIndex >= 0 ? bldgIndex + 1 : 1;
+    const resolvedName = buildingName || (bldgIndex >= 0 ? buildings[bldgIndex].name : "Phân khu");
+    await syncMinimapToSupabase(floorIdNum, resolvedName, image, buildingId, markers);
 
-      const upsertData = {
-        floor_id: floorIdNum,
-        floor_name: buildingName || (bldgIndex >= 0 ? buildings[bldgIndex].name : "Phân khu"),
-        image_url: image || ""
-      };
-      if (buildingId && buildingId !== '__unassigned__') {
-        upsertData.building_id = buildingId;
-      }
-      await db.supabase.from('minimaps').upsert(upsertData);
-
-      // Markers
-      await db.supabase.from('minimap_markers').delete().eq('floor_id', floorIdNum);
-      if (markers && markers.length > 0) {
-        const insertMarkers = markers.map(m => ({
-          floor_id: floorIdNum,
-          room_id: Number(m.roomId),
-          x: Number(m.x),
-          y: Number(m.y),
-          rotation: Number(m.rotation) || 0
-        }));
-        await db.supabase.from('minimap_markers').insert(insertMarkers);
-      }
-    } catch (e) {
-      console.warn('Sync to minimaps table error:', e.message);
+    // 3. Broadcast SSE
+    if (global.broadcastRooms) {
+      await global.broadcastRooms().catch(err => console.error("Error broadcasting rooms on minimap save:", err));
     }
 
     const minimap = await getMinimap();
@@ -1043,6 +1056,10 @@ router.put("/minimap/floor/:id", async (req, res) => {
     fs.writeFileSync(LOCAL_BLDG_MAP_FILE, JSON.stringify(buildingMinimapsConfig, null, 2), 'utf8');
     await db.saveAppConfig('building_minimaps', buildingMinimapsConfig);
 
+    if (global.broadcastRooms) {
+      await global.broadcastRooms().catch(err => console.error("Error broadcasting rooms on minimap floor save:", err));
+    }
+
     const minimap = await getMinimap();
     res.json({ success: true, minimap });
   } catch (err) {
@@ -1059,6 +1076,9 @@ router.post("/minimap/save", async (req, res) => {
 
   try {
     await db.saveMinimap(minimapData);
+    if (global.broadcastRooms) {
+      await global.broadcastRooms().catch(err => console.error("Error broadcasting rooms on minimap save:", err));
+    }
     res.json({ success: true, message: "Minimap markers saved successfully" });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

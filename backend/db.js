@@ -438,14 +438,15 @@ module.exports = {
         // Tìm minimap record theo building_id hoặc floor_name hoặc floor_id
         const mapRow = allFloors.find(f => f.building_id === bldg.id || f.floor_name === bldg.name || Number(f.floor_id) === floorIdNum);
         const configData = buildingMinimapsConfig[bldg.id] || {};
-        const mapImage = mapRow?.image_url || configData.image || "";
+        const mapImage = configData.image || mapRow?.image_url || "";
 
         // Markers của phân khu này
         const bldgRoomIds = new Set(rooms.filter(r => r.buildingId === bldg.id).map(r => r.id));
-        const bldgMarkers = (mapRow 
-          ? allMarkers.filter(m => Number(m.floor_id) === Number(mapRow.floor_id))
-          : (configData.markers || [])
-        ).map(m => {
+        const rawMarkers = (configData.markers && configData.markers.length > 0)
+          ? configData.markers
+          : (mapRow ? allMarkers.filter(m => Number(m.floor_id) === Number(mapRow.floor_id)) : []);
+
+        const bldgMarkers = rawMarkers.map(m => {
           const rotKey = `${floorIdNum}_${m.room_id || m.roomId}`;
           let rot = 0;
           if (m.rotation !== undefined && m.rotation !== null && !isNaN(Number(m.rotation)) && Number(m.rotation) !== 0) {
@@ -479,10 +480,11 @@ module.exports = {
     if (hasUnassignedRooms || resultFloors.length === 0) {
       const unassignedRow = allFloors.find(f => !f.building_id || f.floor_id === 0 || f.floor_name === 'Chưa phân khu');
       const unassignedConfig = buildingMinimapsConfig['__unassigned__'] || {};
-      const unassignedMarkers = (unassignedRow
-        ? allMarkers.filter(m => Number(m.floor_id) === Number(unassignedRow.floor_id))
-        : (unassignedConfig.markers || [])
-      ).map(m => ({
+      const rawUnassignedMarkers = (unassignedConfig.markers && unassignedConfig.markers.length > 0)
+        ? unassignedConfig.markers
+        : (unassignedRow ? allMarkers.filter(m => Number(m.floor_id) === Number(unassignedRow.floor_id)) : []);
+
+      const unassignedMarkers = rawUnassignedMarkers.map(m => ({
         x: Number(m.x),
         y: Number(m.y),
         roomId: Number(m.room_id || m.roomId),
@@ -494,7 +496,7 @@ module.exports = {
         floorId: 9999,
         buildingId: null,
         name: 'Chưa phân khu',
-        image: unassignedRow?.image_url || unassignedConfig.image || "",
+        image: unassignedConfig.image || unassignedRow?.image_url || "",
         markers: unassignedMarkers
       });
     }
