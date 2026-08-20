@@ -371,8 +371,11 @@ module.exports = {
     if (error) throw error;
   },
 
-  // --- MINIMAPS & MARKERS ---
+  // --- MINIMAPS & MARKERS (1 Phân khu = 1 Minimap) ---
   async getMinimap() {
+    const buildings = await this.getBuildings();
+    const rooms = await this.getRooms();
+
     const { data: floors, error: floorErr } = await supabase
       .from('minimaps')
       .select('*')
@@ -380,7 +383,6 @@ module.exports = {
       
     if (floorErr) {
       console.error('Error fetching minimaps:', floorErr);
-      return { floors: [] };
     }
 
     const { data: markers, error: markerErr } = await supabase
@@ -389,14 +391,13 @@ module.exports = {
       
     if (markerErr) {
       console.error('Error fetching minimap markers:', markerErr);
-      return { floors: floors.map(f => ({ id: f.floor_id, buildingId: f.building_id || null, name: f.floor_name, image: f.image_url, markers: [] })) };
     }
 
     // Đọc rotations & building mappings dự phòng từ app_configs & local file
     const LOCAL_ROT_FILE = path.join(__dirname, '..', 'data', 'minimap-rotations.json');
-    const LOCAL_BLDG_FILE = path.join(__dirname, '..', 'data', 'minimap-buildings.json');
+    const LOCAL_BLDG_MAP_FILE = path.join(__dirname, '..', 'data', 'building-minimaps.json');
     let savedRotations = {};
-    let savedBuildingsMap = {};
+    let buildingMinimapsConfig = {};
 
     try {
       if (fs.existsSync(LOCAL_ROT_FILE)) {
@@ -405,8 +406,8 @@ module.exports = {
     } catch {}
 
     try {
-      if (fs.existsSync(LOCAL_BLDG_FILE)) {
-        savedBuildingsMap = JSON.parse(fs.readFileSync(LOCAL_BLDG_FILE, 'utf8')) || {};
+      if (fs.existsSync(LOCAL_BLDG_MAP_FILE)) {
+        buildingMinimapsConfig = JSON.parse(fs.readFileSync(LOCAL_BLDG_MAP_FILE, 'utf8')) || {};
       }
     } catch {}
 
@@ -418,43 +419,87 @@ module.exports = {
     } catch {}
 
     try {
-      const configBldg = await this.getAppConfig('minimap_buildings_map');
+      const configBldg = await this.getAppConfig('building_minimaps');
       if (configBldg && typeof configBldg === 'object') {
-        savedBuildingsMap = { ...savedBuildingsMap, ...configBldg };
+        buildingMinimapsConfig = { ...buildingMinimapsConfig, ...configBldg };
       }
     } catch {}
 
-    return {
-      floors: floors.map(f => {
-        const floorIdNum = Number(f.floor_id);
-        const bldgId = f.building_id || savedBuildingsMap[floorIdNum] || savedBuildingsMap[String(floorIdNum)] || null;
-        return {
-          id: floorIdNum,
-          buildingId: bldgId,
-          name: f.floor_name,
-          image: f.image_url,
-          markers: markers
-            .filter(m => Number(m.floor_id) === floorIdNum)
-            .map(m => {
-              const rotKey = `${f.floor_id}_${m.room_id}`;
-              let rot = 0;
-              if (m.rotation !== undefined && m.rotation !== null && !isNaN(Number(m.rotation)) && Number(m.rotation) !== 0) {
-                rot = Number(m.rotation);
-              } else if (savedRotations[rotKey] !== undefined) {
-                rot = Number(savedRotations[rotKey]);
-              } else if (savedRotations[m.room_id] !== undefined) {
-                rot = Number(savedRotations[m.room_id]);
-              }
-              return {
-                x: Number(m.x),
-                y: Number(m.y),
-                roomId: Number(m.room_id),
-                rotation: rot
-              };
-            })
-        };
-      })
-    };
+    const allFloors = Array.isArray(floors) ? floors : [];
+    const allMarkers = Array.isArray(markers) ? markers : [];
+
+    // Tạo danh sách minimap theo từng phân khu
+    const resultFloors = [];
+
+    // 1. Duyệt qua từng phân khu (building)
+    if (Array.isArray(buildings) && buildings.length > 0) {
+      buildings.forEach((bldg, idx) => {
+        const floorIdNum = idx + 1; // 1-based floor ID
+        // Tìm minimap record theo building_id hoặc floor_name hoặc floor_id
+        const mapRow = allFloors.find(f => f.building_id === bldg.id || f.floor_name === bldg.name || Number(f.floor_id) === floorIdNum);
+        const configData = buildingMinimapsConfig[bldg.id] || {};
+        const mapImage = mapRow?.image_url || configData.image || "";
+
+        // Markers của phân khu này
+        const bldgRoomIds = new Set(rooms.filter(r => r.buildingId === bldg.id).map(r => r.id));
+        const bldgMarkers = (mapRow 
+          ? allMarkers.filter(m => Number(m.floor_id) === Number(mapRow.floor_id))
+          : (configData.markers || [])
+        ).map(m => {
+          const rotKey = `${floorIdNum}_${m.room_id || m.roomId}`;
+          let rot = 0;
+          if (m.rotation !== undefined && m.rotation !== null && !isNaN(Number(m.rotation)) && Number(m.rotation) !== 0) {
+            rot = Number(m.rotation);
+          } else if (savedRotations[rotKey] !== undefined) {
+            rot = Number(savedRotations[rotKey]);
+          } else if (savedRotations[m.room_id || m.roomId] !== undefined) {
+            rot = Number(savedRotations[m.room_id || m.roomId]);
+          }
+          return {
+            x: Number(m.x),
+            y: Number(m.y),
+            roomId: Number(m.room_id || m.roomId),
+            rotation: rot
+          };
+        });
+
+        resultFloors.push({
+          id: bldg.id, // Dùng buildingId làm ID
+          floorId: floorIdNum,
+          buildingId: bldg.id,
+          name: bldg.name,
+          image: mapImage,
+          markers: bldgMarkers
+        });
+      });
+    }
+
+    // 2. Nếu có phòng chưa phân khu, thêm mục "Chưa phân khu"
+    const hasUnassignedRooms = rooms.some(r => !r.buildingId);
+    if (hasUnassignedRooms || resultFloors.length === 0) {
+      const unassignedRow = allFloors.find(f => !f.building_id || f.floor_id === 0 || f.floor_name === 'Chưa phân khu');
+      const unassignedConfig = buildingMinimapsConfig['__unassigned__'] || {};
+      const unassignedMarkers = (unassignedRow
+        ? allMarkers.filter(m => Number(m.floor_id) === Number(unassignedRow.floor_id))
+        : (unassignedConfig.markers || [])
+      ).map(m => ({
+        x: Number(m.x),
+        y: Number(m.y),
+        roomId: Number(m.room_id || m.roomId),
+        rotation: Number(m.rotation) || 0
+      }));
+
+      resultFloors.push({
+        id: '__unassigned__',
+        floorId: 9999,
+        buildingId: null,
+        name: 'Chưa phân khu',
+        image: unassignedRow?.image_url || unassignedConfig.image || "",
+        markers: unassignedMarkers
+      });
+    }
+
+    return { floors: resultFloors };
   },
 
   async saveMinimap(minimapData) {
@@ -462,9 +507,9 @@ module.exports = {
     
     // Cập nhật rotations & buildings map
     const LOCAL_ROT_FILE = path.join(__dirname, '..', 'data', 'minimap-rotations.json');
-    const LOCAL_BLDG_FILE = path.join(__dirname, '..', 'data', 'minimap-buildings.json');
+    const LOCAL_BLDG_MAP_FILE = path.join(__dirname, '..', 'data', 'building-minimaps.json');
     let currentRotations = {};
-    let currentBuildingsMap = {};
+    let buildingMinimapsConfig = {};
 
     try {
       if (fs.existsSync(LOCAL_ROT_FILE)) {
@@ -473,23 +518,28 @@ module.exports = {
     } catch {}
 
     try {
-      if (fs.existsSync(LOCAL_BLDG_FILE)) {
-        currentBuildingsMap = JSON.parse(fs.readFileSync(LOCAL_BLDG_FILE, 'utf8')) || {};
+      if (fs.existsSync(LOCAL_BLDG_MAP_FILE)) {
+        buildingMinimapsConfig = JSON.parse(fs.readFileSync(LOCAL_BLDG_MAP_FILE, 'utf8')) || {};
       }
     } catch {}
 
-    // Lưu các tầng
-    for (const floor of floors) {
-      const floorIdNum = Number(floor.id);
-      const bldgId = floor.buildingId || null;
-      currentBuildingsMap[floorIdNum] = bldgId;
+    // Lưu các phân khu
+    for (let i = 0; i < floors.length; i++) {
+      const floor = floors[i];
+      const floorIdNum = Number(floor.floorId) || (i + 1);
+      const bldgId = floor.buildingId || floor.id || null;
+
+      buildingMinimapsConfig[bldgId || '__unassigned__'] = {
+        image: floor.image || "",
+        markers: floor.markers || []
+      };
 
       const floorPayload = {
         floor_id: floorIdNum,
         floor_name: floor.name,
         image_url: floor.image || ""
       };
-      if (bldgId) {
+      if (bldgId && bldgId !== '__unassigned__') {
         floorPayload.building_id = bldgId;
       }
 
@@ -497,32 +547,29 @@ module.exports = {
         .from('minimaps')
         .upsert(floorPayload);
       
-      // Fallback nếu column building_id chưa tồn tại trên schema PostgreSQL
       if (floorErr && floorErr.message && (floorErr.message.includes('building_id') || floorErr.code === '42703' || floorErr.code === 'PGRST204')) {
-        console.warn('⚠️ [Supabase DB] building_id column missing in minimaps table, inserting without it');
         const fallbackPayload = {
           floor_id: floorIdNum,
           floor_name: floor.name,
           image_url: floor.image || ""
         };
         const fallbackRes = await supabase.from('minimaps').upsert(fallbackPayload);
-        if (fallbackRes.error) throw fallbackRes.error;
+        if (fallbackRes.error) console.warn('Minimaps upsert fallback error:', fallbackRes.error);
       } else if (floorErr) {
-        throw floorErr;
+        console.warn('Minimaps upsert error:', floorErr);
       }
 
       // Xóa markers cũ của tầng này
-      const { error: delErr } = await supabase
+      await supabase
         .from('minimap_markers')
         .delete()
         .eq('floor_id', floorIdNum);
-      if (delErr) throw delErr;
 
       // Chèn markers mới
       if (floor.markers && floor.markers.length > 0) {
         floor.markers.forEach(m => {
           const rot = Number(m.rotation) || 0;
-          currentRotations[`${floor.id}_${m.roomId}`] = rot;
+          currentRotations[`${floorIdNum}_${m.roomId}`] = rot;
           currentRotations[m.roomId] = rot;
         });
 
@@ -538,14 +585,9 @@ module.exports = {
           .from('minimap_markers')
           .insert(insertMarkers);
         
-        // Fallback nếu column rotation chưa tồn tại trên DB hiện tại
         if (insErr && insErr.message && (insErr.message.includes('rotation') || insErr.code === '42703' || insErr.code === 'PGRST204')) {
-          console.warn('⚠️ [Supabase DB] rotation column missing in minimap_markers, inserting without rotation');
           const fallbackMarkers = insertMarkers.map(({ rotation, ...rest }) => rest);
-          const fallbackRes = await supabase.from('minimap_markers').insert(fallbackMarkers);
-          if (fallbackRes.error) throw fallbackRes.error;
-        } else if (insErr) {
-          throw insErr;
+          await supabase.from('minimap_markers').insert(fallbackMarkers);
         }
       }
     }
@@ -555,42 +597,12 @@ module.exports = {
       const dataDir = path.join(__dirname, '..', 'data');
       if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
       fs.writeFileSync(LOCAL_ROT_FILE, JSON.stringify(currentRotations, null, 2), 'utf8');
-      fs.writeFileSync(LOCAL_BLDG_FILE, JSON.stringify(currentBuildingsMap, null, 2), 'utf8');
+      fs.writeFileSync(LOCAL_BLDG_MAP_FILE, JSON.stringify(buildingMinimapsConfig, null, 2), 'utf8');
       await this.saveAppConfig('minimap_rotations', currentRotations);
-      await this.saveAppConfig('minimap_buildings_map', currentBuildingsMap);
+      await this.saveAppConfig('building_minimaps', buildingMinimapsConfig);
     } catch (e) {
       console.warn('⚠️ [Supabase DB] Error saving minimap configs:', e.message);
     }
-  },
-
-  async deleteMinimapFloor(floorId) {
-    const floorIdNum = Number(floorId);
-    
-    // Xóa markers
-    await supabase
-      .from('minimap_markers')
-      .delete()
-      .eq('floor_id', floorIdNum);
-
-    // Xóa tầng
-    const { error } = await supabase
-      .from('minimaps')
-      .delete()
-      .eq('floor_id', floorIdNum);
-
-    if (error) throw error;
-
-    // Cập nhật file local & app_configs
-    const LOCAL_BLDG_FILE = path.join(__dirname, '..', 'data', 'minimap-buildings.json');
-    try {
-      if (fs.existsSync(LOCAL_BLDG_FILE)) {
-        const map = JSON.parse(fs.readFileSync(LOCAL_BLDG_FILE, 'utf8')) || {};
-        delete map[floorIdNum];
-        delete map[String(floorIdNum)];
-        fs.writeFileSync(LOCAL_BLDG_FILE, JSON.stringify(map, null, 2), 'utf8');
-        await this.saveAppConfig('minimap_buildings_map', map);
-      }
-    } catch {}
   },
 
   // --- APP CONFIGS (api_config, tour_scenario) ---

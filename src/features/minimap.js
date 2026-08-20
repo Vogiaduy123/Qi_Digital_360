@@ -158,88 +158,47 @@ function getAvailableFloorsForCurrentContext() {
   
   const activeBldgId = getActiveBuildingId();
   if (activeBldgId) {
-    const bldgFloors = minimapData.floors.filter(f => f.buildingId === activeBldgId);
-    if (bldgFloors.length > 0) return bldgFloors;
-    // If current building has no floors uploaded, return empty array so minimap hides gracefully
+    const bldgFloor = minimapData.floors.find(f => f.buildingId === activeBldgId || f.id === activeBldgId);
+    if (bldgFloor) return [bldgFloor];
     return [];
   }
 
-  // If no building selected, return floors with no building assigned or all floors
-  const unassigned = minimapData.floors.filter(f => !f.buildingId);
-  return unassigned.length > 0 ? unassigned : minimapData.floors;
+  // Nếu chưa chọn phân khu, tìm sơ đồ của phòng hiện tại hoặc sơ đồ đầu tiên
+  const curRoomId = env.getCurrentRoomId();
+  if (curRoomId) {
+    const matchingFloor = minimapData.floors.find(f => f.markers && f.markers.some(m => m.roomId === curRoomId));
+    if (matchingFloor) return [matchingFloor];
+  }
+
+  return minimapData.floors;
 }
 
 function getCurrentFloor() {
   const availableFloors = getAvailableFloorsForCurrentContext();
   if (availableFloors.length === 0) return null;
 
-  const found = availableFloors.find(f => f.id === currentFloorId);
+  const found = availableFloors.find(f => f.id === currentFloorId || f.buildingId === currentFloorId);
   if (found) return found;
 
   return availableFloors[0];
 }
 
-function getCurrentRoomFloor() {
-  const room = env.getRoomsData()[env.getCurrentRoomId()];
-  return room ? (room.floor || 1) : 1;
-}
-
-// ─── Floor tabs ───────────────────────────────────────────────────────────────
+// ─── Floor header & tabs ───────────────────────────────────────────────────────
 
 function renderFloorTabs() {
   const floorTabsContainer = document.getElementById('floorTabs');
-  if (!floorTabsContainer) return;
-
-  floorTabsContainer.innerHTML = '';
-
-  const availableFloors = getAvailableFloorsForCurrentContext();
-  if (availableFloors.length === 0) return;
-
+  const minimapHeaderTitle = document.querySelector('#minimapHeader span');
+  
   const currentFloor = getCurrentFloor();
   if (!currentFloor) return;
 
-  const wrapper = document.createElement('div');
-  wrapper.className = 'floor-switcher';
-
-  const currentLabel = document.createElement('div');
-  currentLabel.className = 'floor-current-name';
-  currentLabel.textContent = currentFloor.name;
-
-  const dropdown = document.createElement('select');
-  dropdown.className = 'floor-dropdown';
-
-  const remainingFloors = availableFloors.filter(f => f.id !== currentFloor.id);
-
-  const placeholder = document.createElement('option');
-  placeholder.value = '';
-
-  if (remainingFloors.length === 0) {
-    placeholder.textContent = 'Không có tầng khác';
-    dropdown.disabled = true;
-  } else {
-    placeholder.textContent = 'Chọn tầng khác...';
-    dropdown.disabled = false;
+  if (minimapHeaderTitle) {
+    minimapHeaderTitle.textContent = `🗺️ Sơ đồ: ${currentFloor.name}`;
   }
 
-  dropdown.appendChild(placeholder);
-
-  remainingFloors.forEach(floor => {
-    const option = document.createElement('option');
-    option.value = String(floor.id);
-    option.textContent = floor.name;
-    dropdown.appendChild(option);
-  });
-
-  dropdown.addEventListener('change', () => {
-    const selectedFloorId = Number(dropdown.value);
-    if (selectedFloorId) {
-      switchFloor(selectedFloorId);
-    }
-  });
-
-  wrapper.appendChild(currentLabel);
-  wrapper.appendChild(dropdown);
-  floorTabsContainer.appendChild(wrapper);
+  if (floorTabsContainer) {
+    floorTabsContainer.style.display = 'none'; // 1 Phân khu = 1 Minimap, không cần tabs đổi tầng
+  }
 }
 
 function switchFloor(floorId) {

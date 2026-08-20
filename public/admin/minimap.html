@@ -378,39 +378,20 @@
   <div class="container">
     <div class="panel">
       <!-- Building Selector -->
-      <div class="field" style="margin-bottom: 14px; background: #f8fafc; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0;">
-        <label style="font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-          <span>🏢 Chọn Phân khu (Tòa nhà):</span>
+      <div class="field" style="margin-bottom: 18px; background: #f8fafc; padding: 14px; border-radius: 12px; border: 2px solid #2B3278;">
+        <label style="font-weight: 800; font-size: 14px; color: #2B3278; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <span>🏢 Chọn Phân khu (Tầng):</span>
         </label>
-        <select id="buildingSelect" style="padding: 10px; font-weight: 700; font-size: 14px; border: 2px solid #cbd5e1; border-radius: 8px; background: white; color: #1e293b;"></select>
+        <select id="buildingSelect" style="padding: 12px; font-weight: 700; font-size: 15px; border: 1.5px solid #cbd5e1; border-radius: 8px; background: white; color: #1e293b;"></select>
       </div>
 
-      <div class="floor-selector">
-        <select id="floorSelect" title="Danh sách các tầng thuộc phân khu đang chọn"></select>
-        <button class="btn btn-secondary" id="btnAddFloor" type="button" title="Thêm tầng mới">+ Thêm tầng</button>
-      </div>
-
-      <h2>Thông tin tầng & Phân khu</h2>
+      <h2>Ảnh sơ đồ / Minimap</h2>
       <div class="field">
-        <label>Tên tầng hiển thị</label>
-        <input type="text" id="floorNameInput" placeholder="Nhập tên tầng (VD: Tầng 1, Sân thượng...)">
-      </div>
-      <div class="field">
-        <label>Thuộc Phân khu</label>
-        <select id="floorBuildingSelect" style="font-weight: 600;"></select>
-      </div>
-      <div style="display: flex; gap: 8px; margin-bottom: 18px;">
-        <button class="btn btn-secondary" id="btnUpdateFloorInfo" style="flex: 1;">✏️ Cập nhật tầng</button>
-        <button class="btn btn-danger" id="btnDeleteFloor" style="background:#ef4444; color:white; border:none;" title="Xóa tầng này">🗑️ Xóa tầng</button>
-      </div>
-
-      <h2>Ảnh minimap</h2>
-      <div class="field">
-        <label>Chọn ảnh sơ đồ / minimap (JPG/PNG/WEBP)</label>
+        <label id="uploadLabel">Chọn ảnh sơ đồ cho Phân khu (JPG/PNG/WEBP)</label>
         <input type="file" id="minimapFile" accept="image/jpeg,image/png,image/webp">
       </div>
-      <button class="btn" id="btnUpload">⬆️ Upload ảnh sơ đồ</button>
-      <p class="muted" style="margin-top: 8px;">Sau khi upload, ảnh sẽ hiển thị bên phải để bạn đặt marker phòng.</p>
+      <button class="btn" id="btnUpload" style="width: 100%;">⬆️ Upload ảnh sơ đồ</button>
+      <p class="muted" style="margin-top: 8px;">Mỗi Phân khu (Tầng) tương ứng với 1 sơ đồ minimap riêng biệt.</p>
 
       <h2 style="margin-top: 24px;">Thêm marker phòng</h2>
       <div class="field">
@@ -419,25 +400,25 @@
           <option value="">-- Chọn phòng --</option>
         </select>
       </div>
-      <button class="btn btn-secondary" id="btnToggleAdd">➕ Chế độ thêm: TẮT</button>
-      <p class="muted" style="margin-top: 8px;">Bật chế độ thêm, sau đó click lên minimap để đặt marker. Kéo thả marker để chỉnh vị trí, chỉnh góc xoay rada bên dưới.</p>
+      <button class="btn btn-secondary" id="btnToggleAdd" style="width: 100%;">➕ Chế độ thêm: TẮT</button>
+      <p class="muted" style="margin-top: 8px;">Bật chế độ thêm, sau đó click lên sơ đồ để đặt vị trí phòng. Kéo thả marker để căn chỉnh, xoay rada bên dưới.</p>
 
       <h2 style="margin-top: 24px;">Danh sách marker & Hướng Rada</h2>
       <div id="markerList" class="marker-list">
-        <p class="muted">Chưa có marker</p>
+        <p class="muted">Chưa có marker nào</p>
       </div>
-      <button class="btn" id="btnSave" style="margin-top: 12px; width: 100%; font-size: 15px; font-weight: 700; padding: 12px;">💾 Lưu toàn bộ Minimap</button>
+      <button class="btn" id="btnSave" style="margin-top: 14px; width: 100%; font-size: 15px; font-weight: 700; padding: 12px;">💾 Lưu sơ đồ Phân khu này</button>
     </div>
 
     <div class="panel">
       <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e7e7e7; padding-bottom: 8px; margin-bottom: 14px;">
-        <h2 style="margin: 0; border: none; padding: 0;">Xem trước & thao tác</h2>
-        <span id="currentFloorBadge" class="badge" style="background: #2B3278; font-size: 13px; font-weight: 600; padding: 6px 12px;">Tầng 1</span>
+        <h2 style="margin: 0; border: none; padding: 0;">Xem trước sơ đồ: <span id="currentBuildingName" style="color: #2B3278;">Tầng 1</span></h2>
+        <span id="currentFloorBadge" class="badge" style="background: #2B3278; font-size: 13px; font-weight: 600; padding: 6px 12px;">Phân khu</span>
       </div>
       <div id="mapContainer">
         <img id="mapImage" alt="Minimap preview">
         <div id="markerLayer"></div>
-        <p class="muted" id="mapPlaceholder" style="position:absolute;">Chưa có ảnh minimap</p>
+        <p class="muted" id="mapPlaceholder" style="position:absolute;">Chưa có ảnh sơ đồ cho phân khu này</p>
       </div>
     </div>
   </div>
@@ -525,8 +506,7 @@
     let rooms = [];
     let buildings = [];
     let minimapData = { floors: [] };
-    let currentFloorId = 1;
-    let currentBuildingFilter = ''; // '' = Tất cả, '__unassigned__' = Chưa phân khu, 'bldg_xxx' = Phân khu cụ thể
+    let currentBuildingId = '';
     let addMode = false;
     let dragState = null;
 
@@ -538,10 +518,9 @@
     let calibOffsetDeg = 0;
 
     const buildingSelect = document.getElementById('buildingSelect');
-    const floorBuildingSelect = document.getElementById('floorBuildingSelect');
-    const btnUpdateFloorInfo = document.getElementById('btnUpdateFloorInfo');
-    const btnDeleteFloor = document.getElementById('btnDeleteFloor');
+    const currentBuildingName = document.getElementById('currentBuildingName');
     const currentFloorBadge = document.getElementById('currentFloorBadge');
+    const uploadLabel = document.getElementById('uploadLabel');
 
     const minimapFile = document.getElementById('minimapFile');
     const btnUpload = document.getElementById('btnUpload');
@@ -553,9 +532,6 @@
     const markerLayer = document.getElementById('markerLayer');
     const markerList = document.getElementById('markerList');
     const mapPlaceholder = document.getElementById('mapPlaceholder');
-    const floorSelect = document.getElementById('floorSelect');
-    const btnAddFloor = document.getElementById('btnAddFloor');
-    const floorNameInput = document.getElementById('floorNameInput');
 
     // Calibration elements
     const calibOffsetSlider = document.getElementById('calibOffsetSlider');
@@ -575,42 +551,20 @@
       await loadBuildings();
       await loadRooms();
       await loadMinimap();
-      renderBuildingOptions();
-      renderFloorTabs();
+      renderBuildingSelector();
       bindUI();
       bindCalibUI();
     }
 
     function bindUI() {
       buildingSelect.addEventListener('change', () => {
-        currentBuildingFilter = buildingSelect.value;
-        const visibleFloors = getVisibleFloors();
-        if (visibleFloors.length > 0) {
-          // If current floor is in visible floors, keep it, else switch to first visible floor
-          if (!visibleFloors.some(f => f.id === currentFloorId)) {
-            switchFloor(visibleFloors[0].id);
-          } else {
-            renderFloorTabs();
-            renderRoomOptions();
-          }
-        } else {
-          renderFloorTabs();
-          renderRoomOptions();
-          renderMarkers();
-          renderMarkerList();
-          mapPlaceholder.style.display = 'flex';
-          mapPlaceholder.textContent = 'Phân khu này chưa có tầng nào. Bấm "+ Thêm tầng" để tạo mới.';
-          mapImage.src = '';
-        }
+        currentBuildingId = buildingSelect.value;
+        switchBuilding(currentBuildingId);
       });
 
       btnUpload.addEventListener('click', uploadMinimapImage);
       btnToggleAdd.addEventListener('click', toggleAddMode);
       btnSave.addEventListener('click', saveMinimap);
-      btnUpdateFloorInfo.addEventListener('click', updateCurrentFloorInfo);
-      btnDeleteFloor.addEventListener('click', deleteCurrentFloor);
-      floorSelect.addEventListener('change', () => switchFloor(Number(floorSelect.value)));
-      btnAddFloor.addEventListener('click', addNewFloor);
       mapImage.addEventListener('load', renderMarkers);
       mapContainer.addEventListener('click', handleAddMarker);
     }
@@ -684,290 +638,129 @@
         const data = await res.json();
         if (data.success) {
           minimapData = data.minimap || { floors: [] };
-          if (minimapData.floors.length === 0) {
-            minimapData.floors.push({
-              id: 1,
-              buildingId: null,
-              name: "Tầng 1",
-              image: "",
-              markers: []
-            });
+          
+          if (!currentBuildingId && minimapData.floors.length > 0) {
+            currentBuildingId = minimapData.floors[0].id;
+          } else if (!currentBuildingId && buildings.length > 0) {
+            currentBuildingId = buildings[0].id;
           }
-          currentFloorId = minimapData.floors[0].id;
-          const floor = getCurrentFloor();
-          floorNameInput.value = floor?.name || '';
-          if (floor && floor.image) {
-            mapPlaceholder.style.display = 'none';
-            mapImage.src = floor.image;
-          }
-          renderBuildingOptions();
-          renderFloorTabs();
-          renderRoomOptions();
-          renderMarkers();
-          renderMarkerList();
+
+          renderBuildingSelector();
+          switchBuilding(currentBuildingId);
         }
       } catch (err) {
         console.error('Load minimap error', err);
       }
     }
 
-    function getCurrentFloor() {
-      return minimapData.floors.find(f => f.id === currentFloorId) || null;
+    function getCurrentMinimap() {
+      if (!minimapData || !minimapData.floors) return null;
+      return minimapData.floors.find(f => f.id === currentBuildingId || f.buildingId === currentBuildingId) || null;
     }
 
-    function getVisibleFloors() {
-      if (!minimapData || !minimapData.floors) return [];
-      if (!currentBuildingFilter) return minimapData.floors;
-      if (currentBuildingFilter === '__unassigned__') {
-        return minimapData.floors.filter(f => !f.buildingId);
-      }
-      return minimapData.floors.filter(f => f.buildingId === currentBuildingFilter);
-    }
-
-    function renderBuildingOptions() {
-      // 1. Top Building Filter
+    function renderBuildingSelector() {
       buildingSelect.innerHTML = '';
-      const allOpt = document.createElement('option');
-      allOpt.value = '';
-      allOpt.textContent = `🌐 Tất cả phân khu (${minimapData.floors.length} tầng)`;
-      buildingSelect.appendChild(allOpt);
 
-      const unassignedCount = minimapData.floors.filter(f => !f.buildingId).length;
-      const unassignedOpt = document.createElement('option');
-      unassignedOpt.value = '__unassigned__';
-      unassignedOpt.textContent = `📁 Chưa phân khu (${unassignedCount} tầng)`;
-      buildingSelect.appendChild(unassignedOpt);
-
-      buildings.forEach(b => {
-        const count = minimapData.floors.filter(f => f.buildingId === b.id).length;
-        const opt = document.createElement('option');
-        opt.value = b.id;
-        opt.textContent = `🏢 ${b.name} (${count} tầng)`;
-        buildingSelect.appendChild(opt);
-      });
-      buildingSelect.value = currentBuildingFilter;
-
-      // 2. Floor Building Select (trong panel chỉnh sửa tầng)
-      floorBuildingSelect.innerHTML = '<option value="">📁 Chưa gán phân khu</option>';
-      buildings.forEach(b => {
-        const opt = document.createElement('option');
-        opt.value = b.id;
-        opt.textContent = `🏢 ${b.name}`;
-        floorBuildingSelect.appendChild(opt);
-      });
-    }
-
-    function renderFloorTabs() {
-      floorSelect.innerHTML = '';
-      const visibleFloors = getVisibleFloors();
-
-      if (visibleFloors.length === 0) {
+      if (buildings.length === 0 && (!minimapData || minimapData.floors.length === 0)) {
         const opt = document.createElement('option');
         opt.value = '';
-        opt.textContent = '-- Không có tầng nào --';
-        floorSelect.appendChild(opt);
-        floorSelect.disabled = true;
-        currentFloorBadge.textContent = 'Chưa chọn tầng';
+        opt.textContent = '-- Chưa có phân khu nào (Hãy tạo trong mục Quản lý Phân khu) --';
+        buildingSelect.appendChild(opt);
         return;
       }
 
-      floorSelect.disabled = false;
-      visibleFloors.forEach(floor => {
-        const option = document.createElement('option');
-        option.value = floor.id;
-        const bldg = buildings.find(b => b.id === floor.buildingId);
-        const bldgTag = bldg ? ` [${bldg.name}]` : '';
-        option.textContent = `${floor.name}${bldgTag}`;
-        floorSelect.appendChild(option);
+      buildings.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        const bldgMap = minimapData.floors.find(f => f.id === b.id || f.buildingId === b.id);
+        const mapStatus = (bldgMap && bldgMap.image) ? ' [Đã có sơ đồ]' : ' [Chưa có sơ đồ]';
+        opt.textContent = `🏢 ${b.name}${mapStatus}`;
+        buildingSelect.appendChild(opt);
       });
 
-      if (visibleFloors.some(f => f.id === currentFloorId)) {
-        floorSelect.value = String(currentFloorId);
-      } else if (visibleFloors.length > 0) {
-        floorSelect.value = String(visibleFloors[0].id);
-        currentFloorId = visibleFloors[0].id;
+      // Nếu có phòng chưa phân khu
+      const hasUnassigned = rooms.some(r => !r.buildingId);
+      if (hasUnassigned) {
+        const opt = document.createElement('option');
+        opt.value = '__unassigned__';
+        opt.textContent = '📁 Chưa gán phân khu';
+        buildingSelect.appendChild(opt);
       }
 
-      const floor = getCurrentFloor();
-      if (floor) {
-        const bldg = buildings.find(b => b.id === floor.buildingId);
-        currentFloorBadge.textContent = bldg ? `${bldg.name} - ${floor.name}` : floor.name;
-        floorBuildingSelect.value = floor.buildingId || '';
+      if (currentBuildingId) {
+        buildingSelect.value = currentBuildingId;
+      } else if (buildingSelect.options.length > 0) {
+        currentBuildingId = buildingSelect.options[0].value;
+        buildingSelect.value = currentBuildingId;
       }
     }
 
-    function switchFloor(floorId) {
-      currentFloorId = floorId;
-      renderFloorTabs();
-      const floor = getCurrentFloor();
-      floorNameInput.value = floor?.name || '';
-      floorBuildingSelect.value = floor?.buildingId || '';
+    function switchBuilding(buildingId) {
+      currentBuildingId = buildingId;
+      buildingSelect.value = buildingId;
+
+      const bldg = buildings.find(b => b.id === buildingId);
+      const bldgName = bldg ? bldg.name : (buildingId === '__unassigned__' ? 'Chưa phân khu' : 'Phân khu');
       
-      if (floor && floor.image) {
+      currentBuildingName.textContent = bldgName;
+      currentFloorBadge.textContent = bldgName;
+      uploadLabel.textContent = `Chọn ảnh sơ đồ cho "${bldgName}" (JPG/PNG/WEBP)`;
+
+      let currentMap = getCurrentMinimap();
+      if (!currentMap) {
+        // Tạo placeholder local cho building này nếu chưa có trong minimapData
+        currentMap = {
+          id: buildingId,
+          buildingId: buildingId,
+          name: bldgName,
+          image: "",
+          markers: []
+        };
+        minimapData.floors.push(currentMap);
+      }
+
+      if (currentMap.image) {
         mapPlaceholder.style.display = 'none';
-        mapImage.src = floor.image;
+        mapImage.src = currentMap.image;
       } else {
         mapPlaceholder.style.display = 'flex';
-        mapPlaceholder.textContent = 'Chưa có ảnh minimap cho tầng này. Hãy upload ảnh bên dưới.';
+        mapPlaceholder.textContent = `Phân khu "${bldgName}" chưa có ảnh sơ đồ. Hãy upload file ảnh bên dưới.`;
         mapImage.src = '';
       }
+
       renderRoomOptions();
       renderMarkers();
       renderMarkerList();
     }
 
-    function addNewFloor() {
-      let defaultBuildingId = null;
-      if (currentBuildingFilter && currentBuildingFilter !== '__unassigned__') {
-        defaultBuildingId = currentBuildingFilter;
-      }
-
-      const bldg = buildings.find(b => b.id === defaultBuildingId);
-      const bldgPrefix = bldg ? ` (${bldg.name})` : '';
-      const floorName = prompt(`Nhập tên tầng mới${bldgPrefix}:`, `Tầng ${minimapData.floors.length + 1}`);
-      if (!floorName) return;
-      
-      const newId = minimapData.floors.length > 0 
-        ? Math.max(...minimapData.floors.map(f => f.id)) + 1 
-        : 1;
-      
-      minimapData.floors.push({
-        id: newId,
-        buildingId: defaultBuildingId,
-        name: floorName,
-        image: "",
-        markers: []
-      });
-
-      currentFloorId = newId;
-      floorNameInput.value = floorName;
-      renderBuildingOptions();
-      switchFloor(newId);
-    }
-
     function renderRoomOptions() {
-      const floor = getCurrentFloor();
-      
-      // Lọc danh sách phòng theo phân khu của tầng hiện tại
-      let filteredRooms = rooms;
-      if (floor && floor.buildingId) {
-        filteredRooms = rooms.filter(r => r.buildingId === floor.buildingId);
-      } else if (currentBuildingFilter && currentBuildingFilter !== '__unassigned__') {
-        filteredRooms = rooms.filter(r => r.buildingId === currentBuildingFilter);
-      }
+      const filteredRooms = (currentBuildingId && currentBuildingId !== '__unassigned__')
+        ? rooms.filter(r => r.buildingId === currentBuildingId)
+        : rooms.filter(r => !r.buildingId);
 
       roomSelect.innerHTML = '<option value="">-- Chọn phòng --</option>';
-      filteredRooms.forEach(r => {
-        const bldg = buildings.find(b => b.id === r.buildingId);
-        const bldgLabel = bldg ? `[${bldg.name}] ` : '';
-        const floorLabel = r.floor ? ` (Tầng ${r.floor})` : '';
-        roomSelect.innerHTML += `<option value="${r.id}">${bldgLabel}${r.name}${floorLabel}</option>`;
-      });
-    }
-
-    async function updateCurrentFloorInfo() {
-      const floor = getCurrentFloor();
-      if (!floor) {
-        alert('Không tìm thấy tầng hiện tại');
-        return;
-      }
-
-      const newName = floorNameInput.value.trim();
-      if (!newName) {
-        alert('Tên minimap không được để trống');
-        floorNameInput.focus();
-        return;
-      }
-
-      const newBuildingId = floorBuildingSelect.value || null;
-
-      btnUpdateFloorInfo.disabled = true;
-      btnUpdateFloorInfo.textContent = 'Đang cập nhật...';
-      try {
-        floor.name = newName;
-        floor.buildingId = newBuildingId;
-
-        const res = await fetch(`/api/admin/minimap/floor/${currentFloorId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            floorName: newName,
-            buildingId: newBuildingId,
-            image: floor.image,
-            markers: floor.markers
-          })
+      if (filteredRooms.length === 0) {
+        roomSelect.innerHTML += '<option value="" disabled>Không có phòng nào trong phân khu này</option>';
+      } else {
+        filteredRooms.forEach(r => {
+          roomSelect.innerHTML += `<option value="${r.id}">📍 ${r.name}</option>`;
         });
-
-        const data = await res.json();
-        if (data.success) {
-          minimapData = data.minimap;
-          renderBuildingOptions();
-          renderFloorTabs();
-          renderRoomOptions();
-          alert('✅ Đã cập nhật thông tin tầng và phân khu thành công!');
-        } else {
-          alert(data.error || 'Cập nhật thất bại');
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Lỗi cập nhật tầng');
-      } finally {
-        btnUpdateFloorInfo.disabled = false;
-        btnUpdateFloorInfo.textContent = '✏️ Cập nhật tầng';
-      }
-    }
-
-    async function deleteCurrentFloor() {
-      const floor = getCurrentFloor();
-      if (!floor) return;
-
-      if (!confirm(`Bạn có chắc chắn muốn xóa "${floor.name}" cùng toàn bộ marker trên sơ đồ này không?`)) {
-        return;
-      }
-
-      btnDeleteFloor.disabled = true;
-      btnDeleteFloor.textContent = 'Đang xóa...';
-      try {
-        const res = await fetch(`/api/admin/minimap/floor/${currentFloorId}`, {
-          method: 'DELETE'
-        });
-        const data = await res.json();
-        if (data.success) {
-          minimapData = data.minimap;
-          if (minimapData.floors.length === 0) {
-            minimapData.floors.push({ id: 1, buildingId: null, name: "Tầng 1", image: "", markers: [] });
-          }
-          currentFloorId = minimapData.floors[0].id;
-          renderBuildingOptions();
-          switchFloor(currentFloorId);
-          alert('✅ Đã xóa tầng thành công!');
-        } else {
-          alert(data.error || 'Xóa tầng thất bại');
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Lỗi xóa tầng');
-      } finally {
-        btnDeleteFloor.disabled = false;
-        btnDeleteFloor.textContent = '🗑️ Xóa tầng';
       }
     }
 
     async function uploadMinimapImage() {
       if (!minimapFile.files[0]) {
-        alert('Chọn file sơ đồ/minimap trước');
+        alert('Vui lòng chọn file ảnh sơ đồ trước');
         return;
       }
-      const floor = getCurrentFloor();
+
+      const bldg = buildings.find(b => b.id === currentBuildingId);
+      const bldgName = bldg ? bldg.name : (currentBuildingId === '__unassigned__' ? 'Chưa phân khu' : 'Phân khu');
+
       const formData = new FormData();
       formData.append('minimap', minimapFile.files[0]);
-      formData.append('floorId', currentFloorId);
-      formData.append('floorName', floor?.name || `Tầng ${currentFloorId}`);
-      if (floor?.buildingId) {
-        formData.append('buildingId', floor.buildingId);
-      } else if (floorBuildingSelect.value) {
-        formData.append('buildingId', floorBuildingSelect.value);
-      }
+      formData.append('buildingId', currentBuildingId);
+      formData.append('buildingName', bldgName);
 
       btnUpload.disabled = true;
       btnUpload.textContent = 'Đang upload...';
@@ -979,22 +772,21 @@
         const data = await res.json();
         if (data.success) {
           minimapData = data.minimap;
-          const updatedFloor = getCurrentFloor();
-          if (updatedFloor && updatedFloor.image) {
+          const currentMap = getCurrentMinimap();
+          if (currentMap && currentMap.image) {
             mapPlaceholder.style.display = 'none';
-            mapImage.src = updatedFloor.image;
+            mapImage.src = currentMap.image;
           }
-          renderBuildingOptions();
-          renderFloorTabs();
+          renderBuildingSelector();
           renderMarkers();
           renderMarkerList();
-          alert('✅ Upload ảnh minimap thành công!');
+          alert(`✅ Upload ảnh sơ đồ cho "${bldgName}" thành công!`);
         } else {
           alert(data.error || 'Upload thất bại');
         }
       } catch (err) {
         console.error(err);
-        alert('Lỗi upload minimap');
+        alert('Lỗi upload sơ đồ');
       } finally {
         btnUpload.disabled = false;
         btnUpload.textContent = '⬆️ Upload ảnh sơ đồ';
@@ -1010,29 +802,30 @@
 
     function handleAddMarker(e) {
       if (!addMode) return;
-      const floor = getCurrentFloor();
-      if (!floor || !floor.image) {
-        alert('Upload ảnh minimap trước');
+      const currentMap = getCurrentMinimap();
+      if (!currentMap || !currentMap.image) {
+        alert('Vui lòng upload ảnh sơ đồ cho phân khu này trước khi đặt marker');
         return;
       }
       const roomId = Number(roomSelect.value);
       if (!roomId) {
-        alert('Chọn phòng trước khi đặt marker');
+        alert('Vui lòng chọn phòng trước khi đặt marker');
         return;
       }
       const rect = mapContainer.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width;
       const y = (e.clientY - rect.top) / rect.height;
-      floor.markers.push({ x, y, roomId, rotation: 0 });
+      if (!currentMap.markers) currentMap.markers = [];
+      currentMap.markers.push({ x, y, roomId, rotation: 0 });
       renderMarkers();
       renderMarkerList();
     }
 
     function renderMarkers() {
       markerLayer.innerHTML = '';
-      const floor = getCurrentFloor();
-      if (!floor || !floor.image || !mapImage.complete) return;
-      floor.markers.forEach((m, idx) => {
+      const currentMap = getCurrentMinimap();
+      if (!currentMap || !currentMap.image || !mapImage.complete) return;
+      (currentMap.markers || []).forEach((m, idx) => {
         const el = document.createElement('div');
         el.className = 'marker';
         el.dataset.index = idx;
@@ -1059,19 +852,19 @@
     }
 
     function renderMarkerList() {
-      const floor = getCurrentFloor();
-      if (!floor || !floor.markers || floor.markers.length === 0) {
-        markerList.innerHTML = '<p class="muted">Chưa có marker</p>';
+      const currentMap = getCurrentMinimap();
+      if (!currentMap || !currentMap.markers || currentMap.markers.length === 0) {
+        markerList.innerHTML = '<p class="muted">Chưa có marker nào trong phân khu này</p>';
         return;
       }
-      markerList.innerHTML = floor.markers.map((m, idx) => {
+      markerList.innerHTML = currentMap.markers.map((m, idx) => {
         const room = rooms.find(r => r.id === m.roomId);
         const rot = m.rotation || 0;
         return `
           <div class="marker-item" data-idx="${idx}" id="marker-item-${idx}">
             <div class="marker-item-header">
               <div class="flex-row">
-                <span class="badge">#${idx + 1}</span>
+                <span class="badge" style="background:#2B3278;">#${idx + 1}</span>
                 <strong>${room ? room.name : 'Chưa gán phòng'}</strong>
               </div>
               <div class="flex-row">
@@ -1138,9 +931,12 @@
       markerList.querySelectorAll('button[data-action="delete"]').forEach(btn => {
         btn.addEventListener('click', () => {
           const idx = Number(btn.dataset.idx);
-          floor.markers.splice(idx, 1);
-          renderMarkers();
-          renderMarkerList();
+          const currentMap = getCurrentMinimap();
+          if (currentMap && currentMap.markers) {
+            currentMap.markers.splice(idx, 1);
+            renderMarkers();
+            renderMarkerList();
+          }
         });
       });
 
@@ -1153,10 +949,10 @@
     }
 
     function updateMarkerRotation(idx, val) {
-      const floor = getCurrentFloor();
-      if (!floor || !floor.markers || !floor.markers[idx]) return;
+      const currentMap = getCurrentMinimap();
+      if (!currentMap || !currentMap.markers || !currentMap.markers[idx]) return;
 
-      floor.markers[idx].rotation = val;
+      currentMap.markers[idx].rotation = val;
 
       const valDisplay = document.getElementById(`radar-val-${idx}`);
       if (valDisplay) valDisplay.textContent = `${val}°`;
@@ -1212,9 +1008,11 @@
         const ny = Math.max(0, Math.min(1, y));
         el.style.left = (nx * 100) + '%';
         el.style.top = (ny * 100) + '%';
-        const floor = getCurrentFloor();
-        floor.markers[dragState.idx].x = nx;
-        floor.markers[dragState.idx].y = ny;
+        const currentMap = getCurrentMinimap();
+        if (currentMap && currentMap.markers && currentMap.markers[dragState.idx]) {
+          currentMap.markers[dragState.idx].x = nx;
+          currentMap.markers[dragState.idx].y = ny;
+        }
       });
 
       el.addEventListener('pointerup', (e) => {
@@ -1229,9 +1027,9 @@
     /* ===== CALIBRATION MODAL LOGIC ===== */
     function openCalibrateModal(idx) {
       calibMarkerIdx = idx;
-      const floor = getCurrentFloor();
-      if (!floor || !floor.markers || !floor.markers[idx]) return;
-      const marker = floor.markers[idx];
+      const currentMap = getCurrentMinimap();
+      if (!currentMap || !currentMap.markers || !currentMap.markers[idx]) return;
+      const marker = currentMap.markers[idx];
       const room = rooms.find(r => r.id === marker.roomId);
       if (!room || !room.image) {
         alert('Phòng này chưa có ảnh panorama 360 để căn chỉnh');
@@ -1247,8 +1045,8 @@
       modal.show();
 
       // Load minimap image for sidebar preview
-      if (floor.image) {
-        calibMapImage.src = floor.image;
+      if (currentMap.image) {
+        calibMapImage.src = currentMap.image;
       }
 
       calibModalEl.addEventListener('shown.bs.modal', () => {
@@ -1299,9 +1097,9 @@
     }
 
     function drawCalibMinimap() {
-      const floor = getCurrentFloor();
-      if (!floor || !calibMapCanvas || calibMarkerIdx === null) return;
-      const marker = floor.markers[calibMarkerIdx];
+      const currentMap = getCurrentMinimap();
+      if (!currentMap || !calibMapCanvas || calibMarkerIdx === null) return;
+      const marker = currentMap.markers[calibMarkerIdx];
       if (!marker) return;
 
       const container = calibMapCanvas.parentElement;
@@ -1363,36 +1161,42 @@
     }
 
     async function saveMinimap() {
-      const floor = getCurrentFloor();
-      if (!floor || !floor.image) {
-        alert('Upload ảnh minimap trước');
+      const currentMap = getCurrentMinimap();
+      if (!currentMap) {
+        alert('Không tìm thấy thông tin sơ đồ');
         return;
       }
+      const bldg = buildings.find(b => b.id === currentBuildingId);
+      const bldgName = bldg ? bldg.name : (currentBuildingId === '__unassigned__' ? 'Chưa phân khu' : 'Phân khu');
+
+      btnSave.disabled = true;
+      btnSave.textContent = 'Đang lưu...';
       try {
-        const res = await fetch(`/api/admin/minimap/floor/${currentFloorId}`, {
+        const res = await fetch(`/api/admin/minimap/building/${currentBuildingId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            image: floor.image,
-            markers: floor.markers,
-            floorName: floor.name,
-            buildingId: floor.buildingId || null
+            image: currentMap.image,
+            markers: currentMap.markers,
+            buildingName: bldgName
           })
         });
         const data = await res.json();
         if (data.success) {
           minimapData = data.minimap;
-          renderBuildingOptions();
-          renderFloorTabs();
+          renderBuildingSelector();
           renderMarkers();
           renderMarkerList();
-          alert('✅ Đã lưu minimap và hướng rada thành công!');
+          alert(`✅ Đã lưu sơ đồ và hướng rada cho "${bldgName}" thành công!`);
         } else {
-          alert(data.error || 'Lưu minimap thất bại');
+          alert(data.error || 'Lưu sơ đồ thất bại');
         }
       } catch (err) {
         console.error(err);
-        alert('Lỗi lưu minimap');
+        alert('Lỗi lưu sơ đồ');
+      } finally {
+        btnSave.disabled = false;
+        btnSave.textContent = '💾 Lưu sơ đồ Phân khu này';
       }
     }
   </script>
