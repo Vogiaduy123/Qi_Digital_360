@@ -883,6 +883,7 @@ router.post("/minimap/upload-image", uploadMinimap.single("minimap"), async (req
   const localPath = req.file.path;
   const floorId = req.body.floorId ? Number(req.body.floorId) : 1;
   const floorName = req.body.floorName || `Tầng ${floorId}`;
+  const buildingId = req.body.buildingId || null;
   const destPath = `uploads/minimaps/minimap_${Date.now()}${path.extname(req.file.originalname)}`;
 
   try {
@@ -895,15 +896,48 @@ router.post("/minimap/upload-image", uploadMinimap.single("minimap"), async (req
     }
 
     // 3. Cập nhật hoặc thêm tầng vào bảng minimaps
-    const { error } = await db.supabase
+    const upsertData = {
+      floor_id: floorId,
+      floor_name: floorName,
+      image_url: cloudUrl
+    };
+    if (buildingId) {
+      upsertData.building_id = buildingId;
+    }
+
+    let { error } = await db.supabase
       .from('minimaps')
-      .upsert({
+      .upsert(upsertData);
+
+    if (error && error.message && (error.message.includes('building_id') || error.code === '42703' || error.code === 'PGRST204')) {
+      console.warn('⚠️ [Admin API] building_id column missing in minimaps, inserting without it');
+      const fallbackRes = await db.supabase.from('minimaps').upsert({
         floor_id: floorId,
         floor_name: floorName,
         image_url: cloudUrl
       });
+      if (fallbackRes.error) throw fallbackRes.error;
+    } else if (error) {
+      throw error;
+    }
 
-    if (error) throw error;
+    // Lưu mapping building vào local file và app_configs
+    if (buildingId) {
+      try {
+        const LOCAL_BLDG_FILE = path.join(__dirname, '..', 'data', 'minimap-buildings.json');
+        let currentBuildingsMap = {};
+        if (fs.existsSync(LOCAL_BLDG_FILE)) {
+          currentBuildingsMap = JSON.parse(fs.readFileSync(LOCAL_BLDG_FILE, 'utf8')) || {};
+        }
+        currentBuildingsMap[floorId] = buildingId;
+        const dataDir = path.join(__dirname, '..', 'data');
+        if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+        fs.writeFileSync(LOCAL_BLDG_FILE, JSON.stringify(currentBuildingsMap, null, 2), 'utf8');
+        await db.saveAppConfig('minimap_buildings_map', currentBuildingsMap);
+      } catch (e) {
+        console.warn('⚠️ [Admin API] Error saving minimap_buildings_map config:', e.message);
+      }
+    }
 
     const minimap = await getMinimap();
     const floor = minimap.floors.find(f => f.id === floorId);
@@ -939,21 +973,100 @@ router.patch("/minimap/floor/:id/name", async (req, res) => {
   }
 });
 
+// Update floor building assignment
+router.patch("/minimap/floor/:id/building", async (req, res) => {
+  const floorId = Number(req.params.id);
+  const { buildingId } = req.body;
+
+  try {
+    const bldgVal = buildingId || null;
+    let { error } = await db.supabase
+      .from('minimaps')
+      .update({ building_id: bldgVal })
+      .eq('floor_id', floorId);
+
+    // Save fallback mapping in app_configs & local file
+    try {
+      const LOCAL_BLDG_FILE = path.join(__dirname, '..', 'data', 'minimap-buildings.json');
+      let currentBuildingsMap = {};
+      if (fs.existsSync(LOCAL_BLDG_FILE)) {
+        currentBuildingsMap = JSON.parse(fs.readFileSync(LOCAL_BLDG_FILE, 'utf8')) || {};
+      }
+      currentBuildingsMap[floorId] = bldgVal;
+      const dataDir = path.join(__dirname, '..', 'data');
+      if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+      fs.writeFileSync(LOCAL_BLDG_FILE, JSON.stringify(currentBuildingsMap, null, 2), 'utf8');
+      await db.saveAppConfig('minimap_buildings_map', currentBuildingsMap);
+    } catch (e) {
+      console.warn('⚠️ [Admin API] Error saving minimap_buildings_map config:', e.message);
+    }
+
+    const minimap = await getMinimap();
+    res.json({ success: true, minimap });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Delete floor (DELETE /minimap/floor/:id)
+router.delete("/minimap/floor/:id", async (req, res) => {
+  const floorId = Number(req.params.id);
+
+  try {
+    await db.deleteMinimapFloor(floorId);
+    const minimap = await getMinimap();
+    res.json({ success: true, minimap, message: "Floor deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Update floor image and markers (PUT /minimap/floor/:id)
 router.put("/minimap/floor/:id", async (req, res) => {
   const floorId = Number(req.params.id);
-  const { image, markers, floorName } = req.body;
+  const { image, markers, floorName, buildingId } = req.body;
 
   try {
     // 1. Update floor info
-    const { error: floorErr } = await db.supabase
+    const upsertData = {
+      floor_id: floorId,
+      floor_name: floorName || `Tầng ${floorId}`,
+      image_url: image || ""
+    };
+    if (buildingId !== undefined) {
+      upsertData.building_id = buildingId || null;
+    }
+
+    let { error: floorErr } = await db.supabase
       .from('minimaps')
-      .upsert({
+      .upsert(upsertData);
+
+    if (floorErr && floorErr.message && (floorErr.message.includes('building_id') || floorErr.code === '42703' || floorErr.code === 'PGRST204')) {
+      const fallbackRes = await db.supabase.from('minimaps').upsert({
         floor_id: floorId,
         floor_name: floorName || `Tầng ${floorId}`,
         image_url: image || ""
       });
-    if (floorErr) throw floorErr;
+      if (fallbackRes.error) throw fallbackRes.error;
+    } else if (floorErr) {
+      throw floorErr;
+    }
+
+    // Save fallback mapping in app_configs & local file
+    if (buildingId !== undefined) {
+      try {
+        const LOCAL_BLDG_FILE = path.join(__dirname, '..', 'data', 'minimap-buildings.json');
+        let currentBuildingsMap = {};
+        if (fs.existsSync(LOCAL_BLDG_FILE)) {
+          currentBuildingsMap = JSON.parse(fs.readFileSync(LOCAL_BLDG_FILE, 'utf8')) || {};
+        }
+        currentBuildingsMap[floorId] = buildingId || null;
+        const dataDir = path.join(__dirname, '..', 'data');
+        if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+        fs.writeFileSync(LOCAL_BLDG_FILE, JSON.stringify(currentBuildingsMap, null, 2), 'utf8');
+        await db.saveAppConfig('minimap_buildings_map', currentBuildingsMap);
+      } catch (e) {}
+    }
 
     // 2. Clear old markers for this floor
     const { error: delErr } = await db.supabase
@@ -1013,7 +1126,6 @@ router.put("/minimap/floor/:id", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
 
 // Save markers / positions on minimap
 router.post("/minimap/save", async (req, res) => {

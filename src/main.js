@@ -164,9 +164,13 @@ function filterRoomsByBuilding(buildingId, isInitial = false) {
       switchRoom(filtered[0].id);
     } else {
       roomSelect.value = currentRoomId;
+      updateMinimapHighlight();
     }
   } else if (currentRoomId && filtered.some(r => r.id === currentRoomId)) {
     roomSelect.value = currentRoomId;
+    updateMinimapHighlight();
+  } else {
+    updateMinimapHighlight();
   }
 }
 
@@ -432,6 +436,7 @@ async function initApp() {
     initMinimap({
       getRoomsData: () => getRoomsData(),
       getCurrentRoomId: () => currentRoomId,
+      getActiveBuildingId: () => buildingSelect ? buildingSelect.value : null,
       switchRoom: switchRoom,
       getViewer: getViewer
     });

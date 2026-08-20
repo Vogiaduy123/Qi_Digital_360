@@ -3,6 +3,7 @@ import { fetchMinimap } from '../core/api.js';
 let env = {
   getRoomsData: () => ({}),
   getCurrentRoomId: () => null,
+  getActiveBuildingId: () => null,
   switchRoom: (id) => {},
   getViewer: () => null
 };
@@ -138,11 +139,44 @@ export function initMinimap(dependencies) {
   initMinimapPanZoom();
 }
 
-// ─── Floor helpers ────────────────────────────────────────────────────────────
+// ─── Building & Floor helpers ─────────────────────────────────────────────────
+
+function getActiveBuildingId() {
+  const room = env.getRoomsData()[env.getCurrentRoomId()];
+  if (room && room.buildingId) {
+    return room.buildingId;
+  }
+  if (env.getActiveBuildingId) {
+    const activeBldg = env.getActiveBuildingId();
+    if (activeBldg) return activeBldg;
+  }
+  return null;
+}
+
+function getAvailableFloorsForCurrentContext() {
+  if (!minimapData || !minimapData.floors || minimapData.floors.length === 0) return [];
+  
+  const activeBldgId = getActiveBuildingId();
+  if (activeBldgId) {
+    const bldgFloors = minimapData.floors.filter(f => f.buildingId === activeBldgId);
+    if (bldgFloors.length > 0) return bldgFloors;
+    // If current building has no floors uploaded, return empty array so minimap hides gracefully
+    return [];
+  }
+
+  // If no building selected, return floors with no building assigned or all floors
+  const unassigned = minimapData.floors.filter(f => !f.buildingId);
+  return unassigned.length > 0 ? unassigned : minimapData.floors;
+}
 
 function getCurrentFloor() {
-  if (!minimapData || !minimapData.floors) return null;
-  return minimapData.floors.find(f => f.id === currentFloorId) || minimapData.floors[0];
+  const availableFloors = getAvailableFloorsForCurrentContext();
+  if (availableFloors.length === 0) return null;
+
+  const found = availableFloors.find(f => f.id === currentFloorId);
+  if (found) return found;
+
+  return availableFloors[0];
 }
 
 function getCurrentRoomFloor() {
@@ -154,9 +188,12 @@ function getCurrentRoomFloor() {
 
 function renderFloorTabs() {
   const floorTabsContainer = document.getElementById('floorTabs');
-  if (!floorTabsContainer || !minimapData || !minimapData.floors) return;
+  if (!floorTabsContainer) return;
 
   floorTabsContainer.innerHTML = '';
+
+  const availableFloors = getAvailableFloorsForCurrentContext();
+  if (availableFloors.length === 0) return;
 
   const currentFloor = getCurrentFloor();
   if (!currentFloor) return;
@@ -171,16 +208,16 @@ function renderFloorTabs() {
   const dropdown = document.createElement('select');
   dropdown.className = 'floor-dropdown';
 
-  const remainingFloors = minimapData.floors.filter(f => f.id !== currentFloor.id);
+  const remainingFloors = availableFloors.filter(f => f.id !== currentFloor.id);
 
   const placeholder = document.createElement('option');
   placeholder.value = '';
 
   if (remainingFloors.length === 0) {
-    placeholder.textContent = 'Không có minimap khác';
+    placeholder.textContent = 'Không có tầng khác';
     dropdown.disabled = true;
   } else {
-    placeholder.textContent = 'Chọn minimap khác...';
+    placeholder.textContent = 'Chọn tầng khác...';
     dropdown.disabled = false;
   }
 
@@ -210,11 +247,14 @@ function switchFloor(floorId) {
   renderFloorTabs();
   const floor = getCurrentFloor();
   if (floor && floor.image) {
+    minimapWrapper.style.display = 'block';
     userMinimapImage.src = floor.image;
     userMinimapImage.onload = () => {
       initUserMinimapCanvas();
       drawUserMinimap();
     };
+  } else {
+    minimapWrapper.style.display = 'none';
   }
 }
 
@@ -226,24 +266,7 @@ export async function loadMinimap() {
 
     if (data.success && data.minimap && data.minimap.floors && data.minimap.floors.length > 0) {
       minimapData = data.minimap;
-
-      const roomFloor = getCurrentRoomFloor();
-      currentFloorId = minimapData.floors.find(f => f.id === roomFloor)?.id || minimapData.floors[0].id;
-
-      const floor = getCurrentFloor();
-      if (floor && floor.image) {
-        userMinimapImage.src = floor.image;
-
-        userMinimapImage.onload = () => {
-          minimapWrapper.style.display = 'block';
-
-          setTimeout(() => {
-            renderFloorTabs();
-            initUserMinimapCanvas();
-            drawUserMinimap();
-          }, 100);
-        };
-      }
+      updateMinimapHighlight();
     }
   } catch (err) {
     console.error('Lỗi load minimap:', err);
@@ -289,11 +312,6 @@ function handleMinimapClick(e) {
     const marker = floor.markers[clickedMarkerIndex];
     if (marker.roomId && env.getRoomsData()[marker.roomId]) {
       env.switchRoom(marker.roomId);
-
-      const roomFloor = env.getRoomsData()[marker.roomId].floor || 1;
-      if (roomFloor !== currentFloorId) {
-        switchFloor(roomFloor);
-      }
     }
   }
 }
@@ -325,7 +343,7 @@ function getMarkerAtPosition(x, y) {
   const floor = getCurrentFloor();
   if (!floor || !floor.markers) return -1;
 
-  const tolerance = 15 / userMinimapCanvas.width;
+  const tolerance = 15 / (userMinimapCanvas.width || 240);
 
   for (let i = floor.markers.length - 1; i >= 0; i--) {
     const marker = floor.markers[i];
@@ -416,10 +434,43 @@ export function drawUserMinimap() {
 // ─── Update highlight ─────────────────────────────────────────────────────────
 
 export function updateMinimapHighlight() {
-  const roomFloor = getCurrentRoomFloor();
-  if (roomFloor !== currentFloorId) {
-    switchFloor(roomFloor);
+  const availableFloors = getAvailableFloorsForCurrentContext();
+  if (availableFloors.length === 0) {
+    if (minimapWrapper) minimapWrapper.style.display = 'none';
+    return;
+  }
+
+  const curRoomId = env.getCurrentRoomId();
+  const room = env.getRoomsData()[curRoomId];
+
+  // Try to find if this room is placed on a marker in any of the available floors
+  let targetFloor = null;
+  if (curRoomId) {
+    targetFloor = availableFloors.find(f => f.markers && f.markers.some(m => m.roomId === curRoomId));
+  }
+
+  // If not found by marker, try matching by floor number / name
+  if (!targetFloor && room) {
+    const roomFloorNum = room.floor || 1;
+    targetFloor = availableFloors.find(f => f.id === roomFloorNum || f.name.includes(String(roomFloorNum)));
+  }
+
+  // Fallback to first available floor if current floor is not among available floors
+  if (!targetFloor) {
+    targetFloor = availableFloors.find(f => f.id === currentFloorId) || availableFloors[0];
+  }
+
+  if (targetFloor) {
+    if (targetFloor.id !== currentFloorId || !userMinimapImage.src || userMinimapImage.src !== targetFloor.image) {
+      switchFloor(targetFloor.id);
+    } else {
+      if (targetFloor.image) {
+        minimapWrapper.style.display = 'block';
+      }
+      renderFloorTabs();
+      drawUserMinimap();
+    }
   } else {
-    drawUserMinimap();
+    if (minimapWrapper) minimapWrapper.style.display = 'none';
   }
 }

@@ -73,12 +73,15 @@ CREATE TABLE IF NOT EXISTS sensors (
     color TEXT
 );
 
--- 7. Bảng minimaps (Bản đồ thu nhỏ cho các tầng)
+-- 7. Bảng minimaps (Bản đồ thu nhỏ cho các tầng, có liên kết phân khu)
 CREATE TABLE IF NOT EXISTS minimaps (
     floor_id INTEGER PRIMARY KEY,
     floor_name TEXT NOT NULL,
-    image_url TEXT NOT NULL -- URL ảnh bản đồ tầng
+    image_url TEXT NOT NULL, -- URL ảnh bản đồ tầng
+    building_id TEXT REFERENCES buildings(id) ON DELETE SET NULL -- Liên kết phân khu
 );
+-- Migration nếu bảng minimaps đã tồn tại:
+-- ALTER TABLE minimaps ADD COLUMN IF NOT EXISTS building_id TEXT REFERENCES buildings(id) ON DELETE SET NULL;
 
 -- 8. Bảng minimap_markers (Điểm phòng định vị trên bản đồ tầng)
 CREATE TABLE IF NOT EXISTS minimap_markers (
