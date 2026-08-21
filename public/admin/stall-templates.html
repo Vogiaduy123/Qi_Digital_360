@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý & Kho Mẫu Sạp Hàng - Virtual Tour Admin</title>
+  <!-- Auth Guard -->
+  <script src="/js/auth-guard.js"></script>
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="/js/admin-runtime-config.js"></script>
+  <script src="/js/admin-api-base.js"></script>
+
+  <style>
+    html,
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #0b0f19;
+      color: #f3f4f6;
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+      height: auto !important;
+    }
+
+    /* Standard Button Styles */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      line-height: 1.4;
+    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-small { padding: 4px 10px; font-size: 12px; border-radius: 6px; }
+    .btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; border-color: rgba(255,255,255,0.12); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    .btn-success { background: #10b981; color: #fff; border-color: #10b981; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger { background: rgba(239,68,68,0.2); color: #f87171; border-color: rgba(239,68,68,0.3); }
+    .btn-danger:hover { background: #dc2626; color: #fff; }
+    .btn-outline-warning { background: rgba(245,158,11,0.1); color: #fbbf24; border-color: rgba(245,158,11,0.3); }
+    .btn-outline-warning:hover { background: #f59e0b; color: #000; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .form-group label {
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .form-group input, .form-group textarea, .form-group select {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #fff;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+      border-color: #10b981;
+    }
+
+    .top-nav {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .nav-brand img {
+      height: 32px;
+    }
+
+    .nav-brand h1 {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0;
+      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .nav-link-btn {
+      color: #94a3b8;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .nav-link-btn:hover, .nav-link-btn.active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .main-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .page-title h2 {
+      font-size: 24px;
+      font-weight: 800;
+      margin: 0 0 4px 0;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .page-title p {
+      color: #94a3b8;
+      font-size: 13.5px;
+      margin: 0;
+    }
+
+    /* Main Tabs */
+    .view-tabs-bar {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 20px;
+      padding-bottom: 4px;
+    }
+
+    .tab-item-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .tab-item-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-item-btn.active {
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .tab-badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+    }
+
+    .tab-item-btn.active .tab-badge {
+      background: #10b981;
+      color: #064e3b;
+      font-weight: 700;
+    }
+
+    .search-filter-bar {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 250px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 8px 12px 8px 36px;
+      color: #fff;
+      font-size: 13.5px;
+      outline: none;
+    }
+
+    .search-box input:focus {
+      border-color: #10b981;
+    }
+
+    .search-box .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    /* Template Grid */
+    .templates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 20px;
+    }
+
+    .tpl-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tpl-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .tpl-card-stripe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .tpl-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .tpl-card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      background: rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+
+    .tpl-card-title h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 2px 0;
+      color: #fff;
+    }
+
+    .tpl-card-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+    }
+
+    .tpl-card-body {
+      margin-bottom: 16px;
+    }
+
+    .tpl-preview-thumb {
+      display: flex;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .tpl-thumb-img {
+      width: 60px;
+      height: 60px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .tpl-thumb-details {
+      flex: 1;
+      font-size: 11.5px;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+
+    .tpl-sections-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .tpl-chip {
+      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.15);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    .tpl-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 12px;
+      margin-top: auto;
+    }
+
+    /* Modal Styling */
+    .custom-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 1050;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .custom-modal-backdrop.active {
+      display: flex;
+    }
+
+    .custom-modal-box {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 1100px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalPop {
+      0% { opacity: 0; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .custom-modal-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .custom-modal-header h3 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .btn-close-modal {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    .btn-close-modal:hover {
+      color: #fff;
+    }
+
+    .custom-modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-split-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .modal-split-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-pane {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .preview-pane {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-pane-header {
+      font-size: 13px;
+      font-weight: 700;
+      color: #6ee7b7;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .custom-modal-footer {
+      padding: 14px 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .emoji-picker-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .emoji-pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .emoji-pill:hover {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: #10b981;
+      transform: scale(1.08);
+    }
+
+    /* Section Panels */
+    .tab-section-content {
+      display: none;
+    }
+
+    .tab-section-content.active {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Top Navigation -->
+  <header class="top-nav">
+    <a href="/admin/index.html" class="nav-brand">
+      <img src="/images/logo-qi.png" alt="Qi Logo" onerror="this.src='https://raw.githubusercontent.com/Vogiaduy123/Qi_Digital_360/main/public/images/logo-qi.png'">
+      <h1>Virtual Tour Qi — Admin</h1>
+    </a>
+
+    <nav class="nav-links">
+      <a href="/admin/index.html" class="nav-link-btn">📊 Dashboard</a>
+      <a href="/admin/buildings.html" class="nav-link-btn">🏢 Tòa nhà</a>
+      <a href="/admin/upload.html" class="nav-link-btn">📤 Upload</a>
+      <a href="/admin/rooms.html" class="nav-link-btn">🏠 Quản lý Phòng</a>
+      <a href="/admin/minimap.html" class="nav-link-btn">🗺️ Minimap</a>
+      <a href="/admin/tour.html" class="nav-link-btn">⚡ Auto Tour</a>
+      <a href="/admin/stall-templates.html" class="nav-link-btn active">🎨 Mẫu Sạp Hàng</a>
+      <a href="/" target="_blank" class="nav-link-btn" style="color:#38bdf8;">👁️ Xem Tour ↗</a>
+    </nav>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+    <div class="page-header">
+      <div class="page-title">
+        <h2><span>🏪</span> Quản lý & Thiết kế Mẫu Sạp Hàng (Stall Templates Studio)</h2>
+        <p>Tạo mẫu sạp tự do, nạp mẫu từ tệp JSON của bạn hoặc sử dụng các mẫu đề xuất sẵn có để đưa vào Tour 360.</p>
+      </div>
+
+      <div class="action-group">
+        <button type="button" class="btn btn-secondary" onclick="exportTemplatesJson()" title="Tải xuống tệp JSON danh sách mẫu của bạn">
+          📤 Xuất JSON
+        </button>
+        <label class="btn btn-secondary" style="margin:0;cursor:pointer;" title="Nhập danh sách mẫu từ tệp JSON">
+          📥 Nhập JSON
+          <input type="file" id="importJsonInput" accept=".json" style="display:none;" onchange="importTemplatesJson(event)">
+        </label>
+        <button type="button" class="btn btn-outline-warning" onclick="resetDefaultTemplates()" title="Khôi phục 7 mẫu mặc định của hệ thống">
+          🔄 Khôi phục Mặc định
+        </button>
+        <button type="button" class="btn btn-success" onclick="openCreateTemplateModal()" style="font-weight:700;display:inline-flex;align-items:center;gap:6px;box-shadow:0 4px 15px rgba(16,185,129,0.3);">
+          <span>➕</span> Tạo Mẫu Mới
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="view-tabs-bar">
+      <button type="button" class="tab-item-btn active" id="tabBtnMine" onclick="switchViewTab('mine')">
+        <span>📁</span> Mẫu Của Tôi <span class="tab-badge" id="myCountBadge">0</span>
+      </button>
+      <button type="button" class="tab-item-btn" id="tabBtnCloud" onclick="switchViewTab('cloud')">
+        <span>✨</span> Mẫu Gợi Ý Sẵn Có <span class="tab-badge" id="cloudCountBadge" style="background:#0284c7;color:#fff;">16 Mẫu Đề Xuất</span>
+      </button>
+      <button type="button" class="tab-item-btn" id="tabBtnUrl" onclick="switchViewTab('url')">
+        <span>🔗</span> Nhập từ Link URL (.json)
+      </button>
+      <button type="button" class="tab-item-btn" id="tabBtnText" onclick="switchViewTab('text')">
+        <span>🪄</span> Trích xuất từ Văn bản
+      </button>
+    </div>
+
+    <!-- TAB 1: MY TEMPLATES -->
+    <section class="tab-section-content active" id="secMine">
+      <!-- Search & Filter Bar -->
+      <div class="search-filter-bar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="tplSearchInput" placeholder="Tìm kiếm mẫu theo tên sạp, ngành hàng hoặc mã số..." oninput="filterMyTemplates(this.value)">
+        </div>
+        <div style="font-size:13px;color:#94a3b8;">
+          Tổng số: <strong id="tplCountBadge" style="color:#6ee7b7;">0</strong> mẫu sạp đang kích hoạt
+        </div>
+      </div>
+
+      <!-- Templates Grid Cards Container -->
+      <div class="templates-grid" id="templatesContainer">
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #64748b;">
+          <div style="font-size: 32px; margin-bottom: 10px;">⏳</div>
+          Đang tải danh sách mẫu sạp hàng...
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: SUGGESTED BUILT-IN TEMPLATES -->
+    <section class="tab-section-content" id="secCloud">
+      <div class="search-filter-bar" style="background:rgba(2,132,199,0.06);border-color:rgba(2,132,199,0.25);">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap;">
+          <span style="font-weight:700;color:#38bdf8;font-size:13.5px;">✨ BỘ MẪU GỢI Ý THEO NGÀNH NGHỀ:</span>
+          <span style="font-size:12.5px;color:#94a3b8;">16 mẫu được cấu hình sẵn theo các ngành kinh doanh phổ biến. Chọn mẫu bạn thích để thêm vào danh sách sử dụng.</span>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="btn btn-small" onclick="installAllCloudTemplates()" style="background:#0284c7;color:#fff;font-weight:700;padding:6px 12px;font-size:12px;">
+            ➕ Thêm tất cả 16 mẫu gợi ý
+          </button>
+        </div>
+      </div>
+
+      <div class="templates-grid" id="cloudTemplatesContainer"></div>
+    </section>
+
+    <!-- TAB 3: IMPORT FROM URL -->
+    <section class="tab-section-content" id="secUrl">
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;max-width:800px;margin:0 auto;">
+        <h3 style="font-size:18px;font-weight:700;color:#fff;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+          <span>🔗</span> Tải Mẫu Từ Đường Link URL Ngoài Internet (.json)
+        </h3>
+        <p style="font-size:13px;color:#94a3b8;margin-bottom:18px;">
+          Dán đường link chứa tệp JSON trên Internet (VD: GitHub Raw, link server lưu trữ tệp json). Hệ thống sẽ gửi yêu cầu tải dữ liệu từ liên kết này và thêm vào danh sách mẫu của bạn.
+        </p>
+
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+          <input type="url" id="importUrlInput" placeholder="https://raw.githubusercontent.com/.../stall-templates.json" style="flex:1;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 14px;color:#fff;font-size:13px;outline:none;">
+          <button type="button" class="btn btn-primary" onclick="importFromWebUrl()" style="font-weight:700;padding:10px 20px;white-space:nowrap;">
+            ⬇️ Tải & Nhập Mẫu
+          </button>
+        </div>
+
+        <div id="urlImportStatus" style="display:none;padding:12px;border-radius:8px;font-size:13px;"></div>
+      </div>
+    </section>
+
+    <!-- TAB 4: SMART TEXT EXTRACTOR -->
+    <section class="tab-section-content" id="secText">
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:24px;max-width:900px;margin:0 auto;">
+        <h3 style="font-size:18px;font-weight:700;color:#6ee7b7;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+          <span>🪄</span> Trích Xuất Thông Tin Sạp Tự Động Từ Văn Bản (Smart Text Import)
+        </h3>
+        <p style="font-size:13px;color:#94a3b8;margin-bottom:16px;">
+          Dán bất kỳ bài đăng giới thiệu quán, thực đơn, bài viết Facebook hoặc thông tin sạp hàng trên mạng vào đây. Hệ thống sẽ tự động nhận diện Hotline, Địa chỉ, Sản phẩm kinh doanh, Cam kết để tạo thành Mẫu Sạp hoàn chỉnh!
+        </p>
+
+        <textarea id="smartTextInput" rows="7" placeholder="Ví dụ dán nội dung:&#10;Tiệm Trà Sữa GongCha - Chi nhánh Chợ Bến Thành&#10;Hotline / Zalo: 0912.888.999&#10;Địa chỉ: Sạp K-02, Tầng 1 Khu Ẩm Thực&#10;Menu chính: Trà Sữa Trân Châu Hoàng Kim, Trà Đào Cam Sả, Sữa Tươi Trân Châu Đường Đen, Trà Xoài Macchiato&#10;Cam kết: 100% trà tươi ủ trong ngày, sữa tươi thanh trùng Dalat Milk&#10;Giao hàng: Freeship bán kính 3km đơn từ 2 ly" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:12px;color:#fff;font-size:13px;outline:none;margin-bottom:14px;"></textarea>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('smartTextInput').value=''">Xóa văn bản</button>
+          <button type="button" class="btn btn-success" onclick="processSmartText()" style="font-weight:700;padding:8px 20px;display:inline-flex;align-items:center;gap:6px;">
+            <span>🪄</span> Phân tích & Tạo Mẫu Ngay
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Interactive Modal Editor (Live 2-Column Preview) -->
+  <div class="custom-modal-backdrop" id="templateModal">
+    <div class="custom-modal-box">
+      <div class="custom-modal-header">
+        <h3 id="modalEditorTitle">📝 Tạo Mẫu Sạp Hàng Mới</h3>
+        <button type="button" class="btn-close-modal" onclick="closeTemplateModal()">✕</button>
+      </div>
+
+      <div class="custom-modal-body">
+        <div class="modal-split-layout">
+          <!-- Left Column: Form Editor -->
+          <div class="form-pane">
+            <div style="display:grid;grid-template-columns:1fr 80px;gap:12px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12.5px;font-weight:600;">Tên mẫu sạp <span style="color:#ef4444;">*</span></label>
+                <input type="text" id="tplName" placeholder="VD: Sạp Quần Áo Trẻ Em" style="font-size:13px;" oninput="updateLivePreview()">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12.5px;font-weight:600;">Icon</label>
+                <input type="text" id="tplIcon" value="🏪" style="text-align:center;font-size:16px;" oninput="updateLivePreview()">
+              </div>
+            </div>
+
+            <!-- Emoji Quick Picker -->
+            <div>
+              <span style="font-size:11px;color:#94a3b8;">Chọn nhanh biểu tượng:</span>
+              <div class="emoji-picker-row">
+                <span class="emoji-pill" onclick="pickEmoji('👗')">👗 Quần áo</span>
+                <span class="emoji-pill" onclick="pickEmoji('🐟')">🐟 Cá / Hải sản</span>
+                <span class="emoji-pill" onclick="pickEmoji('🥩')">🥩 Thịt tươi</span>
+                <span class="emoji-pill" onclick="pickEmoji('🥦')">🥦 Rau củ</span>
+                <span class="emoji-pill" onclick="pickEmoji('🍎')">🍎 Trái cây</span>
+                <span class="emoji-pill" onclick="pickEmoji('☕')">☕ Cà phê</span>
+                <span class="emoji-pill" onclick="pickEmoji('📱')">📱 Phụ kiện</span>
+                <span class="emoji-pill" onclick="pickEmoji('💊')">💊 Thuốc</span>
+                <span class="emoji-pill" onclick="pickEmoji('🌸')">🌸 Hoa tươi</span>
+                <span class="emoji-pill" onclick="pickEmoji('🥖')">🥖 Bánh mì</span>
+                <span class="emoji-pill" onclick="pickEmoji('🎁')">🎁 Quà tặng</span>
+                <span class="emoji-pill" onclick="pickEmoji('✂️')">✂️ Barber/Spa</span>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12.5px;font-weight:600;">Mã hiệu / Số sạp:</label>
+                <input type="text" id="tplBadge" placeholder="VD: SẠP SỐ: B-12 • KHU MAY MẶC" style="font-size:12px;" oninput="updateLivePreview()">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12.5px;font-weight:600;">Màu chủ đạo:</label>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <input type="color" id="tplThemeColor" value="#0d3834" style="width:40px;height:34px;padding:0;border:none;border-radius:6px;cursor:pointer;background:transparent;" onchange="document.getElementById('tplThemeColorText').value = this.value; updateLivePreview();">
+                  <input type="text" id="tplThemeColorText" value="#0d3834" style="flex:1;font-size:12px;" oninput="document.getElementById('tplThemeColor').value = this.value; updateLivePreview();">
+                </div>
+              </div>
+            </div>
+
+            <!-- Avatar Image -->
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="font-size:12.5px;font-weight:600;">Ảnh đại diện sạp / Logo mẫu:</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="tplAvatarUrl" placeholder="Link ảnh trực tiếp hoặc tải từ máy..." style="flex:1;font-size:12px;" oninput="updateLivePreview()">
+                <label class="btn btn-small btn-primary" style="margin:0;cursor:pointer;white-space:nowrap;padding:7px 12px;font-size:12px;">
+                  📁 Tải ảnh
+                  <input type="file" id="tplAvatarFileInput" accept="image/*" style="display:none;" onchange="handleModalAvatarUpload(event)">
+                </label>
+              </div>
+            </div>
+
+            <!-- Left column text (Cam kết chất lượng) -->
+            <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:12px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12.5px;font-weight:600;">Tiêu đề cột trái:</label>
+                <input type="text" id="tplSidebarTitle" value="CAM KẾT CHẤT LƯỢNG" style="font-size:12px;" oninput="updateLivePreview()">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12.5px;font-weight:600;">Nội dung cột trái (Mỗi dòng 1 ý):</label>
+                <textarea id="tplSidebarContent" rows="3" placeholder="- Nguồn gốc rõ ràng&#10;- Đổi trả linh hoạt" style="font-size:12px;" oninput="updateLivePreview()"></textarea>
+              </div>
+            </div>
+
+            <!-- Dynamic Timeline Sections -->
+            <div style="border-top:1px dashed rgba(255,255,255,0.15);padding-top:10px;margin-top:6px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+                <label style="font-size:12.5px;font-weight:700;color:#6ee7b7;margin:0;">📋 CÁC MỤC TIMELINE CỘT PHẢI:</label>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                  <button type="button" class="btn btn-small" onclick="addModalSection('THÔNG TIN LIÊN HỆ & VỊ TRÍ', '👤 Chủ sạp: ...\n📞 Hotline / Zalo: 09xx.xxx.xxx\n📍 Vị trí: Sạp ...\n⏰ Giờ mở cửa: 06:00 - 18:00')" style="padding:2px 7px;font-size:11px;background:rgba(56,189,248,0.2);color:#38bdf8;margin:0;">+ Liên hệ</button>
+                  <button type="button" class="btn btn-small" onclick="addModalSection('MẶT HÀNG KINH DOANH CHÍNH', 'Sản phẩm 1\nSản phẩm 2\nSản phẩm 3\nSản phẩm 4')" style="padding:2px 7px;font-size:11px;background:rgba(251,191,36,0.2);color:#fbbf24;margin:0;">+ Mặt hàng</button>
+                  <button type="button" class="btn btn-small" onclick="addModalSection('CHÍNH SÁCH & THANH TOÁN', '🚚 Giao hàng: Freeship đơn từ ...\n💳 Thanh toán: Chuyển khoản QR, Tiền mặt')" style="padding:2px 7px;font-size:11px;background:rgba(168,85,247,0.2);color:#c084fc;margin:0;">+ Chính sách</button>
+                  <button type="button" class="btn btn-small btn-success" onclick="addModalSection('', '')" style="padding:2px 8px;font-size:11px;margin:0;">+ Thêm mục</button>
+                </div>
+              </div>
+
+              <div id="modalSectionsContainer" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;padding-right:4px;"></div>
+            </div>
+          </div>
+
+          <!-- Right Column: Live Interactive Preview -->
+          <div class="preview-pane">
+            <div class="preview-pane-header">
+              <span>👁️</span> BẢN XEM TRƯỚC THỰC TẾ TRONG TOUR 360:
+            </div>
+            <div id="livePreviewWrapper" style="overflow-y:auto;flex:1;max-height:580px;border-radius:10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="custom-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeTemplateModal()">Hủy bỏ</button>
+        <button type="button" class="btn btn-success" onclick="saveTemplateFromModal()" style="font-weight:700;padding:8px 20px;">
+          💾 Lưu Mẫu Sạp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fullscreen Preview Modal -->
+  <div class="custom-modal-backdrop" id="viewModal">
+    <div class="custom-modal-box" style="max-width:850px;">
+      <div class="custom-modal-header">
+        <h3 id="viewModalTitle">👁️ Xem trước Mẫu Sạp Hàng</h3>
+        <button type="button" class="btn-close-modal" onclick="closeViewModal()">✕</button>
+      </div>
+      <div class="custom-modal-body" id="viewModalBody" style="padding:24px;"></div>
+      <div class="custom-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeViewModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin-stall-templates.js"></script>
+</body>
+</html>

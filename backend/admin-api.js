@@ -1273,6 +1273,123 @@ router.post("/tour-scenario", async (req, res) => {
   }
 });
 
+/* ===== STALL TEMPLATES (DATABASE SUPABASE / POSTGRESQL) ===== */
+
+// GET all stall templates from database
+router.get("/stall-templates", async (req, res) => {
+  try {
+    const templates = await db.getStallTemplates();
+    res.json({ success: true, templates });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// CREATE a new stall template in database
+router.post("/stall-templates", async (req, res) => {
+  try {
+    const { name, icon, badge, themeColor, avatar, sidebarTitle, sidebarContent, sections } = req.body;
+    if (!name) {
+      return res.status(400).json({ success: false, error: "Vui lòng nhập tên mẫu sạp" });
+    }
+
+    const templates = await db.getStallTemplates();
+    const newId = req.body.id || `stall_tpl_${Date.now()}`;
+    
+    // Check if ID already exists
+    const existingIndex = templates.findIndex(t => t.id === newId);
+    const newTemplate = {
+      id: newId,
+      name: name.trim(),
+      icon: icon || "🏪",
+      badge: badge || "",
+      themeColor: themeColor || "#0d3834",
+      avatar: avatar || "",
+      sidebarTitle: sidebarTitle || "CAM KẾT CHẤT LƯỢNG",
+      sidebarContent: sidebarContent || "",
+      sections: Array.isArray(sections) ? sections : []
+    };
+
+    if (existingIndex >= 0) {
+      templates[existingIndex] = newTemplate;
+    } else {
+      templates.push(newTemplate);
+    }
+
+    await db.saveStallTemplates(templates);
+    res.json({ success: true, template: newTemplate, message: "Đã lưu mẫu sạp vào cơ sở dữ liệu thành công!" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// UPDATE existing stall template in database
+router.put("/stall-templates/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const { name, icon, badge, themeColor, avatar, sidebarTitle, sidebarContent, sections } = req.body;
+
+    const templates = await db.getStallTemplates();
+    const index = templates.findIndex(t => t.id === id);
+
+    if (index === -1) {
+      return res.status(404).json({ success: false, error: "Không tìm thấy mẫu sạp cần sửa" });
+    }
+
+    templates[index] = {
+      ...templates[index],
+      name: name ? name.trim() : templates[index].name,
+      icon: icon !== undefined ? icon : templates[index].icon,
+      badge: badge !== undefined ? badge : templates[index].badge,
+      themeColor: themeColor !== undefined ? themeColor : templates[index].themeColor,
+      avatar: avatar !== undefined ? avatar : templates[index].avatar,
+      sidebarTitle: sidebarTitle !== undefined ? sidebarTitle : templates[index].sidebarTitle,
+      sidebarContent: sidebarContent !== undefined ? sidebarContent : templates[index].sidebarContent,
+      sections: Array.isArray(sections) ? sections : templates[index].sections
+    };
+
+    await db.saveStallTemplates(templates);
+    res.json({ success: true, template: templates[index], message: "Cập nhật mẫu sạp trong cơ sở dữ liệu thành công!" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE a stall template from database
+router.delete("/stall-templates/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    let templates = await db.getStallTemplates();
+    const beforeCount = templates.length;
+    templates = templates.filter(t => t.id !== id);
+
+    if (templates.length === beforeCount) {
+      return res.status(404).json({ success: false, error: "Không tìm thấy mẫu sạp cần xóa" });
+    }
+
+    await db.deleteStallTemplate(id);
+    await db.saveStallTemplates(templates);
+    res.json({ success: true, message: "Đã xóa mẫu sạp khỏi cơ sở dữ liệu thành công!" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// RESET stall templates to default in database
+router.post("/stall-templates/reset", async (req, res) => {
+  try {
+    const defaultPath = path.join(__dirname, '../data/stall-templates.json');
+    let defaultTemplates = [];
+    if (fs.existsSync(defaultPath)) {
+      defaultTemplates = JSON.parse(fs.readFileSync(defaultPath, 'utf8'));
+    }
+    await db.saveStallTemplates(defaultTemplates);
+    res.json({ success: true, templates: defaultTemplates, message: "Đã khôi phục các mẫu sạp mặc định trong cơ sở dữ liệu!" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 /* ===== API CONFIG (ADMIN) ===== */
 
 // GET API config (Protected: Admin only)

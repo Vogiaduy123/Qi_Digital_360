@@ -542,9 +542,32 @@
           </div>
 
           <div id="stallCardFormBody">
-            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
               Tạo thẻ hồ sơ 2 cột chuyên nghiệp cho gian hàng (Khung ảnh viền đôi + Danh sách mục timeline động).
             </p>
+
+            <!-- Preset Templates Dropdown -->
+            <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span style="font-size:12.5px;font-weight:700;color:#6ee7b7;white-space:nowrap;display:flex;align-items:center;gap:5px;">
+                <span>✨</span> Mẫu sạp có sẵn:
+              </span>
+              <select id="stallTemplateSelect" onchange="applyStallTemplate(this.value)" style="flex:1;min-width:220px;background:#1e293b;color:#f8fafc;border:1px solid #334155;border-radius:6px;padding:6px 10px;font-size:12px;font-weight:600;outline:none;cursor:pointer;">
+                <option value="">-- Chọn mẫu để tự động điền nhanh thông tin --</option>
+                <option value="clothing">👗 Sạp Quần áo / Thời trang & May mặc</option>
+                <option value="fish">🐟 Sạp Cá / Hải sản tươi sống</option>
+                <option value="meat">🥩 Sạp Thịt tươi sạch (Bò, Heo, Gà)</option>
+                <option value="vegetables">🥦 Sạp Rau củ quả / Nông sản Đà Lạt</option>
+                <option value="fruits">🍎 Sạp Trái cây tươi & Hoa quả nhập khẩu</option>
+                <option value="grocery">🛒 Sạp Bách hóa / Gia vị & Hàng khô</option>
+                <option value="food">🍲 Sạp Ăn vặt / Ẩm thực & Món ngon</option>
+              </select>
+              <button type="button" class="btn btn-small" onclick="applyStallTemplate(document.getElementById('stallTemplateSelect').value)" style="background:#10b981;color:#fff;padding:6px 12px;font-size:11.5px;font-weight:700;margin:0;display:inline-flex;align-items:center;gap:4px;">
+                ⚡ Điền mẫu
+              </button>
+              <a href="/admin/stall-templates.html" target="_blank" class="btn btn-small" style="background:rgba(255,255,255,0.08);color:#93c5fd;border:1px solid rgba(255,255,255,0.15);padding:6px 10px;font-size:11.5px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin:0;" title="Mở trang Quản lý & Tạo Mẫu Sạp Mới">
+                ⚙️ Quản lý Mẫu ↗
+              </a>
+            </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
               <div class="form-group" style="margin-bottom:0;">

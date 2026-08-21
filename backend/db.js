@@ -709,5 +709,103 @@ module.exports = {
 
   async saveInvitations(invitations) {
     await this.saveAppConfig('invitations', invitations);
+  },
+
+  // --- STALL TEMPLATES (DATABASE SUPABASE / POSTGRESQL) ---
+  async getStallTemplates() {
+    // 1. Thử truy vấn từ bảng riêng stall_templates trên Supabase nếu đã tạo
+    try {
+      const { data, error } = await supabase
+        .from('stall_templates')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (!error && Array.isArray(data) && data.length > 0) {
+        return data.map(item => ({
+          id: item.id,
+          name: item.name,
+          icon: item.icon || '🏪',
+          badge: item.badge || '',
+          themeColor: item.theme_color || item.themeColor || '#0d3834',
+          avatar: item.avatar || '',
+          sidebarTitle: item.sidebar_title || item.sidebarTitle || 'CAM KẾT CHẤT LƯỢNG',
+          sidebarContent: item.sidebar_content || item.sidebarContent || '',
+          sections: item.sections || []
+        }));
+      }
+    } catch (err) {
+      // Table may not exist, fallback to app_configs
+    }
+
+    // 2. Truy vấn từ bảng app_configs trên Supabase
+    try {
+      const configData = await this.getAppConfig('stall_templates');
+      if (Array.isArray(configData) && configData.length > 0) {
+        return configData;
+      }
+    } catch (err) {
+      console.warn('⚠️ [Supabase DB] Error getting stall_templates from app_configs:', err.message);
+    }
+
+    // 3. Fallback về file JSON cục bộ
+    const localFile = path.join(__dirname, '..', 'data', 'stall-templates.json');
+    if (fs.existsSync(localFile)) {
+      try {
+        const raw = fs.readFileSync(localFile, 'utf8');
+        return JSON.parse(raw);
+      } catch {}
+    }
+    return [];
+  },
+
+  async saveStallTemplates(templates) {
+    const validList = Array.isArray(templates) ? templates : [];
+    
+    // 1. Lưu vào bảng app_configs trên Supabase
+    try {
+      await this.saveAppConfig('stall_templates', validList);
+    } catch (err) {
+      console.warn('⚠️ [Supabase DB] saveAppConfig stall_templates error:', err.message);
+    }
+
+    // 2. Thử lưu vào bảng riêng stall_templates trên Supabase nếu bảng tồn tại
+    try {
+      for (const item of validList) {
+        await supabase
+          .from('stall_templates')
+          .upsert({
+            id: String(item.id),
+            name: item.name,
+            icon: item.icon || '🏪',
+            badge: item.badge || '',
+            theme_color: item.themeColor || '#0d3834',
+            avatar: item.avatar || '',
+            sidebar_title: item.sidebarTitle || 'CAM KẾT CHẤT LƯỢNG',
+            sidebar_content: item.sidebarContent || '',
+            sections: item.sections || [],
+            updated_at: new Date().toISOString()
+          });
+      }
+    } catch (err) {
+      // Table stall_templates might not be created yet, app_configs handled it
+    }
+
+    // 3. Đồng bộ vào file JSON cục bộ
+    try {
+      const localFile = path.join(__dirname, '..', 'data', 'stall-templates.json');
+      fs.writeFileSync(localFile, JSON.stringify(validList, null, 2), 'utf8');
+    } catch (err) {
+      console.warn('Failed to write local stall-templates.json:', err.message);
+    }
+  },
+
+  async deleteStallTemplate(id) {
+    try {
+      await supabase
+        .from('stall_templates')
+        .delete()
+        .eq('id', String(id));
+    } catch (err) {
+      console.warn('⚠️ [Supabase DB] deleteStallTemplate error:', err.message);
+    }
   }
 };

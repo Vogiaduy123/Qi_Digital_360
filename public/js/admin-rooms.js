@@ -2860,6 +2860,220 @@
       if (urlInput) urlInput.value = file.name;
     };
 
+    const STALL_PRESET_TEMPLATES = {
+      clothing: {
+        badge: "SẠP SỐ: B-12 • KHU THỜI TRANG & MAY MẶC",
+        themeColor: "#4f46e5",
+        avatar: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80",
+        sidebarTitle: "CAM KẾT CHẤT LƯỢNG",
+        sidebarContent: "- Vải nhập cao cấp, thoáng mát không bai xù\n- Đường may chuẩn đẹp, sắc nét\n- Đổi size miễn phí trong 3 ngày\n- Hàng mới về liên tục hàng tuần",
+        sections: [
+          {
+            title: "THÔNG TIN LIÊN HỆ & VỊ TRÍ",
+            content: "👤 Chủ sạp: Chị Mai Phương (Shop Mai Phương)\n📞 Hotline / Zalo: 0912.345.678\n📍 Vị trí: Sạp B-12, Tầng 2 (Khu Thời Trang Nữ)\n⏰ Giờ mở cửa: 08:00 - 20:30 (Cả tuần)"
+          },
+          {
+            title: "MẶT HÀNG KINH DOANH CHÍNH",
+            content: "Váy Đầm Dự Tiệc\nÁo Sơ Mi Công Sở\nQuần Jean Co Giãn\nÁo Thun Unisex\nChân Váy Xòe\nÁo Khoác Blazer"
+          },
+          {
+            title: "CHÍNH SÁCH BÁN HÀNG & THANH TOÁN",
+            content: "🚚 Giao hàng: Ship COD toàn quốc, hỗ trợ kiểm tra hàng trước khi nhận\n💳 Thanh toán: Quét mã VietQR, Chuyển khoản, MoMo, Tiền mặt\n🏷️ Ưu đãi: Giảm ngay 10% cho khách mua từ 3 sản phẩm trở lên"
+          }
+        ]
+      },
+      fish: {
+        badge: "SẠP SỐ: A-05 • KHU HẢI SẢN TƯƠI SỐNG",
+        themeColor: "#0284c7",
+        avatar: "https://images.unsplash.com/photo-1534483509719-3feaee7c30da?auto=format&fit=crop&w=600&q=80",
+        sidebarTitle: "TIÊU CHUẨN ĐÁNH BẮT",
+        sidebarContent: "- Hải sản đánh bắt trong ngày, bơi tại hồ\n- Không ướp hóa chất, bao tươi sống\n- Hỗ trợ làm sạch, phi lê miễn phí\n- Đổi trả 1-1 nếu cá ngộp/không tươi",
+        sections: [
+          {
+            title: "THÔNG TIN LIÊN HỆ & VỊ TRÍ",
+            content: "👤 Chủ sạp: Anh Hải Biển Đông\n📞 Hotline / Zalo: 0938.889.999\n📍 Vị trí: Sạp A-05, Cổng Số 1 (Khu Hải Sản Tươi)\n⏰ Giờ mở cửa: 04:30 - 18:00 (Mở sớm mỗi ngày)"
+          },
+          {
+            title: "CÁC LOẠI HẢI SẢN TƯƠI SỐNG",
+            content: "Cá Hồi Na Uy\nCá Thu Cắt Khúc\nCá Điêu Hồng Sống\nTôm Sú Biển\nMực Trứng Tươi\nCua Cà Mau\nNghêu - Sò - Ốc Hương"
+          },
+          {
+            title: "DỊCH VỤ & PHƯƠNG THỨC GIAO NHẬN",
+            content: "🚚 Giao hàng: Giao hỏa tốc bằng thùng xốp ướp đá trong 30-45 phút\n🔪 Sơ chế: Cắt khúc, phi lê, đánh vảy, làm sạch theo yêu cầu\n💳 Thanh toán: Chuyển khoản QR, Tiền mặt"
+          }
+        ]
+      },
+      meat: {
+        badge: "SẠP SỐ: C-08 • KHU THỊT TƯƠI SẠCH MỖI NGÀY",
+        themeColor: "#b91c1c",
+        avatar: "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80",
+        sidebarTitle: "CAM KẾT NGUỒN GỐC",
+        sidebarContent: "- Thịt nóng mới mổ trong ngày từ 4h sáng\n- Có tem kiểm định thú y an toàn vệ sinh\n- Không chất tạo nạc, không bơm nước\n- Cân đúng, cân đủ tuyệt đối",
+        sections: [
+          {
+            title: "THÔNG TIN LIÊN HỆ & VỊ TRÍ",
+            content: "👤 Chủ sạp: Chú Bảy Thịt Sạch\n📞 Hotline / Zalo: 0903.654.321\n📍 Vị trí: Sạp C-08, Khu Nhà Lồng Chợ Chính\n⏰ Giờ mở cửa: 05:00 - 17:30"
+          },
+          {
+            title: "DANH MỤC THỊT TƯƠI TRONG NGÀY",
+            content: "Thịt Ba Chỉ Rút Sườn\nSườn Non Heo\nThịt Bò Tơ Củ Chi\nBắp Bò Hoa\nGà Ta Thả Vườn\nVịt Cỏ Tươi Sống\nGiò Heo Rút Xương"
+          },
+          {
+            title: "CHÍNH SÁCH BÁN HÀNG & ĐẶT TRƯỚC",
+            content: "🔪 Cắt thái: Hỗ trợ xay thịt, thái mỏng xào, chặt khúc theo yêu cầu\n📦 Đặt hàng: Nhận đặt số lượng lớn cho quán ăn, tiệc gia đình với giá sỉ\n💳 Thanh toán: VietQR, MoMo, Tiền mặt"
+          }
+        ]
+      },
+      vegetables: {
+        badge: "SẠP SỐ: A-15 • KHU RAU CỦ NÔNG SẢN ĐÀ LẠT",
+        themeColor: "#15803d",
+        avatar: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80",
+        sidebarTitle: "TIÊU CHUẨN VIETGAP",
+        sidebarContent: "- Nông sản Đà Lạt chuẩn VietGAP\n- Hàng tươi mới về xe lúc 3h sáng\n- Không chất bảo quản, tồn dư thuốc BVTV\n- Nhặt sạch gốc rễ, tươi ngon từng bó",
+        sections: [
+          {
+            title: "THÔNG TIN LIÊN HỆ & VỊ TRÍ",
+            content: "👤 Chủ sạp: Cô Út Đà Lạt\n📞 Hotline / Zalo: 0988.234.567\n📍 Vị trí: Sạp A-15, Dãy Nông Sản Tươi (Gần Cổng 2)\n⏰ Giờ mở cửa: 05:30 - 19:00"
+          },
+          {
+            title: "MẶT HÀNG RAU CỦ TƯƠI SẠCH",
+            content: "Xà Lách Búp Mỡ\nBắp Cải Trắng Đà Lạt\nCà Chua Beef\nỚt Chuông Đà Lạt\nBông Cải Xanh (Broccoli)\nCà Rốt Baby\nKhoai Tây Sáp"
+          },
+          {
+            title: "CHÍNH SÁCH GIAO HÀNG & THANH TOÁN",
+            content: "🚚 Giao hàng: Đóng gói sạch sẽ, freeship bán kính 3km đơn từ 150k\n🛒 Combo: Cung cấp gói rau lẩu, gói canh sẵn sàng nấu\n💳 Thanh toán: Quét mã QR, Chuyển khoản, Tiền mặt"
+          }
+        ]
+      },
+      fruits: {
+        badge: "SẠP SỐ: D-02 • HOA QUẢ NHẬP KHẨU & ĐẶC SẢN",
+        themeColor: "#c2410c",
+        avatar: "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?auto=format&fit=crop&w=600&q=80",
+        sidebarTitle: "CAM KẾT CHÍNH HÃNG",
+        sidebarContent: "- 100% Trái cây chuẩn loại 1, rõ ràng xuất xứ\n- Bao ăn từng quả, lỗi 1 đổi 1\n- Nhận gói giỏ quà biếu sang trọng\n- Bảo quản kho lạnh tiêu chuẩn",
+        sections: [
+          {
+            title: "THÔNG TIN LIÊN HỆ & VỊ TRÍ",
+            content: "👤 Chủ sạp: Shop Trái Cây Bốn Mùa\n📞 Hotline / Zalo: 0977.112.233\n📍 Vị trí: Sạp D-02, Mặt Tiền Chợ (Khu Trái Cây)\n⏰ Giờ mở cửa: 07:00 - 21:00"
+          },
+          {
+            title: "CÁC LOẠI TRÁI CÂY NỔI BẬT",
+            content: "Nho Mẫu Đơn Nhật Bản\nCherry Đỏ Mỹ Size 9.5\nTáo Envy New Zealand\nSầu Riêng Musang King\nXoài Cát Hòa Lộc\nCam Canh Mọng Nước\nBơ Booth Đắk Lắk"
+          },
+          {
+            title: "DỊCH VỤ GIỎ QUÀ & SHIP HỎA TỐC",
+            content: "🎁 Giỏ quà: Thiết kế giỏ hoa quả dạm ngõ, biếu tặng theo ngân sách\n🚚 Giao hàng: Ship hỏa tốc 1h nội thành\n💳 Thanh toán: Chuyển khoản QR, Thẻ tín dụng, Tiền mặt"
+          }
+        ]
+      },
+      grocery: {
+        badge: "SẠP SỐ: E-18 • BÁCH HÓA GIA VỊ & HÀNG KHÔ",
+        themeColor: "#854d0e",
+        avatar: "https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=600&q=80",
+        sidebarTitle: "UY TÍN LÂU NĂM",
+        sidebarContent: "- Đầy đủ gia vị truyền thống & nhập khẩu\n- Date mới nhất, hạn sử dụng dài\n- Giá sỉ tận gốc cho hộ gia đình & quán ăn\n- Đóng gói hút chân không miễn phí",
+        sections: [
+          {
+            title: "THÔNG TIN LIÊN HỆ & VỊ TRÍ",
+            content: "👤 Chủ sạp: Tiệm Tạp Hóa Kim Phát\n📞 Hotline / Zalo: 0908.776.655\n📍 Vị trí: Sạp E-18 & E-19, Khu Hàng Khô\n⏰ Giờ mở cửa: 06:00 - 19:30"
+          },
+          {
+            title: "MẶT HÀNG BÁCH HÓA KINH DOANH",
+            content: "Nước Mắm Phú Quốc Cốt\nGạo ST25 Ông Cua\nMiến Dong Làng So\nNấm Hương Rừng\nTôm Khô Cà Mau\nHạt Tiêu Phú Quốc\nNgũ Vị Hương & Thảo Mộc"
+          },
+          {
+            title: "CHÍNH SÁCH BÁN BUÔN & VẬN CHUYỂN",
+            content: "📦 Gửi hàng: Nhận đóng thùng gửi chành xe các tỉnh\n💳 Thanh toán: Linh hoạt xuất hóa đơn đỏ, Quét mã QR, Tiền mặt\n🏷️ Chiết khấu: Giảm 5-10% cho đơn hàng định kỳ"
+          }
+        ]
+      },
+      food: {
+        badge: "SẠP SỐ: F-06 • KHU ẨM THỰC DÂN GIAN & ĂN VẶT",
+        themeColor: "#b45309",
+        avatar: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80",
+        sidebarTitle: "VỆ SINH AN TOÀN",
+        sidebarContent: "- Chế biến nóng hổi tại chỗ mỗi ngày\n- Nguyên liệu tươi sạch, dầu ăn mới 100%\n- Hương vị gia truyền đậm đà\n- Đóng hộp giấy bảo vệ môi trường",
+        sections: [
+          {
+            title: "THÔNG TIN LIÊN HỆ & VỊ TRÍ",
+            content: "👤 Chủ sạp: Quán Ăn Cô Ba\n📞 Hotline / Đặt món: 0945.334.455\n📍 Vị trí: Sạp F-06, Khu Ẩm Thực Chợ\n⏰ Giờ mở cửa: 06:30 - 19:00"
+          },
+          {
+            title: "THỰC ĐƠN MÓN NGON MỖI NGÀY",
+            content: "Bún Bò Huế Đặc Biệt\nBánh Xèo Giòn Rụm\nBánh Mì Kẹp Thịt Nướng\nGỏi Cuốn Tôm Thịt\nChè Bưởi An Giang\nNước Mía Sầu Riêng\nTrà Tắc Mật Ong"
+          },
+          {
+            title: "ĐẶT MÓN ONLINE & GIAO HÀNG TẬN NƠI",
+            content: "🛵 Giao hàng: Nhận ship qua Grab/ShopeeFood hoặc shipper riêng của quán\n📦 Đóng gói: Kèm đầy đủ rau sống, nước chấm và đồ ăn kèm\n💳 Thanh toán: Chuyển khoản VietQR, Tiền mặt"
+          }
+        ]
+      }
+    };
+
+    let dynamicStallTemplates = [];
+
+    async function loadStallTemplatesForDropdown() {
+      const selectEl = document.getElementById('stallTemplateSelect');
+      if (!selectEl) return;
+
+      try {
+        const res = await fetch('/api/stall-templates');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.templates) && data.templates.length > 0) {
+          dynamicStallTemplates = data.templates;
+          let optionsHtml = '<option value="">-- Chọn mẫu để tự động điền nhanh thông tin --</option>';
+          dynamicStallTemplates.forEach(t => {
+            optionsHtml += `<option value="${t.id}">${t.icon || '🏪'} ${t.name || 'Mẫu sạp'}</option>`;
+          });
+          selectEl.innerHTML = optionsHtml;
+        }
+      } catch (err) {
+        console.warn('Error loading dynamic stall templates:', err);
+      }
+    }
+    window.loadStallTemplatesForDropdown = loadStallTemplatesForDropdown;
+
+    window.applyStallTemplate = function(templateKey) {
+      if (!templateKey) return;
+      const tpl = dynamicStallTemplates.find(t => t.id === templateKey) || STALL_PRESET_TEMPLATES[templateKey];
+      if (!tpl) return;
+
+      const badgeInput = document.getElementById('stallBadge');
+      if (badgeInput) badgeInput.value = tpl.badge || '';
+
+      const themeColorInput = document.getElementById('stallThemeColor');
+      const themeColorText = document.getElementById('stallThemeColorText');
+      if (themeColorInput) themeColorInput.value = tpl.themeColor || '#0d3834';
+      if (themeColorText) themeColorText.value = tpl.themeColor || '#0d3834';
+
+      const avatarInput = document.getElementById('stallAvatarUrl');
+      if (avatarInput) {
+        avatarInput.value = tpl.avatar || '';
+        selectedStallAvatarFile = null;
+        updateStallAvatarPreview();
+      }
+
+      const sidebarTitleInput = document.getElementById('stallSidebarTitle');
+      if (sidebarTitleInput) sidebarTitleInput.value = tpl.sidebarTitle || 'CAM KẾT CHẤT LƯỢNG';
+
+      const sidebarContentInput = document.getElementById('stallSidebarContent');
+      if (sidebarContentInput) sidebarContentInput.value = tpl.sidebarContent || '';
+
+      stallSections = Array.isArray(tpl.sections) ? tpl.sections.map(s => ({ title: s.title, content: s.content })) : [];
+      renderStallSections();
+
+      // Ensure form body is open
+      const formBody = document.getElementById('stallCardFormBody');
+      if (formBody) formBody.style.display = 'block';
+
+      // Visual feedback
+      const selectEl = document.getElementById('stallTemplateSelect');
+      if (selectEl) {
+        selectEl.style.borderColor = '#10b981';
+        setTimeout(() => { selectEl.style.borderColor = '#334155'; }, 1500);
+      }
+    };
+
     window.updateStallAvatarPreview = function() {
       const url = (document.getElementById('stallAvatarUrl')?.value || '').trim();
       const previewWrap = document.getElementById('stallAvatarPreview');
@@ -2887,6 +3101,8 @@
       selectedStallAvatarFile = null;
       stallSections = [];
       renderStallSections();
+      const tplSelect = document.getElementById('stallTemplateSelect');
+      if (tplSelect) tplSelect.value = '';
       const avatarPreview = document.getElementById('stallAvatarPreview');
       if (avatarPreview) avatarPreview.style.display = 'none';
       const imagesInfo = document.getElementById('mediaImagesListInfo');
@@ -4423,6 +4639,7 @@
     applyRoomsPanelState();
     loadCustomIcons().then(() => {
       loadRooms();
+      loadStallTemplatesForDropdown();
     });
     loadApiConfig();
 

@@ -462,6 +462,16 @@ app.get("/api/buildings", async (req, res) => {
   }
 });
 
+// GET STALL TEMPLATES (Public)
+app.get("/api/stall-templates", async (req, res) => {
+  try {
+    const templates = await db.getStallTemplates();
+    res.json({ success: true, templates });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET ROOMS
 app.get("/api/rooms", async (req, res) => {
   const rooms = await getRooms();
@@ -897,6 +907,24 @@ app.get("/api/tour-scenario", async (req, res) => {
     } else {
       res.json({ success: false, message: "No scenario found" });
     }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* ===== STALL TEMPLATES PUBLIC API ===== */
+app.get("/api/stall-templates", async (req, res) => {
+  try {
+    let templates = await db.getAppConfig('stall_templates');
+    if (!templates || !Array.isArray(templates) || templates.length === 0) {
+      const defaultPath = path.join(__dirname, 'data/stall-templates.json');
+      if (fs.existsSync(defaultPath)) {
+        try {
+          templates = JSON.parse(fs.readFileSync(defaultPath, 'utf8'));
+        } catch {}
+      }
+    }
+    res.json({ success: true, templates: Array.isArray(templates) ? templates : [] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

@@ -26,3 +26,4 @@ scratch/
 docs/plans/
 scripts/*
 !scripts/check-syntax.js
+!scripts/sync-stall-templates-to-db.js

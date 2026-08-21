@@ -94,6 +94,7 @@
       '/admin/minimap':   ['admin', 'collaborator'],
       '/admin/tour':      ['admin', 'collaborator'],
       '/admin/drag':      ['admin', 'collaborator'],
+      '/admin/stall-templates': ['admin', 'collaborator'],
       '/admin/users':     ['admin'],
       '/admin/api-config':['admin'],
       '/admin/index':     ['admin', 'collaborator'],
@@ -121,7 +122,7 @@
     window.hasPermission = function(permission) {
       if (user.role === 'admin') return true;
       if (user.role === 'collaborator') {
-        const collabAllowed = ['buildings', 'upload', 'rooms', 'minimap', 'tour', 'drag', 'view_tour'];
+        const collabAllowed = ['buildings', 'upload', 'rooms', 'minimap', 'tour', 'drag', 'stall_templates', 'view_tour'];
         return collabAllowed.includes(permission);
       }
       return permission === 'view_tour';
