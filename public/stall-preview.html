@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mẫu Thẻ Thông Tin Sạp Hàng Hóa 360</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background: #090d16 radial-gradient(circle at center, #172033 0%, #090d16 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #fff;
+    }
+
+    .preview-header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .preview-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: -0.01em;
+    }
+
+    .preview-header p {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .stall-card-backdrop {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stall-card {
+      width: 840px;
+      max-width: 95vw;
+      min-height: 480px;
+      background: #fdfbfb;
+      border-radius: 12px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+      color: #1e293b;
+      animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.96) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    /* Left Sidebar - Deep Teal */
+    .stall-sidebar {
+      background: linear-gradient(175deg, #092c28 0%, #0d3834 60%, #082622 100%);
+      color: #ffffff;
+      padding: 32px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      border-right: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    /* Double Frame Avatar / Photo Container */
+    .stall-photo-frame-wrap {
+      position: relative;
+      width: 190px;
+      height: 190px;
+      margin: 0 auto 20px;
+    }
+
+    .stall-photo-frame-wrap::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      right: -8px;
+      bottom: -8px;
+      border: 1.5px solid rgba(255, 255, 255, 0.45);
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .stall-photo-frame {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+      border: 3px solid #ffffff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      background: #111;
+    }
+
+    .stall-photo-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .stall-photo-frame:hover img {
+      transform: scale(1.05);
+    }
+
+    .stall-sidebar-badge {
+      display: inline-block;
+      align-self: center;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #6ee7b7;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+
+    .stall-sidebar-title {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      color: #ffffff;
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.25);
+      padding-bottom: 6px;
+      display: inline-block;
+    }
+
+    .stall-sidebar-desc {
+      font-size: 12.5px;
+      line-height: 1.65;
+      color: #e2e8f0;
+      opacity: 0.92;
+    }
+
+    .stall-sidebar-desc ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    .stall-sidebar-desc li {
+      position: relative;
+      padding-left: 14px;
+      margin-bottom: 6px;
+    }
+
+    .stall-sidebar-desc li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #6ee7b7;
+      font-weight: bold;
+    }
+
+    /* Right Content Area */
+    .stall-main {
+      padding: 32px 36px 28px 26px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      position: relative;
+      background: #fafafa;
+    }
+
+    .stall-timeline {
+      position: relative;
+      padding-left: 32px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .stall-timeline::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 14px;
+      bottom: 20px;
+      width: 2px;
+      background: #cbd5e1;
+    }
+
+    .timeline-node {
+      position: relative;
+    }
+
+    .timeline-node::before {
+      content: '';
+      position: absolute;
+      left: -32px;
+      top: 3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #0d3834;
+      border: 3px solid #fafafa;
+      box-shadow: 0 0 0 2px #0d3834;
+      z-index: 2;
+    }
+
+    .section-heading {
+      font-size: 15px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #0f172a;
+      margin-bottom: 4px;
+      display: inline-block;
+      position: relative;
+    }
+
+    .section-divider {
+      width: 100%;
+      max-width: 260px;
+      height: 1.5px;
+      background: #0f172a;
+      margin-bottom: 10px;
+    }
+
+    .section-body {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #334155;
+    }
+
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .info-icon {
+      font-size: 14px;
+      width: 20px;
+      text-align: center;
+      color: #0d3834;
+    }
+
+    .badge-tag {
+      display: inline-block;
+      background: #e2e8f0;
+      color: #1e293b;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      margin-right: 6px;
+      margin-top: 6px;
+    }
+
+    .badge-tag.highlight {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .nav-arrow-group {
+      position: absolute;
+      right: -24px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    .nav-arrow-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .nav-arrow-btn:hover {
+      background: #0284c7;
+      transform: scale(1.1);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      line-height: 1;
+      color: #64748b;
+      cursor: pointer;
+      transition: color 0.2s;
+      z-index: 10;
+    }
+
+    .close-btn:hover {
+      color: #ef4444;
+    }
+
+    @media (max-width: 768px) {
+      .stall-card {
+        grid-template-columns: 1fr;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .stall-sidebar {
+        padding: 24px;
+      }
+      .stall-photo-frame-wrap {
+        width: 140px;
+        height: 140px;
+      }
+      .stall-main {
+        padding: 24px;
+      }
+      .nav-arrow-group {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="preview-header">
+    <h1>THIẾT KẾ MẪU: THẺ THÔNG TIN SẠP HÀNG HÓA 360</h1>
+    <p>Hiển thị trực quan khi người dùng click vào Hotspot Tư liệu của Sạp hàng trên Tour 360</p>
+  </div>
+
+  <div class="stall-card-backdrop">
+    <div class="stall-card">
+      <button class="close-btn" title="Đóng">&times;</button>
+
+      <!-- CỘT TRÁI: NHẬN DIỆN SẠP HÀNG -->
+      <div class="stall-sidebar">
+        <div class="stall-photo-frame-wrap">
+          <div class="stall-photo-frame">
+            <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80" alt="Sạp Trái Cây & Nông Sản Tươi">
+          </div>
+        </div>
+
+        <div class="stall-sidebar-badge">SẠP SỐ: A-15 • KHU NÔNG SẢN</div>
+
+        <div class="stall-sidebar-title">CAM KẾT CHẤT LƯỢNG</div>
+        <div class="stall-sidebar-desc">
+          <ul>
+            <li>Nguồn hàng tươi sạch tuyển chọn mỗi ngày từ nhà vườn.</li>
+            <li>Đạt chứng nhận an toàn thực phẩm VietGAP.</li>
+            <li>Giá niêm yết rõ ràng, ổn định, cân đúng chuẩn.</li>
+            <li>Bao đổi trả trong ngày nếu phát hiện hàng lỗi, dập.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- CỘT PHẢI: CHI TIẾT & TIMELINE -->
+      <div class="stall-main">
+        <div class="stall-timeline">
+          
+          <!-- MỤC 1 -->
+          <div class="timeline-node">
+            <div class="section-heading">THÔNG TIN LIÊN HỆ & VỊ TRÍ</div>
+            <div class="section-divider"></div>
+            <div class="section-body">
+              <div class="info-list">
+                <div class="info-item">
+                  <span class="info-icon">👤</span>
+                  <span><strong>Chủ sạp:</strong> Bà Nguyễn Thu Trang</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-icon">📞</span>
+                  <span><strong>Hotline / Zalo:</strong> <span style="color:#0284c7;font-weight:700;">0988.123.456</span></span>
+                </div>
+                <div class="info-item">
+                  <span class="info-icon">📍</span>
+                  <span><strong>Vị trí:</strong> Sạp A-15, Tầng 1 (Gần lối vào Cổng Số 2)</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-icon">⏰</span>
+                  <span><strong>Thời gian mở cửa:</strong> 06:00 - 18:30 (Tất cả các ngày)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MỤC 2 -->
+          <div class="timeline-node">
+            <div class="section-heading">MẶT HÀNG KINH DOANH CHÍNH</div>
+            <div class="section-divider"></div>
+            <div class="section-body">
+              <p style="margin-bottom: 6px;">Chuyên cung cấp sỉ & lẻ các loại nông sản và trái cây đặc sản:</p>
+              <div>
+                <span class="badge-tag highlight">🍇 Nho Ninh Thuận</span>
+                <span class="badge-tag highlight">🥭 Xoài Cát Hòa Lộc</span>
+                <span class="badge-tag highlight">🍊 Cam Sành Tiền Giang</span>
+                <span class="badge-tag">🥑 Bơ Sáp Đắk Lắk</span>
+                <span class="badge-tag">🥥 Nước dừa xiêm</span>
+                <span class="badge-tag">📦 Đóng thùng sỉ gửi tỉnh</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- MỤC 3 -->
+          <div class="timeline-node">
+            <div class="section-heading">CHÍNH SÁCH & PHƯƠNG THỨC THANH TOÁN</div>
+            <div class="section-divider"></div>
+            <div class="section-body">
+              <div class="info-list">
+                <div class="info-item">
+                  <span class="info-icon">🚚</span>
+                  <span><strong>Giao hàng:</strong> Miễn phí ship đơn từ 300k trong bán kính 5km.</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-icon">💳</span>
+                  <span><strong>Thanh toán:</strong> Tiền mặt, Chuyển khoản QR, MoMo, VNPay.</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-icon">🏷️</span>
+                  <span><strong>Ưu đãi:</strong> Chiết khấu 5 - 10% cho khách đặt số lượng lớn hoặc sự kiện.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Nút chuyển sạp nếu gian hàng có nhiều sạp -->
+    <div class="nav-arrow-group">
+      <button class="nav-arrow-btn" title="Sạp trước">▲</button>
+      <button class="nav-arrow-btn" title="Sạp tiếp theo">▼</button>
+    </div>
+  </div>
+
+</body>
+</html>

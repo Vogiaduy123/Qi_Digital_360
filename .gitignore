@@ -24,4 +24,5 @@ data/
 # Script tạm và kế hoạch phát triển
 scratch/
 docs/plans/
-scripts/
+scripts/*
+!scripts/check-syntax.js

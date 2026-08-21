@@ -532,6 +532,81 @@
           📂 ĐÍNH KÈM TƯ LIỆU ĐA PHƯƠNG TIỆN <span style="font-size:11px;font-weight:400;color:var(--text-muted);">(Mục nào để trống sẽ tự động không hiển thị)</span>
         </div>
 
+        <!-- 0. Stall Info Card (Thẻ Thông Tin Sạp Hàng Hóa) Section -->
+        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:14px;margin-bottom:18px;">
+          <div style="font-weight:700;color:#34d399;font-size:13.5px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span>🏪</span> <span>THẺ THÔNG TIN SẠP HÀNG HÓA (STALL CARD)</span>
+            </div>
+            <button type="button" class="btn btn-small" onclick="toggleStallCardSection()" id="stallToggleBtn" style="padding:3px 8px;font-size:11px;background:rgba(255,255,255,0.1);color:#fff;margin:0;">▼ Mở rộng / Thu gọn</button>
+          </div>
+
+          <div id="stallCardFormBody">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">
+              Tạo thẻ hồ sơ 2 cột chuyên nghiệp cho gian hàng (Khung ảnh viền đôi + Danh sách mục timeline động).
+            </p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12px;font-weight:600;">Mã sạp / Số hiệu sạp:</label>
+                <input type="text" id="stallBadge" placeholder="Ví dụ: SẠP SỐ: A-15 • KHU NÔNG SẢN" style="font-size:12px;">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12px;font-weight:600;">Màu nền chủ đạo cột trái:</label>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <input type="color" id="stallThemeColor" value="#0d3834" style="width:40px;height:34px;padding:0;border:none;border-radius:6px;cursor:pointer;background:transparent;" onchange="document.getElementById('stallThemeColorText').value = this.value">
+                  <input type="text" id="stallThemeColorText" value="#0d3834" style="flex:1;font-size:12px;" onchange="document.getElementById('stallThemeColor').value = this.value">
+                </div>
+              </div>
+            </div>
+
+            <!-- Avatar Image -->
+            <div class="form-group" style="margin-bottom:10px;">
+              <label style="font-size:12px;font-weight:600;">Ảnh đại diện sạp hàng / Logo:</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="text" id="stallAvatarUrl" placeholder="Link ảnh hoặc tải ảnh từ máy..." style="flex:1;font-size:12px;" oninput="updateStallAvatarPreview()">
+                <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:7px 10px;font-size:12px;">
+                  📁 Tải ảnh
+                  <input type="file" id="stallAvatarFileInput" accept="image/*" style="display:none;" onchange="handleStallAvatarSelect(event)">
+                </label>
+              </div>
+              <div id="stallAvatarPreview" style="margin-top:6px;display:none;">
+                <img id="stallAvatarPreviewImg" src="" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1.5px solid #fff;">
+              </div>
+            </div>
+
+            <!-- Left column text (Cam kết chất lượng) -->
+            <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:10px;margin-bottom:12px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12px;font-weight:600;">Tiêu đề cột trái:</label>
+                <input type="text" id="stallSidebarTitle" placeholder="Ví dụ: CAM KẾT CHẤT LƯỢNG" value="CAM KẾT CHẤT LƯỢNG" style="font-size:12px;">
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:12px;font-weight:600;">Nội dung cột trái (Mỗi dòng 1 ý):</label>
+                <textarea id="stallSidebarContent" rows="2" placeholder="- Nguồn hàng tươi sạch mỗi ngày&#10;- Đạt chuẩn an toàn thực phẩm VietGAP&#10;- Đổi trả nếu hàng không đạt" style="font-size:12px;"></textarea>
+              </div>
+            </div>
+
+            <!-- Dynamic Timeline Sections (Right column) -->
+            <div style="border-top:1px dashed rgba(255,255,255,0.15);padding-top:10px;margin-top:10px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+                <label style="font-size:12px;font-weight:700;color:#6ee7b7;margin:0;">📋 CÁC MỤC TIMELINE CỘT PHẢI:</label>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                  <button type="button" class="btn btn-small" onclick="addStallSectionTemplate('contact')" style="padding:3px 7px;font-size:11px;background:rgba(56,189,248,0.2);color:#38bdf8;margin:0;">+ Liên hệ</button>
+                  <button type="button" class="btn btn-small" onclick="addStallSectionTemplate('products')" style="padding:3px 7px;font-size:11px;background:rgba(251,191,36,0.2);color:#fbbf24;margin:0;">+ Mặt hàng</button>
+                  <button type="button" class="btn btn-small" onclick="addStallSectionTemplate('policy')" style="padding:3px 7px;font-size:11px;background:rgba(168,85,247,0.2);color:#c084fc;margin:0;">+ Chính sách</button>
+                  <button type="button" class="btn btn-small btn-success" onclick="addStallSection()" style="padding:3px 8px;font-size:11px;margin:0;">+ Thêm mục</button>
+                </div>
+              </div>
+
+              <div id="stallSectionsContainer" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;padding-right:4px;">
+                <!-- Dynamically populated sections -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+
         <!-- 1. Image / Gallery Section -->
         <div class="form-group" style="margin-bottom:14px;">
           <label style="font-size:13px;font-weight:600;">🖼️ Hình ảnh / Bộ sưu tập ảnh:</label>

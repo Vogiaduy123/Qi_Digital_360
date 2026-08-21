@@ -1,4 +1,4 @@
-export const MEDIA_ICONS = { image: "🖼️", pdf: "📄", video: "🎥", "3d": "🧊", gallery: "📸", youtube: "▶️", facebook: "", web: "🌐", note: "i" };
+export const MEDIA_ICONS = { image: "🖼️", pdf: "📄", video: "🎥", "3d": "🧊", gallery: "📸", youtube: "▶️", facebook: "", web: "🌐", note: "i", stall: "🏪" };
 
 // Media overlay elements
 let mediaOverlay, mediaOverlayTitle, mediaOverlayDescription, mediaOverlayContent, mediaOverlayLink, mediaOverlayClose;
@@ -6,6 +6,14 @@ let mediaOverlay, mediaOverlayTitle, mediaOverlayDescription, mediaOverlayConten
 // Store active media hotspot overlay reference
 let activeMediaHotspotOverlay = null;
 let active3DModal = null;
+let activeStallModal = null;
+
+export function closeStallModal() {
+  if (activeStallModal) {
+    activeStallModal.remove();
+    activeStallModal = null;
+  }
+}
 
 export function initMediaOverlay() {
   mediaOverlay = document.getElementById("mediaOverlay");
@@ -22,6 +30,8 @@ export function initMediaOverlay() {
   document.addEventListener("keyup", (e) => {
     if (e.key === "Escape") {
       hideMediaOverlay();
+      close3DModal();
+      closeStallModal();
     }
   });
 
@@ -33,6 +43,185 @@ export function initMediaOverlay() {
 function normalizeMediaUrl(url) {
   if (!url) return "";
   return /^https?:\/\//i.test(url) ? url : `${window.location.origin}${url}`;
+}
+
+// Show Fullscreen Stall Info Card Modal (2-column layout with timeline)
+export function showStallCardModal(stallCard, media = {}) {
+  closeStallModal();
+  close3DModal();
+  hideMediaOverlay();
+  if (!stallCard) return;
+
+  const backdrop = document.createElement("div");
+  backdrop.className = "stall-card-backdrop";
+  backdrop.onclick = closeStallModal;
+
+  const card = document.createElement("div");
+  card.className = "stall-card";
+  card.onclick = (e) => e.stopPropagation();
+
+  // Close Button
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "stall-card-close-btn";
+  closeBtn.innerHTML = "&times;";
+  closeBtn.title = "Đóng";
+  closeBtn.onclick = closeStallModal;
+  card.appendChild(closeBtn);
+
+  // Left Column (Sidebar)
+  const sidebar = document.createElement("div");
+  sidebar.className = "stall-sidebar";
+  if (stallCard.themeColor) {
+    sidebar.style.background = `linear-gradient(175deg, #092c28 0%, ${stallCard.themeColor} 60%, #082622 100%)`;
+  }
+
+  // Photo Frame
+  const photoWrap = document.createElement("div");
+  photoWrap.className = "stall-photo-frame-wrap";
+  const photoFrame = document.createElement("div");
+  photoFrame.className = "stall-photo-frame";
+  const img = document.createElement("img");
+  
+  let avatarUrl = stallCard.avatar || stallCard.image;
+  if (!avatarUrl && stallCard.images && stallCard.images.length) avatarUrl = stallCard.images[0];
+  if (!avatarUrl && media.mediaUrl && !media.mediaUrl.startsWith('{')) avatarUrl = media.mediaUrl;
+  if (!avatarUrl) avatarUrl = "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80";
+
+  img.src = normalizeMediaUrl(avatarUrl);
+  img.alt = stallCard.badge || media.title || "Sạp hàng";
+  photoFrame.appendChild(img);
+  photoWrap.appendChild(photoFrame);
+  sidebar.appendChild(photoWrap);
+
+  // Badge / Mã Sạp
+  if (stallCard.badge || media.title) {
+    const badge = document.createElement("div");
+    badge.className = "stall-sidebar-badge";
+    badge.textContent = stallCard.badge || media.title;
+    sidebar.appendChild(badge);
+  }
+
+  // Sidebar Title & Description
+  if (stallCard.sidebarTitle || stallCard.sidebarContent) {
+    if (stallCard.sidebarTitle) {
+      const sTitle = document.createElement("div");
+      sTitle.className = "stall-sidebar-title";
+      sTitle.textContent = stallCard.sidebarTitle;
+      sidebar.appendChild(sTitle);
+    }
+    if (stallCard.sidebarContent) {
+      const sDesc = document.createElement("div");
+      sDesc.className = "stall-sidebar-desc";
+      
+      const lines = String(stallCard.sidebarContent).split('\n').filter(l => l.trim());
+      if (lines.length > 0) {
+        const ul = document.createElement("ul");
+        lines.forEach(line => {
+          const li = document.createElement("li");
+          li.textContent = line.replace(/^[•\-\*]\s*/, '');
+          ul.appendChild(li);
+        });
+        sDesc.appendChild(ul);
+      } else {
+        sDesc.textContent = stallCard.sidebarContent;
+      }
+      sidebar.appendChild(sDesc);
+    }
+  }
+
+  // Right Column (Main Content & Timeline)
+  const main = document.createElement("div");
+  main.className = "stall-main";
+
+  const timeline = document.createElement("div");
+  timeline.className = "stall-timeline";
+
+  let sections = Array.isArray(stallCard.sections) ? stallCard.sections : [];
+  if (sections.length === 0 && (media.title || media.description)) {
+    sections = [{
+      title: "THÔNG TIN GIAN HÀNG",
+      content: media.description || "Chưa có mô tả chi tiết."
+    }];
+  }
+
+  sections.forEach(sec => {
+    const node = document.createElement("div");
+    node.className = "timeline-node";
+
+    const h = document.createElement("div");
+    h.className = "section-heading";
+    h.textContent = sec.title || "THÔNG TIN";
+    node.appendChild(h);
+
+    const div = document.createElement("div");
+    div.className = "section-divider";
+    node.appendChild(div);
+
+    const body = document.createElement("div");
+    body.className = "section-body";
+
+    const lines = String(sec.content || "").split('\n').filter(l => l.trim());
+    
+    // Check if it's tags/badges (short tags without colons)
+    const isTagList = sec.type === 'tags' || (lines.length > 1 && lines.every(l => l.length < 35 && !l.includes(':')));
+
+    if (isTagList) {
+      const tagWrap = document.createElement("div");
+      lines.forEach((t, i) => {
+        const tag = document.createElement("span");
+        tag.className = `badge-tag ${i < 3 ? 'highlight' : ''}`;
+        tag.textContent = t.replace(/^[•\-\*]\s*/, '');
+        tagWrap.appendChild(tag);
+      });
+      body.appendChild(tagWrap);
+    } else {
+      const infoList = document.createElement("div");
+      infoList.className = "info-list";
+      lines.forEach(line => {
+        const item = document.createElement("div");
+        item.className = "info-item";
+        
+        let icon = "•";
+        const lower = line.toLowerCase();
+        if (lower.includes("chủ") || lower.includes("quản lý") || lower.includes("tên")) icon = "👤";
+        else if (lower.includes("sđt") || lower.includes("hotline") || lower.includes("phone") || lower.includes("zalo") || lower.includes("liên hệ") || lower.includes("điện thoại")) icon = "📞";
+        else if (lower.includes("vị trí") || lower.includes("địa chỉ") || lower.includes("sạp") || lower.includes("cổng") || lower.includes("tầng")) icon = "📍";
+        else if (lower.includes("giờ") || lower.includes("thời gian") || lower.includes("mở cửa")) icon = "⏰";
+        else if (lower.includes("giao hàng") || lower.includes("ship") || lower.includes("vận chuyển")) icon = "🚚";
+        else if (lower.includes("thanh toán") || lower.includes("chuyển khoản") || lower.includes("momo") || lower.includes("vnpay") || lower.includes("qr")) icon = "💳";
+        else if (lower.includes("ưu đãi") || lower.includes("giảm giá") || lower.includes("khuyến mãi") || lower.includes("chiết khấu")) icon = "🏷️";
+        else if (lower.includes("sản phẩm") || lower.includes("mặt hàng") || lower.includes("kinh doanh") || lower.includes("chuyên")) icon = "📦";
+
+        const iconSpan = document.createElement("span");
+        iconSpan.className = "info-icon";
+        iconSpan.textContent = icon;
+        item.appendChild(iconSpan);
+
+        const textSpan = document.createElement("span");
+        if (line.includes(":")) {
+          const parts = line.split(":");
+          const prefix = parts[0].trim().replace(/^[•\-\*]\s*/, '');
+          const val = parts.slice(1).join(":").trim();
+          textSpan.innerHTML = `<strong>${prefix}:</strong> ${val}`;
+        } else {
+          textSpan.textContent = line.replace(/^[•\-\*]\s*/, '');
+        }
+        item.appendChild(textSpan);
+        infoList.appendChild(item);
+      });
+      body.appendChild(infoList);
+    }
+
+    node.appendChild(body);
+    timeline.appendChild(node);
+  });
+
+  main.appendChild(timeline);
+  card.appendChild(sidebar);
+  card.appendChild(main);
+  backdrop.appendChild(card);
+  document.body.appendChild(backdrop);
+  activeStallModal = backdrop;
 }
 
 // Show a full-screen 3D modal (fixed, not a Marzipano hotspot)
@@ -507,6 +696,34 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
     content.appendChild(webCard);
   }
 
+  // 9. Stall Info Card Button
+  const stallCard = items.stallCard || media.stallCard || items.profileCard;
+  if (stallCard) {
+    hasAnyContent = true;
+    const stallBtn = document.createElement("button");
+    stallBtn.className = "btn-primary";
+    stallBtn.style.width = "100%";
+    stallBtn.style.padding = "10px";
+    stallBtn.style.background = "linear-gradient(135deg, #0d3834 0%, #10b981 100%)";
+    stallBtn.style.color = "#fff";
+    stallBtn.style.fontWeight = "700";
+    stallBtn.style.fontSize = "12px";
+    stallBtn.style.borderRadius = "8px";
+    stallBtn.style.border = "1px solid rgba(255,255,255,0.2)";
+    stallBtn.style.cursor = "pointer";
+    stallBtn.style.display = "flex";
+    stallBtn.style.alignItems = "center";
+    stallBtn.style.justifyContent = "center";
+    stallBtn.style.gap = "8px";
+    stallBtn.style.boxShadow = "0 4px 12px rgba(16, 185, 129, 0.3)";
+    stallBtn.innerHTML = "<span>🏪</span> <span>Xem Thẻ Thông Tin Sạp Hàng</span>";
+    stallBtn.onclick = (e) => {
+      e.stopPropagation();
+      showStallCardModal(stallCard, media);
+    };
+    content.appendChild(stallBtn);
+  }
+
   if (hasAnyContent) {
     overlayEl.appendChild(content);
   }
@@ -532,6 +749,18 @@ export function hideMediaOverlay() {
 }
 
 export function showMediaOverlay(media) {
+  if (!media) return;
+
+  let items = media.mediaItems || {};
+  if (typeof items === 'string') {
+    try { items = JSON.parse(items); } catch {}
+  }
+  const stallCard = items.stallCard || media.stallCard || items.profileCard;
+  if (stallCard || media.mediaType === "stall") {
+    showStallCardModal(stallCard, media);
+    return;
+  }
+
   if (!mediaOverlay) return;
   const url = normalizeMediaUrl(media.mediaUrl);
 
@@ -811,15 +1040,22 @@ export function createMediaHotspotElement(media, onClickHandler) {
     // Document & media tags: click header triggers media overlay viewer
     el.appendChild(header);
 
-    header.addEventListener("click", (e) => {
+    const triggerMediaOpen = (e) => {
       e.stopPropagation();
+      let items = media.mediaItems || {};
+      if (typeof items === 'string') {
+        try { items = JSON.parse(items); } catch {}
+      }
+      const stallCard = items.stallCard || media.stallCard || items.profileCard;
+      if (stallCard || media.mediaType === 'stall') {
+        showStallCardModal(stallCard, media);
+        return;
+      }
       if (onClickHandler) onClickHandler(media);
-    });
+    };
 
-    el.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (onClickHandler) onClickHandler(media);
-    });
+    header.addEventListener("click", triggerMediaOpen);
+    el.addEventListener("click", triggerMediaOpen);
   }
 
   return el;
@@ -828,6 +1064,7 @@ export function createMediaHotspotElement(media, onClickHandler) {
 function getMediaDefaultTitle(type) {
   const titles = {
     note: "Ghi chú",
+    stall: "Sạp hàng hóa",
     pdf: "Tài liệu PDF",
     image: "Hình ảnh",
     gallery: "Bộ sưu tập",
@@ -842,6 +1079,8 @@ function getMediaDefaultTitle(type) {
 
 export function getMediaIconSVG(type) {
   switch (type) {
+    case "stall":
+      return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`;
     case "pdf":
       return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;
     case "image":
