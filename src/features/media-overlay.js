@@ -296,7 +296,7 @@ function show3DModal(media) {
   active3DModal = backdrop;
 }
 
-function close3DModal() {
+export function close3DModal() {
   if (active3DModal) {
     active3DModal.remove();
     active3DModal = null;

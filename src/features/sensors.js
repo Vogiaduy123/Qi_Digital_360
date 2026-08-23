@@ -256,7 +256,7 @@ function showSnapshotFallback(camera, container, statusText) {
   return true;
 }
 
-function showCameraPreview(camera) {
+export function showCameraPreview(camera) {
   const cameraModal = document.getElementById('cameraModal');
   const cameraModalTitle = document.getElementById('cameraModalTitle');
   const cameraPreviewContainer = document.getElementById('cameraPreviewContainer');

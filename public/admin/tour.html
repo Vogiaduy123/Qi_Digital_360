@@ -774,8 +774,11 @@
             <button class="btn-studio btn-studio-primary" onclick="captureCurrentViewAsStop()" title="Phím tắt: Phím Space">
               📸 Chụp góc hiện tại (+ Điểm)
             </button>
+            <button class="btn-studio btn-studio-outline" onclick="openAddTagModal()" title="Thêm điểm dừng xem Tag (Media, Sensor, Gian hàng, Ghi chú)">
+              📌 Thêm Tag vào Tour
+            </button>
             <button class="btn-studio btn-studio-outline" onclick="updateSelectedStopWithCurrentView()" id="btnUpdateCurrentStop" title="Ghi đè góc nhìn vào điểm đang chọn">
-              🔄 Cập nhật góc vào điểm chọn
+              🔄 Cập nhật góc
             </button>
           </div>
 
@@ -822,9 +825,14 @@
             <span>📍 Danh sách chặng Tour</span>
             <span class="stop-count-badge" id="stopCountBadge">0 điểm</span>
           </h2>
-          <button class="btn-studio btn-studio-outline" style="padding: 3px 8px; font-size: 11px;" onclick="addNewEmptyStop()">
-            + Thêm chặng trống
-          </button>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn-studio btn-studio-outline" style="padding: 3px 8px; font-size: 11px;" onclick="openAddTagModal()">
+              📌 + Thêm Tag
+            </button>
+            <button class="btn-studio btn-studio-outline" style="padding: 3px 8px; font-size: 11px;" onclick="addNewEmptyStop()">
+              + Chặng trống
+            </button>
+          </div>
         </div>
 
         <!-- Stops List (Sortable) -->
@@ -834,6 +842,27 @@
 
       </div>
 
+    </div>
+  </div>
+
+  <!-- Modal: Thêm Tag/Hotspot vào Tour -->
+  <div class="modal fade" id="addTagModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 14px; overflow: hidden;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; padding: 12px 16px;">
+          <h5 class="modal-title" style="font-size: 16px;">📌 Chọn Tag / Hotspot trong phòng để thêm vào Tour</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" style="padding: 16px;">
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+            Chọn một <b>Media Hotspot</b> (Ảnh, Video, 3D, Ghi chú, Gian hàng) hoặc <b>Cảm biến IoT / Camera</b>. Camera sẽ tự động lia tới và bung popup nội dung khi tour chạy đến.
+          </p>
+
+          <div id="tagListContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; max-height: 420px; overflow-y: auto;">
+            <!-- Dynamically populated tags -->
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -902,6 +931,7 @@
     /* ===== STATE ===== */
     let rooms = [];
     let buildings = [];
+    let sensors = [];
     let currentViewerRoomId = null;
     let pannellumInstance = null;
     let viewerPositionTimer = null;
@@ -922,6 +952,7 @@
     async function init() {
       await loadRooms();
       await loadBuildings();
+      await loadSensors();
       await loadTourScenario();
       initKeyboardShortcuts();
       initSortable();
@@ -954,6 +985,16 @@
         }
       } catch (e) {
         console.warn('Cannot load buildings', e);
+      }
+    }
+
+    async function loadSensors() {
+      try {
+        const res = await fetch('/api/sensors');
+        const data = await res.json();
+        sensors = Array.isArray(data) ? data : [];
+      } catch (e) {
+        console.warn('Could not load sensors', e);
       }
     }
 
@@ -1179,6 +1220,130 @@
       }
     }
 
+    /* ===== ADD TAG MODAL LOGIC ===== */
+    function openAddTagModal() {
+      const room = rooms.find(r => r.id === currentViewerRoomId);
+      if (!room) {
+        alert('Vui lòng chọn một phòng trước!');
+        return;
+      }
+
+      const container = document.getElementById('tagListContainer');
+      const mediaList = room.mediaHotspots || [];
+      const roomSensors = sensors.filter(s => Number(s.roomId) === Number(room.id));
+
+      if (mediaList.length === 0 && roomSensors.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: #64748b;">
+            <div style="font-size: 40px; margin-bottom: 8px;">📭</div>
+            <p style="font-size: 13px; font-weight: 700; color: #1e293b;">Phòng này chưa có Tag nào!</p>
+            <p style="font-size: 12px;">Bạn có thể vào trang <b>Quản lý phòng</b> để gắn Media Hotspots (Ảnh, Video, 3D, Gian hàng) hoặc <b>Quản lý Sensor</b> để tạo cảm biến.</p>
+          </div>
+        `;
+      } else {
+        let html = '';
+        
+        // Media hotspots
+        mediaList.forEach((m, idx) => {
+          const typeIcons = { image: "🖼️", video: "🎥", "3d": "🧊", pdf: "📄", note: "📝", stall: "🏪", gallery: "📸", youtube: "▶️", web: "🌐" };
+          const icon = typeIcons[m.mediaType] || "📌";
+          const title = m.title || `Media #${idx + 1}`;
+          const typeName = m.mediaType ? m.mediaType.toUpperCase() : 'MEDIA';
+          const safeDataStr = JSON.stringify(m).replace(/"/g, '&quot;');
+
+          html += `
+            <div style="background: #fff; border: 1.5px solid var(--border-color); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+              <div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                  <span style="font-size: 18px;">${icon}</span>
+                  <span style="font-size: 10px; font-weight: 700; background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px;">${typeName}</span>
+                </div>
+                <div style="font-size: 13px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${title}">
+                  ${title}
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+                  🧭 Yaw: ${(m.yaw || 0).toFixed(1)}° | Pitch: ${(m.pitch || 0).toFixed(1)}°
+                </div>
+              </div>
+              <button class="btn btn-sm btn-primary" style="font-size: 12px; width: 100%; border-radius: 6px;" onclick="addTagAsStop('media', ${safeDataStr})">
+                + Thêm vào kịch bản
+              </button>
+            </div>
+          `;
+        });
+
+        // Sensors & cameras
+        roomSensors.forEach(s => {
+          const isCam = s.type === 'camera';
+          const icon = isCam ? "📹" : "🌡️";
+          const title = s.name || (isCam ? 'Camera giám sát' : 'Cảm biến môi trường');
+          const pos = s.position || { yaw: 0, pitch: 0 };
+          const safeDataStr = JSON.stringify(s).replace(/"/g, '&quot;');
+
+          html += `
+            <div style="background: #fff; border: 1.5px solid var(--border-color); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
+              <div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                  <span style="font-size: 18px;">${icon}</span>
+                  <span style="font-size: 10px; font-weight: 700; background: ${isCam ? '#dcfce7; color: #15803d' : '#fef3c7; color: #b45309'}; padding: 2px 6px; border-radius: 4px;">
+                    ${isCam ? 'CAMERA' : 'SENSOR'}
+                  </span>
+                </div>
+                <div style="font-size: 13px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${title}">
+                  ${title}
+                </div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+                  🧭 Yaw: ${(pos.yaw || 0).toFixed(1)}° | Pitch: ${(pos.pitch || 0).toFixed(1)}°
+                </div>
+              </div>
+              <button class="btn btn-sm btn-primary" style="font-size: 12px; width: 100%; border-radius: 6px;" onclick="addTagAsStop('${isCam ? 'camera' : 'sensor'}', ${safeDataStr})">
+                + Thêm vào kịch bản
+              </button>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+      }
+
+      const modalEl = document.getElementById('addTagModal');
+      const modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    }
+
+    function addTagAsStop(tagType, tagData) {
+      const isSensor = tagType === 'sensor' || tagType === 'camera';
+      const yaw = isSensor ? (tagData.position?.yaw || 0) : (tagData.yaw || 0);
+      const pitch = isSensor ? (tagData.position?.pitch || 0) : (tagData.pitch || 0);
+      const title = tagData.title || tagData.name || (isSensor ? 'Cảm biến' : 'Tư liệu');
+
+      const newStop = {
+        id: Date.now(),
+        type: 'tag',
+        tagType: tagType,
+        tagId: tagData.id,
+        roomId: currentViewerRoomId,
+        title: title,
+        description: tagData.description || '',
+        yaw: safeNumber(yaw, 0),
+        pitch: safeNumber(pitch, 0),
+        fov: 75,
+        duration: 6000,
+        cameraEffect: 'lookAt',
+        autoOpen: true
+      };
+
+      tourScenario.stops.push(newStop);
+      renderStops();
+
+      const modalEl = document.getElementById('addTagModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+
+      showToast(`📌 Đã thêm Tag "${title}" vào kịch bản!`);
+      selectStopCard(tourScenario.stops.length - 1);
+    }
+
     function initKeyboardShortcuts() {
       window.addEventListener('keydown', (e) => {
         // Space key outside input fields captures view
@@ -1201,7 +1366,7 @@
           <div class="empty-stops">
             <div class="empty-stops-icon">🎯</div>
             <h6 style="font-weight: 700; color: #475569; font-size: 13px;">Chưa có điểm dừng nào</h6>
-            <p style="font-size: 12px;">Bấm <b>"⚡ Chọn nhanh chuỗi phòng"</b> hoặc bấm <b>"📸 Chụp góc hiện tại"</b> để tạo kịch bản ngay.</p>
+            <p style="font-size: 12px;">Bấm <b>"⚡ Chọn nhanh chuỗi phòng"</b> hoặc bấm <b>"📌 Thêm Tag vào Tour"</b> để tạo kịch bản ngay.</p>
           </div>
         `;
         return;
@@ -1212,16 +1377,24 @@
         const roomName = room ? room.name : 'Phòng không xác định';
         const isSelected = selectedStopIndex === index;
         const durationSec = ((stop.duration || 5000) / 1000).toFixed(1);
+        const isTag = stop.type === 'tag';
+
+        let tagBadge = '';
+        if (isTag) {
+          const typeIcons = { image: "🖼️", video: "🎥", "3d": "🧊", pdf: "📄", note: "📝", stall: "🏪", sensor: "🌡️", camera: "📹" };
+          const icon = typeIcons[stop.tagType] || "📌";
+          tagBadge = `<span style="font-size: 10px; font-weight: 700; background: #ede9fe; color: #6d28d9; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">${icon} TAG</span>`;
+        }
 
         return `
-          <div class="stop-card ${isSelected ? 'active-preview' : ''}" data-index="${index}" onclick="selectStopCard(${index})">
+          <div class="stop-card ${isSelected ? 'active-preview' : ''} ${isTag ? 'stop-card-tag' : ''}" data-index="${index}" onclick="selectStopCard(${index})" style="${isTag ? 'border-left: 4px solid #7c3aed;' : ''}">
             <div class="stop-card-head">
               <div class="stop-card-left">
                 <span class="stop-drag-handle" title="Kéo thả để đổi thứ tự">☰</span>
-                <span class="stop-idx-circle">${index + 1}</span>
+                <span class="stop-idx-circle" style="${isTag ? 'background: #7c3aed; color: #fff;' : ''}">${index + 1}</span>
                 <div class="stop-room-title">
-                  <span>${roomName}</span>
-                  <span class="stop-angle-tag">🧭 ${stop.yaw ?? 0}° / ${stop.pitch ?? 0}°</span>
+                  <span>${escapeHtml(stop.title || roomName)}${tagBadge}</span>
+                  <span class="stop-angle-tag">🧭 ${stop.yaw ?? 0}° / ${stop.pitch ?? 0}° (${roomName})</span>
                 </div>
               </div>
 
@@ -1234,17 +1407,24 @@
 
             <div class="stop-card-body" onclick="event.stopPropagation()">
               <div class="stop-input-group">
-                <label>Hiệu ứng camera:</label>
-                <select onchange="updateStopField(${index}, 'cameraEffect', this.value)">
-                  <option value="pan360" ${stop.cameraEffect === 'pan360' ? 'selected' : ''}>Quay tròn 360°</option>
-                  <option value="slowPan" ${stop.cameraEffect === 'slowPan' ? 'selected' : ''}>Quét chậm 60°</option>
-                  <option value="lookAt" ${stop.cameraEffect === 'lookAt' ? 'selected' : ''}>Nhìn thẳng (Focus)</option>
-                  <option value="static" ${stop.cameraEffect === 'static' ? 'selected' : ''}>Tĩnh (Static)</option>
-                </select>
+                <label>${isTag ? 'Tự động mở Popup:' : 'Hiệu ứng camera:'}</label>
+                ${isTag ? `
+                  <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #4338ca; cursor: pointer; margin-top: 4px;">
+                    <input type="checkbox" ${stop.autoOpen !== false ? 'checked' : ''} onchange="updateStopField(${index}, 'autoOpen', this.checked)">
+                    Bung Popup Modal khi đến nơi
+                  </label>
+                ` : `
+                  <select onchange="updateStopField(${index}, 'cameraEffect', this.value)">
+                    <option value="pan360" ${stop.cameraEffect === 'pan360' ? 'selected' : ''}>Quay tròn 360°</option>
+                    <option value="slowPan" ${stop.cameraEffect === 'slowPan' ? 'selected' : ''}>Quét chậm 60°</option>
+                    <option value="lookAt" ${stop.cameraEffect === 'lookAt' ? 'selected' : ''}>Nhìn thẳng (Focus)</option>
+                    <option value="static" ${stop.cameraEffect === 'static' ? 'selected' : ''}>Tĩnh (Static)</option>
+                  </select>
+                `}
               </div>
 
               <div class="stop-input-group">
-                <label>Thời gian dừng:</label>
+                <label>Thời gian dừng xem:</label>
                 <div class="stop-duration-control">
                   <input type="range" min="1000" max="25000" step="500" value="${stop.duration || 5000}" 
                          oninput="onDurationSliderChange(${index}, this.value)">
@@ -1568,26 +1748,35 @@
             pannellumInstance.stopAutoRotate();
           } catch (e) {}
 
+          const isTag = stop.type === 'tag';
           const effect = stop.cameraEffect || 'pan360';
           const rotateDuration = Math.max(500, durationMs - startDelay);
           const durationSeconds = rotateDuration / 1000;
 
-          if (effect === 'pan360' || !effect) {
-            // Quay trọn vẹn 360 độ (360 / duration giây = số độ mỗi giây)
-            const speed = 360 / Math.max(1, durationSeconds);
-            try {
-              pannellumInstance.startAutoRotate(speed);
-            } catch (e) {}
-          } else if (effect === 'slowPan') {
-            // Quét nhẹ 90 độ
-            const speed = 90 / Math.max(1, durationSeconds);
-            try {
-              pannellumInstance.startAutoRotate(speed);
-            } catch (e) {}
-          } else {
+          if (isTag) {
             try {
               pannellumInstance.stopAutoRotate();
+              pannellumInstance.lookAt(safeNumber(stop.pitch, 0), safeNumber(stop.yaw, 0), safeNumber(stop.fov, 75), 800);
             } catch (e) {}
+            showToast(`📌 Đang xem Tag: ${stop.title || 'Thông tin'} (${durationSeconds.toFixed(0)}s)`);
+          } else {
+            if (effect === 'pan360' || !effect) {
+              // Quay trọn vẹn 360 độ (360 / duration giây = số độ mỗi giây)
+              const speed = 360 / Math.max(1, durationSeconds);
+              try {
+                pannellumInstance.startAutoRotate(speed);
+              } catch (e) {}
+            } else if (effect === 'slowPan') {
+              // Quét nhẹ 90 độ
+              const speed = 90 / Math.max(1, durationSeconds);
+              try {
+                pannellumInstance.startAutoRotate(speed);
+              } catch (e) {}
+            } else {
+              try {
+                pannellumInstance.stopAutoRotate();
+              } catch (e) {}
+            }
           }
 
           // Advance to next step after rotateDuration

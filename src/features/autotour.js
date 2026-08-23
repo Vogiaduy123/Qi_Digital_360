@@ -1,4 +1,6 @@
 import { degToRad } from '../core/utils.js';
+import { showMediaOverlay, hideMediaOverlay, closeStallModal, close3DModal } from './media-overlay.js';
+import { showCameraPreview, closeCameraModal, showSensorGrafana } from './sensors.js';
 
 let env = {
   getCurrentRoomId: () => null,
@@ -56,6 +58,13 @@ export function initAutoTour(dependencies) {
   
   // Load tour scenario from server if available
   loadTourScenario();
+}
+
+function closeAllTourModals() {
+  try { hideMediaOverlay(); } catch (e) {}
+  try { closeStallModal(); } catch (e) {}
+  try { close3DModal(); } catch (e) {}
+  try { closeCameraModal(); } catch (e) {}
 }
 
 function togglePlayPause() {
@@ -212,6 +221,9 @@ function stopAutoTour() {
   // Clear all timers and animations
   clearAllTourTimers();
 
+  // Close any opened tag/media/camera modals
+  closeAllTourModals();
+
   // Remove all highlights
   removeAllTourHighlights();
   
@@ -251,6 +263,8 @@ function executeCurrentStop() {
 
   if (stop.type === 'room' || !stop.type) {
     executeRoomStop(stop);
+  } else if (stop.type === 'tag' || stop.type === 'media' || stop.type === 'sensor' || stop.type === 'note' || stop.type === 'stall') {
+    executeTagStop(stop);
   } else if (stop.type === 'hotspot') {
     executeHotspotStop(stop);
   }
@@ -259,6 +273,64 @@ function executeCurrentStop() {
 function executeNextStop() {
   autoTourState.currentStopIndex++;
   executeCurrentStop();
+}
+
+function executeTagStop(stop) {
+  const currentRoomId = env.getCurrentRoomId();
+  const roomsData = env.getRoomsData();
+  const room = roomsData[stop.roomId];
+
+  const targetYawDeg = (stop.yaw !== undefined && stop.yaw !== null) ? Number(stop.yaw) : 0;
+  const targetPitchDeg = (stop.pitch !== undefined && stop.pitch !== null) ? Number(stop.pitch) : 0;
+
+  const isNewRoom = currentRoomId !== stop.roomId;
+  if (isNewRoom) {
+    env.switchRoom(stop.roomId, targetYawDeg, targetPitchDeg);
+  }
+
+  const title = stop.title || 'Điểm thông tin';
+  const description = stop.description || `Đang xem: ${title} (${autoTourState.currentStopIndex + 1}/${autoTourState.tourStops.length})`;
+  showTourInfo(`📌 ${title}`, description);
+
+  const targetYawRad = degToRad(targetYawDeg);
+  const targetPitchRad = degToRad(-targetPitchDeg);
+  const durationMs = getStopDurationMs(stop.duration || 6);
+
+  const startDelay = isNewRoom ? 350 : 50;
+
+  autoTourState.timeoutId = setTimeout(() => {
+    panCameraTo(targetYawRad, targetPitchRad, () => {
+      // Auto open modal or trigger action if enabled
+      if (stop.autoOpen !== false) {
+        if (stop.tagType === 'sensor' || stop.tagType === 'camera' || stop.type === 'sensor') {
+          if (stop.sensorData) {
+            if (stop.sensorData.type === 'camera' || stop.tagType === 'camera') {
+              showCameraPreview(stop.sensorData);
+            } else {
+              showSensorGrafana(stop.sensorData);
+            }
+          }
+        } else {
+          // Media Hotspot (image, video, 3d, note, stall, etc.)
+          let mediaObj = stop.mediaData;
+          if (!mediaObj && room && room.mediaHotspots) {
+            mediaObj = room.mediaHotspots.find(m => m.id === stop.tagId || (Math.abs(Number(m.yaw) - targetYawDeg) < 1 && Math.abs(Number(m.pitch) - targetPitchDeg) < 1));
+          }
+          if (mediaObj) {
+            showMediaOverlay(mediaObj);
+          }
+        }
+      }
+
+      startProgressBar(durationMs);
+
+      autoTourState.timeoutId = setTimeout(() => {
+        closeAllTourModals();
+        removeTourInfo();
+        executeNextStop();
+      }, durationMs);
+    });
+  }, startDelay);
 }
 
 function getStopDurationMs(duration) {
