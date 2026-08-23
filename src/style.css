@@ -422,47 +422,110 @@ body.admin #pano>* {
   }
 }
 
-/* Overlay hiển thị thông tin khi tour tự động chạy */
+/* Overlay hiển thị thông tin khi tour tự động chạy (Góc phải dưới màn hình - Phong cách Capsule Pill gọn gàng chuẩn Hình 2) */
 .tour-info-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.2);
-  padding: 30px 40px;
-  border-radius: 15px;
-  color: white;
-  text-align: center;
-  z-index: 999;
-  max-width: 500px;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  animation: fadeInScale 0.5s ease;
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  top: auto;
+  left: auto;
+  transform: none;
+  background: rgba(17, 24, 39, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 8px 24px 8px 8px;
+  border-radius: 9999px;
+  color: #ffffff;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  width: max-content;
+  max-width: calc(100vw - 56px);
+  animation: slideInFromRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
 }
 
-@keyframes fadeInScale {
+@keyframes slideInFromRight {
   from {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.9);
+    transform: translateX(40px) scale(0.95);
   }
-
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateX(0) scale(1);
   }
 }
 
-.tour-info-overlay h2 {
-  margin: 0 0 15px 0;
-  font-size: 28px;
-  color: #667eea;
+.tour-info-icon-badge {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.tour-info-overlay p {
-  margin: 10px 0;
-  font-size: 16px;
-  line-height: 1.6;
-  color: #ddd;
+.tour-info-icon {
+  font-size: 22px;
+  line-height: 1;
+  color: #1e293b;
+}
+
+.tour-info-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+}
+
+.tour-info-title {
+  font-size: 15.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.tour-info-desc {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+@media (max-width: 600px) {
+  .tour-info-overlay {
+    bottom: 85px;
+    top: auto;
+    right: 16px;
+    padding: 6px 16px 6px 6px;
+    max-width: calc(100vw - 32px);
+    gap: 10px;
+  }
+  .tour-info-icon-badge {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+  }
+  .tour-info-icon {
+    font-size: 18px;
+  }
+  .tour-info-title {
+    font-size: 13.5px;
+  }
+  .tour-info-desc {
+    font-size: 10.5px;
+    max-width: 180px;
+  }
 }
 
 /* ===== ZOOM CONTROL ===== */

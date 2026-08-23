@@ -15,6 +15,17 @@ export function closeStallModal() {
   }
 }
 
+export function closeActiveMediaHotspotOverlay() {
+  if (activeMediaHotspotOverlay) {
+    try {
+      if (window.currentHotspotContainer) {
+        window.currentHotspotContainer.destroyHotspot(activeMediaHotspotOverlay);
+      }
+    } catch (e) {}
+    activeMediaHotspotOverlay = null;
+  }
+}
+
 export function initMediaOverlay() {
   mediaOverlay = document.getElementById("mediaOverlay");
   mediaOverlayTitle = document.getElementById("mediaOverlayTitle");

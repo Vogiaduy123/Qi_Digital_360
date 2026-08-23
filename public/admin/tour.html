@@ -18,7 +18,6 @@
   <script src="/js/admin-runtime-config.js"></script>
   <script src="/js/admin-api-base.js"></script>
   <link rel="stylesheet" href="/css/admin-header.css">
-  <link rel="stylesheet" href="/css/admin-rooms.css">
 
   <style>
     :root {
@@ -34,6 +33,21 @@
       --text-main: #1e293b;
       --text-muted: #64748b;
       --border-color: #e2e8f0;
+    }
+
+    /* Ensure Bootstrap Modal is above all overlays & clickable */
+    .modal {
+      z-index: 1060 !important;
+    }
+    .modal-backdrop {
+      z-index: 1050 !important;
+    }
+    .modal-dialog {
+      z-index: 1065 !important;
+      pointer-events: auto !important;
+    }
+    .modal-content {
+      pointer-events: auto !important;
     }
 
     * {
@@ -1221,6 +1235,9 @@
     }
 
     /* ===== ADD TAG MODAL LOGIC ===== */
+    let currentRoomMediaList = [];
+    let currentRoomSensorsList = [];
+
     function openAddTagModal() {
       const room = rooms.find(r => r.id === currentViewerRoomId);
       if (!room) {
@@ -1229,10 +1246,10 @@
       }
 
       const container = document.getElementById('tagListContainer');
-      const mediaList = room.mediaHotspots || [];
-      const roomSensors = sensors.filter(s => Number(s.roomId) === Number(room.id));
+      currentRoomMediaList = room.mediaHotspots || [];
+      currentRoomSensorsList = sensors.filter(s => Number(s.roomId) === Number(room.id));
 
-      if (mediaList.length === 0 && roomSensors.length === 0) {
+      if (currentRoomMediaList.length === 0 && currentRoomSensorsList.length === 0) {
         container.innerHTML = `
           <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: #64748b;">
             <div style="font-size: 40px; margin-bottom: 8px;">📭</div>
@@ -1244,12 +1261,11 @@
         let html = '';
         
         // Media hotspots
-        mediaList.forEach((m, idx) => {
+        currentRoomMediaList.forEach((m, idx) => {
           const typeIcons = { image: "🖼️", video: "🎥", "3d": "🧊", pdf: "📄", note: "📝", stall: "🏪", gallery: "📸", youtube: "▶️", web: "🌐" };
           const icon = typeIcons[m.mediaType] || "📌";
           const title = m.title || `Media #${idx + 1}`;
           const typeName = m.mediaType ? m.mediaType.toUpperCase() : 'MEDIA';
-          const safeDataStr = JSON.stringify(m).replace(/"/g, '&quot;');
 
           html += `
             <div style="background: #fff; border: 1.5px solid var(--border-color); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
@@ -1258,14 +1274,14 @@
                   <span style="font-size: 18px;">${icon}</span>
                   <span style="font-size: 10px; font-weight: 700; background: #e0e7ff; color: #4338ca; padding: 2px 6px; border-radius: 4px;">${typeName}</span>
                 </div>
-                <div style="font-size: 13px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${title}">
-                  ${title}
+                <div style="font-size: 13px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(title)}">
+                  ${escapeHtml(title)}
                 </div>
                 <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
                   🧭 Yaw: ${(m.yaw || 0).toFixed(1)}° | Pitch: ${(m.pitch || 0).toFixed(1)}°
                 </div>
               </div>
-              <button class="btn btn-sm btn-primary" style="font-size: 12px; width: 100%; border-radius: 6px;" onclick="addTagAsStop('media', ${safeDataStr})">
+              <button type="button" class="btn btn-sm btn-primary" style="font-size: 12px; width: 100%; border-radius: 6px;" onclick="addTagAsStopByIndex('media', ${idx})">
                 + Thêm vào kịch bản
               </button>
             </div>
@@ -1273,12 +1289,11 @@
         });
 
         // Sensors & cameras
-        roomSensors.forEach(s => {
+        currentRoomSensorsList.forEach((s, idx) => {
           const isCam = s.type === 'camera';
           const icon = isCam ? "📹" : "🌡️";
           const title = s.name || (isCam ? 'Camera giám sát' : 'Cảm biến môi trường');
           const pos = s.position || { yaw: 0, pitch: 0 };
-          const safeDataStr = JSON.stringify(s).replace(/"/g, '&quot;');
 
           html += `
             <div style="background: #fff; border: 1.5px solid var(--border-color); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
@@ -1289,14 +1304,14 @@
                     ${isCam ? 'CAMERA' : 'SENSOR'}
                   </span>
                 </div>
-                <div style="font-size: 13px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${title}">
-                  ${title}
+                <div style="font-size: 13px; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(title)}">
+                  ${escapeHtml(title)}
                 </div>
                 <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
                   🧭 Yaw: ${(pos.yaw || 0).toFixed(1)}° | Pitch: ${(pos.pitch || 0).toFixed(1)}°
                 </div>
               </div>
-              <button class="btn btn-sm btn-primary" style="font-size: 12px; width: 100%; border-radius: 6px;" onclick="addTagAsStop('${isCam ? 'camera' : 'sensor'}', ${safeDataStr})">
+              <button type="button" class="btn btn-sm btn-primary" style="font-size: 12px; width: 100%; border-radius: 6px;" onclick="addTagAsStopByIndex('sensor', ${idx})">
                 + Thêm vào kịch bản
               </button>
             </div>
@@ -1311,8 +1326,12 @@
       modal.show();
     }
 
-    function addTagAsStop(tagType, tagData) {
-      const isSensor = tagType === 'sensor' || tagType === 'camera';
+    function addTagAsStopByIndex(tagGroup, index) {
+      const tagData = tagGroup === 'media' ? currentRoomMediaList[index] : currentRoomSensorsList[index];
+      if (!tagData) return;
+
+      const isSensor = tagGroup === 'sensor' || tagData.type === 'camera';
+      const tagType = tagGroup === 'sensor' ? (tagData.type === 'camera' ? 'camera' : 'sensor') : (tagData.mediaType || 'media');
       const yaw = isSensor ? (tagData.position?.yaw || 0) : (tagData.yaw || 0);
       const pitch = isSensor ? (tagData.position?.pitch || 0) : (tagData.pitch || 0);
       const title = tagData.title || tagData.name || (isSensor ? 'Cảm biến' : 'Tư liệu');

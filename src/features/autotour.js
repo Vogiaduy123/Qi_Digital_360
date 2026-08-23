@@ -1,5 +1,5 @@
 import { degToRad } from '../core/utils.js';
-import { showMediaOverlay, hideMediaOverlay, closeStallModal, close3DModal } from './media-overlay.js';
+import { showMediaOverlay, hideMediaOverlay, closeStallModal, close3DModal, createMediaHotspotOverlay, closeActiveMediaHotspotOverlay } from './media-overlay.js';
 import { showCameraPreview, closeCameraModal, showSensorGrafana } from './sensors.js';
 
 let env = {
@@ -61,6 +61,7 @@ export function initAutoTour(dependencies) {
 }
 
 function closeAllTourModals() {
+  try { closeActiveMediaHotspotOverlay(); } catch (e) {}
   try { hideMediaOverlay(); } catch (e) {}
   try { closeStallModal(); } catch (e) {}
   try { close3DModal(); } catch (e) {}
@@ -288,9 +289,22 @@ function executeTagStop(stop) {
     env.switchRoom(stop.roomId, targetYawDeg, targetPitchDeg);
   }
 
-  const title = stop.title || 'Điểm thông tin';
-  const description = stop.description || `Đang xem: ${title} (${autoTourState.currentStopIndex + 1}/${autoTourState.tourStops.length})`;
-  showTourInfo(`📌 ${title}`, description);
+  const tagTypeIcons = {
+    image: '🖼️',
+    video: '🎥',
+    '3d': '🧊',
+    pdf: '📚',
+    note: '📚',
+    stall: '🏪',
+    sensor: '🌡️',
+    camera: '📹',
+    media: '📚'
+  };
+  const icon = tagTypeIcons[stop.tagType] || '📚';
+  const title = stop.title || 'THÔNG TIN TÀI LIỆU';
+  
+  // Tag stops only show the sleek title pill (no long description underneath)
+  showTourInfo(title, null, icon, true);
 
   const targetYawRad = degToRad(targetYawDeg);
   const targetPitchRad = degToRad(-targetPitchDeg);
@@ -300,26 +314,19 @@ function executeTagStop(stop) {
 
   autoTourState.timeoutId = setTimeout(() => {
     panCameraTo(targetYawRad, targetPitchRad, () => {
-      // Auto open modal or trigger action if enabled
-      if (stop.autoOpen !== false) {
-        if (stop.tagType === 'sensor' || stop.tagType === 'camera' || stop.type === 'sensor') {
-          if (stop.sensorData) {
-            if (stop.sensorData.type === 'camera' || stop.tagType === 'camera') {
-              showCameraPreview(stop.sensorData);
-            } else {
-              showSensorGrafana(stop.sensorData);
-            }
-          }
-        } else {
-          // Media Hotspot (image, video, 3d, note, stall, etc.)
-          let mediaObj = stop.mediaData;
-          if (!mediaObj && room && room.mediaHotspots) {
-            mediaObj = room.mediaHotspots.find(m => m.id === stop.tagId || (Math.abs(Number(m.yaw) - targetYawDeg) < 1 && Math.abs(Number(m.pitch) - targetPitchDeg) < 1));
-          }
-          if (mediaObj) {
-            showMediaOverlay(mediaObj);
-          }
-        }
+      // Bung nội dung ra ngay tại tag 3D trong không gian 360 như hình mẫu
+      const currentRoomId = env.getCurrentRoomId();
+      const scenes = env.getScenes ? env.getScenes() : {};
+      const scene = scenes[currentRoomId];
+      const container = scene ? scene.hotspotContainer() : window.currentHotspotContainer;
+
+      let mediaObj = stop.mediaData;
+      if (!mediaObj && room && room.mediaHotspots) {
+        mediaObj = room.mediaHotspots.find(m => m.id === stop.tagId || (Math.abs(Number(m.yaw) - targetYawDeg) < 1.5 && Math.abs(Number(m.pitch) - targetPitchDeg) < 1.5));
+      }
+
+      if (mediaObj && container) {
+        createMediaHotspotOverlay(mediaObj, container, degToRad(mediaObj.yaw), degToRad(-mediaObj.pitch));
       }
 
       startProgressBar(durationMs);
@@ -361,7 +368,7 @@ function executeRoomStop(stop) {
   const title = stop.title || roomData?.name || 'Phòng';
   const description = stop.description || `Đang tham quan: ${title} (${autoTourState.currentStopIndex + 1}/${autoTourState.tourStops.length})`;
   
-  showTourInfo(title, description);
+  showTourInfo(title, description, '🏠', false);
 
   const customYaw = targetYawDeg !== null ? degToRad(targetYawDeg) : null;
   const customPitch = targetPitchDeg !== null ? degToRad(-targetPitchDeg) : null;
@@ -562,14 +569,22 @@ function removeAllTourHighlights() {
   });
 }
 
-function showTourInfo(title, description) {
+function showTourInfo(title, description, icon = '📚', isTag = false) {
   removeTourInfo();
   
   const overlay = document.createElement('div');
-  overlay.className = 'tour-info-overlay';
+  overlay.className = `tour-info-overlay ${isTag ? 'is-tag-pill' : 'is-room-pill'}`;
+
+  const cleanTitle = (title || '').replace(/^📌\s*/, '').toUpperCase();
+
   overlay.innerHTML = `
-    <h2>${title}</h2>
-    <p>${description}</p>
+    <div class="tour-info-icon-badge">
+      <span class="tour-info-icon">${icon}</span>
+    </div>
+    <div class="tour-info-text">
+      <div class="tour-info-title">${cleanTitle}</div>
+      ${description ? `<div class="tour-info-desc">${description}</div>` : ''}
+    </div>
   `;
   
   document.body.appendChild(overlay);
@@ -605,7 +620,7 @@ function startProgressBar(duration) {
 }
 
 function completeTour() {
-  showTourInfo('Hoàn thành!', 'Đã tham quan xong tất cả các điểm. Cảm ơn bạn đã tham quan!');
+  showTourInfo('HOÀN THÀNH!', 'Đã tham quan xong tất cả các điểm.', '🎉', false);
   
   setTimeout(() => {
     stopAutoTour();
