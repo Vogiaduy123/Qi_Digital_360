@@ -225,37 +225,17 @@ function stopAutoTour() {
 
 function buildTourRoute() {
   const roomsData = env.getRoomsData();
-  // Get all rooms in order
-  const rooms = Object.values(roomsData).sort((a, b) => a.id - b.id);
+  const rooms = Object.values(roomsData).sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0) || a.id - b.id);
   
-  const route = [];
-  
-  rooms.forEach(room => {
-    // Add room as a stop
-    route.push({
-      type: 'room',
-      roomId: room.id,
-      roomName: room.name
-    });
-    
-    // Add hotspots as stops
-    if (room.hotspots && room.hotspots.length > 0) {
-      room.hotspots.forEach((hotspot, index) => {
-        const targetRoom = roomsData[hotspot.target];
-        if (targetRoom) {
-          route.push({
-            type: 'hotspot',
-            roomId: room.id,
-            hotspotIndex: index,
-            hotspot: hotspot,
-            targetRoomName: targetRoom.name
-          });
-        }
-      });
-    }
-  });
-  
-  return route;
+  return rooms.map(room => ({
+    type: 'room',
+    roomId: room.id,
+    roomName: room.name,
+    duration: 8,
+    cameraEffect: 'pan360',
+    title: room.name,
+    description: `Khám phá ${room.name}`
+  }));
 }
 
 function executeCurrentStop() {
@@ -269,7 +249,7 @@ function executeCurrentStop() {
     return;
   }
 
-  if (stop.type === 'room') {
+  if (stop.type === 'room' || !stop.type) {
     executeRoomStop(stop);
   } else if (stop.type === 'hotspot') {
     executeHotspotStop(stop);
@@ -281,48 +261,66 @@ function executeNextStop() {
   executeCurrentStop();
 }
 
+function getStopDurationMs(duration) {
+  if (duration === null || duration === undefined || duration === '') {
+    return AUTO_TOUR_CONFIG.stopDuration;
+  }
+  const num = Number(duration);
+  if (!Number.isFinite(num) || num <= 0) return AUTO_TOUR_CONFIG.stopDuration;
+  // If duration is in seconds (e.g. 5, 8, 10, <= 60), convert to milliseconds
+  return num <= 60 ? num * 1000 : num;
+}
+
 function executeRoomStop(stop) {
   const currentRoomId = env.getCurrentRoomId();
   const roomsData = env.getRoomsData();
+  const roomData = roomsData[stop.roomId];
 
-  // Switch to room if not already there
-  if (currentRoomId !== stop.roomId) {
-    env.switchRoom(stop.roomId);
+  // Determine target starting yaw/pitch if defined (or fallback to room default initial view)
+  const targetYawDeg = (stop.yaw !== undefined && stop.yaw !== null) ? Number(stop.yaw) : (roomData?.initialYaw !== undefined ? Number(roomData.initialYaw) : null);
+  const targetPitchDeg = (stop.pitch !== undefined && stop.pitch !== null) ? Number(stop.pitch) : (roomData?.initialPitch !== undefined ? Number(roomData.initialPitch) : null);
+
+  const isNewRoom = currentRoomId !== stop.roomId;
+  if (isNewRoom) {
+    env.switchRoom(stop.roomId, targetYawDeg, targetPitchDeg);
   }
 
   // Show room info with custom title/description if available
-  const title = stop.title || roomsData[stop.roomId]?.name || 'Phòng';
-  const description = stop.description || `Đang tham quan điểm ${autoTourState.currentStopIndex + 1}/${autoTourState.tourStops.length}`;
+  const title = stop.title || roomData?.name || 'Phòng';
+  const description = stop.description || `Đang tham quan: ${title} (${autoTourState.currentStopIndex + 1}/${autoTourState.tourStops.length})`;
   
   showTourInfo(title, description);
 
-  // Animate camera pan
-  animateCameraPan(getTourPanDuration(), () => {
-    // After pan, wait and move to next
-    const duration = stop.duration || AUTO_TOUR_CONFIG.stopDuration;
-    autoTourState.timeoutId = setTimeout(() => {
-      removeTourInfo();
-      executeNextStop();
-    }, duration);
-    
-    // Update progress bar
-    startProgressBar(duration);
-  });
+  const customYaw = targetYawDeg !== null ? degToRad(targetYawDeg) : null;
+  const customPitch = targetPitchDeg !== null ? degToRad(-targetPitchDeg) : null;
+  const effect = stop.cameraEffect || 'pan360';
+  const durationMs = getStopDurationMs(stop.duration);
+
+  // Wait 300ms if switching rooms so Marzipano scene stabilizes, then perform full 360 spin
+  const startDelay = isNewRoom ? 300 : 50;
+
+  autoTourState.timeoutId = setTimeout(() => {
+    startProgressBar(durationMs);
+
+    animateRoomCameraEffect(effect, customYaw, customPitch, durationMs, () => {
+      autoTourState.timeoutId = setTimeout(() => {
+        removeTourInfo();
+        executeNextStop();
+      }, 350);
+    });
+  }, startDelay);
 }
 
 function executeHotspotStop(stop) {
   const currentRoomId = env.getCurrentRoomId();
   const roomsData = env.getRoomsData();
 
-  // Make sure we're in the correct room
   if (currentRoomId !== stop.roomId) {
     env.switchRoom(stop.roomId);
   }
 
-  // Get hotspot data
   const room = roomsData[stop.roomId];
   if (!room || !room.hotspots || !room.hotspots[stop.hotspotIndex]) {
-    // Hotspot not found, skip to next
     console.warn('Hotspot not found, skipping');
     executeNextStop();
     return;
@@ -331,34 +329,29 @@ function executeHotspotStop(stop) {
   const hotspot = room.hotspots[stop.hotspotIndex];
   const targetRoom = roomsData[hotspot.target];
 
-  // Pan camera to hotspot
   const targetYaw = degToRad(hotspot.yaw);
   const targetPitch = degToRad(-hotspot.pitch);
 
   panCameraTo(targetYaw, targetPitch, () => {
-    // Highlight the hotspot
     highlightHotspot(stop.hotspotIndex);
     
-    // Show info with custom title/description if available
     const title = stop.title || `Điểm chuyển: ${targetRoom?.name || 'Phòng khác'}`;
     const description = stop.description || `Hotspot ${autoTourState.currentStopIndex + 1}/${autoTourState.tourStops.length}`;
     
     showTourInfo(title, description);
 
-    // Wait and move to next
-    const duration = stop.duration || AUTO_TOUR_CONFIG.stopDuration;
+    const durationMs = getStopDurationMs(stop.duration);
     autoTourState.timeoutId = setTimeout(() => {
       removeHotspotHighlight(stop.hotspotIndex);
       removeTourInfo();
       executeNextStop();
-    }, duration);
+    }, durationMs);
     
-    // Update progress bar
-    startProgressBar(duration);
+    startProgressBar(durationMs);
   });
 }
 
-function animateCameraPan(duration, onComplete) {
+function animateRoomCameraEffect(effect, initialYaw, initialPitch, duration, onComplete) {
   const currentRoomId = env.getCurrentRoomId();
   const scenes = env.getScenes();
   const scene = scenes[currentRoomId];
@@ -368,26 +361,35 @@ function animateCameraPan(duration, onComplete) {
   }
 
   const view = scene.view();
+  if (initialYaw !== null) view.setYaw(initialYaw);
+  if (initialPitch !== null) view.setPitch(initialPitch);
+
   const startYaw = view.yaw();
-  const animationDuration = Math.max(1000, Number(duration) || AUTO_TOUR_CONFIG.panDuration);
+  const startPitch = view.pitch();
+  const animationDuration = getStopDurationMs(duration);
   const startTime = Date.now();
-  
-  // Pan 360 degrees slowly
-  const targetYaw = startYaw + Math.PI * 2;
 
   function animate() {
-    if (!autoTourState.isPlaying) return;
+    if (!autoTourState.isPlaying || autoTourState.isPaused) return;
     
     const elapsed = Date.now() - startTime;
     const progress = Math.min(elapsed / animationDuration, 1);
     
-    // Ease-in-out function
-    const eased = progress < 0.5 
-      ? 2 * progress * progress 
-      : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+    let currentYaw = startYaw;
+    if (effect === 'pan360' || !effect) {
+      // Rotate a FULL 360 degrees (2 * PI radians)
+      currentYaw = startYaw + (Math.PI * 2) * progress;
+    } else if (effect === 'slowPan') {
+      const eased = progress < 0.5 
+        ? 2 * progress * progress 
+        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+      currentYaw = startYaw + (Math.PI / 3) * eased;
+    } else {
+      currentYaw = startYaw;
+    }
     
-    const currentYaw = startYaw + (targetYaw - startYaw) * eased;
     view.setYaw(currentYaw);
+    view.setPitch(startPitch);
     
     if (progress < 1) {
       autoTourState.animationFrameId = requestAnimationFrame(animate);

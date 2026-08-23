@@ -2,322 +2,716 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Quản lý Kịch bản Auto Tour</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Studio Biên Tập Auto Tour 360 - Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <!-- Auth Guard -->
   <script src="/js/auth-guard.js"></script>
   <!-- Bootstrap 5 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+  <!-- Pannellum for 360 View -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+  <script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+  <!-- SortableJS for Smooth Drag and Drop -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  
   <script src="/js/admin-runtime-config.js"></script>
   <script src="/js/admin-api-base.js"></script>
   <link rel="stylesheet" href="/css/admin-header.css">
   <link rel="stylesheet" href="/css/admin-rooms.css">
 
   <style>
-    html,
+    :root {
+      --primary-color: #2B3278;
+      --primary-hover: #1e245a;
+      --accent-color: #3b82f6;
+      --accent-hover: #2563eb;
+      --success-color: #10b981;
+      --danger-color: #ef4444;
+      --warning-color: #f59e0b;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      height: 100%;
+    }
+
     body {
+      min-height: 100vh !important;
       height: auto !important;
-      min-height: 100% !important;
-      overflow-x: hidden !important;
-      overflow-y: auto !important;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: #f5f7fa;
       margin: 0;
       padding: 0;
-      color: #2B3278;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-main);
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
     }
 
-    .tour-editor {
-      max-width: 1200px;
+    .tour-studio-wrapper {
+      max-width: 1680px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 10px 14px 14px;
+      width: 100%;
     }
 
-    .editor-header {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
+    /* Header Bar */
+    .studio-header {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 10px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-
-    .editor-header h1 {
-      margin: 0;
-      color: #333;
-      font-size: 24px;
-    }
-
-    .header-actions {
-      display: flex;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 10px;
+      border: 1px solid var(--border-color);
+      flex-wrap: wrap;
       gap: 10px;
+      flex-shrink: 0;
     }
 
-    .scenario-info {
-      background: #2B3278;
-      padding: 22px;
-      border-radius: 12px;
-      border: 1px solid #e2eaf3;
-      box-shadow: 0 6px 18px rgba(44, 62, 80, 0.08);
-      margin-bottom: 20px;
+    .studio-header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
-    .scenario-info input {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid #cfd8e3;
-      border-radius: 8px;
-      font-size: 16px;
-      margin-top: 6px;
-      background: #fff;
-      color: #2B3278;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .scenario-info input:focus {
-      outline: none;
-      border-color: #2B3278;
-      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.12);
-    }
-
-    .scenario-grid {
-      grid-template-columns: 1fr 280px;
-      gap: 14px;
-      align-items: end;
-    }
-
-    .scenario-info-title {
-      margin-bottom: 14px;
-      font-size: 18px;
+    .studio-header-title h1 {
+      font-size: 17px;
       font-weight: 700;
-      color: #2B3278;
+      color: var(--primary-color);
+      margin: 0;
+    }
+
+    .studio-header-actions {
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
-    .scenario-field label {
-      display: block;
-      font-size: 15px;
-      color: #334155;
+    .btn-studio {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 7px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      white-space: nowrap;
     }
 
-    .scenario-field small {
-      display: block;
-      margin-top: 6px;
-      color: #7a8899;
-      font-size: 12px;
+    .btn-studio-primary {
+      background: var(--primary-color);
+      color: #fff;
+    }
+    .btn-studio-primary:hover {
+      background: var(--primary-hover);
+      color: #fff;
     }
 
-    @media (max-width: 900px) {
-      .scenario-grid {
+    .btn-studio-accent {
+      background: var(--accent-color);
+      color: #fff;
+    }
+    .btn-studio-accent:hover {
+      background: var(--accent-hover);
+      color: #fff;
+    }
+
+    .btn-studio-success {
+      background: var(--success-color);
+      color: #fff;
+    }
+    .btn-studio-success:hover {
+      background: #059669;
+      color: #fff;
+    }
+
+    .btn-studio-outline {
+      background: #fff;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+    .btn-studio-outline:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .btn-studio-record {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+    }
+    .btn-studio-record.recording {
+      background: #ef4444;
+      color: #fff;
+      border-color: #dc2626;
+      animation: pulse-red 1.5s infinite;
+    }
+
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+      70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* Main Studio Grid */
+    .studio-layout {
+      display: grid;
+      grid-template-columns: minmax(400px, 1.15fr) minmax(360px, 0.85fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 1080px) {
+      .studio-layout {
         grid-template-columns: 1fr;
+      }
+      .studio-viewer-card {
+        position: static !important;
       }
     }
 
-    .tour-stops {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .tour-stops h2 {
-      margin-top: 0;
-      color: #333;
+    /* Left Column: 360 Live Studio */
+    .studio-viewer-card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      overflow: hidden;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      height: 100%;
     }
 
-    .stop-item {
-      background: #f9f9f9;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 15px;
+    .viewer-toolbar-top {
+      padding: 8px 12px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .viewer-room-select {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .viewer-room-select select {
+      width: 100%;
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-main);
+      background: #fff;
+      outline: none;
+    }
+
+    .viewer-badges {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .v-badge {
+      background: #e2e8f0;
+      color: #334155;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .v-badge-rec {
+      background: #fee2e2;
+      color: #dc2626;
+      display: none;
+    }
+    .v-badge-rec.active {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* 360 Viewer Container */
+    .panorama-viewer-box {
+      width: 100%;
+      flex: 1;
+      min-height: clamp(280px, calc(100vh - 310px), 520px);
+      height: clamp(280px, calc(100vh - 310px), 520px);
+      background: #0f172a;
       position: relative;
-      transition: all 0.3s ease;
     }
 
-    .stop-item:hover {
-      border-color: #667eea;
-      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+    #pannellumContainer {
+      width: 100%;
+      height: 100%;
     }
 
-    .stop-item.dragging {
-      opacity: 0.5;
-      transform: scale(0.95);
+    .viewer-overlay-crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      pointer-events: none;
+      opacity: 0.35;
+      z-index: 10;
+    }
+    .viewer-overlay-crosshair::before,
+    .viewer-overlay-crosshair::after {
+      content: '';
+      position: absolute;
+      background: #fff;
+      box-shadow: 0 0 2px rgba(0,0,0,0.8);
+    }
+    .viewer-overlay-crosshair::before {
+      top: 11px;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+    .viewer-overlay-crosshair::after {
+      left: 11px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
     }
 
-    .stop-header {
+    /* Bottom Control Bar of Viewer */
+    .viewer-toolbar-bottom {
+      padding: 8px 12px;
+      background: #ffffff;
+      border-top: 1px solid var(--border-color);
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #e0e0e0;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
     }
 
-    .stop-number {
-      background: #2B3278;
-      color: white;
-      width: 32px;
-      height: 32px;
+    .capture-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* Right Column: Storyboard & Stops */
+    .studio-storyboard-card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .storyboard-config-box {
+      padding: 10px 12px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    .storyboard-config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .cfg-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+    .cfg-field input, .cfg-field select {
+      width: 100%;
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-size: 12.5px;
+      background: #fff;
+      outline: none;
+    }
+    .cfg-field input:focus, .cfg-field select:focus {
+      border-color: var(--accent-color);
+    }
+
+    .batch-actions-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 6px;
+      border-top: 1px dashed var(--border-color);
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .batch-actions-left {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .batch-btn {
+      padding: 2.5px 6px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #fff;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.1s ease;
+    }
+    .batch-btn:hover {
+      background: var(--accent-color);
+      color: #fff;
+      border-color: var(--accent-color);
+    }
+
+    .storyboard-header {
+      padding: 8px 12px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .storyboard-header h3 {
+      font-size: 13px;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .storyboard-count-badge {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .stops-container {
+      padding: 10px;
+      overflow-y: auto;
+      flex: 1;
+      max-height: clamp(260px, calc(100vh - 350px), 520px);
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Stop Item Card */
+    .stop-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      transition: all 0.15s ease;
+      position: relative;
+      user-select: none;
+    }
+
+    .stop-card:hover {
+      border-color: var(--accent-color);
+      box-shadow: 0 3px 10px rgba(59, 130, 246, 0.1);
+    }
+
+    .stop-card.active-preview {
+      border-color: #2563eb;
+      background: #f0f7ff;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+    }
+
+    .stop-card.sortable-ghost {
+      opacity: 0.3;
+      background: #e2e8f0;
+    }
+
+    .stop-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .stop-card-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .stop-drag-handle {
+      cursor: grab;
+      color: #94a3b8;
+      font-size: 15px;
+      padding: 1px 3px;
+    }
+    .stop-drag-handle:hover {
+      color: #475569;
+    }
+
+    .stop-idx-circle {
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
+      background: var(--primary-color);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
-      font-size: 14px;
     }
 
-    .stop-actions {
+    .stop-room-title {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text-main);
       display: flex;
+      align-items: center;
       gap: 5px;
+      flex-wrap: wrap;
     }
 
-    .stop-actions button {
-      padding: 6px 12px;
-      font-size: 12px;
+    .stop-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .btn-stop-action {
+      padding: 3px 7px;
+      border-radius: 5px;
+      border: 1px solid var(--border-color);
+      background: #fff;
+      font-size: 11px;
       cursor: pointer;
-      border: 1px solid #ddd;
-      background: white;
-      border-radius: 4px;
-      transition: all 0.2s;
+      color: #475569;
+      transition: all 0.15s;
+    }
+    .btn-stop-action:hover {
+      background: #f1f5f9;
+      color: var(--primary-color);
+    }
+    .btn-stop-action.delete:hover {
+      background: #fee2e2;
+      color: #ef4444;
+      border-color: #fca5a5;
     }
 
-    .stop-actions button:hover {
-      background: #f0f0f0;
-    }
-
-    .stop-actions .delete-btn {
-      color: #f44336;
-      border-color: #f44336;
-    }
-
-    .stop-actions .delete-btn:hover {
-      background: #f44336;
-      color: white;
-    }
-
-    .stop-content {
+    .stop-card-body {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 8px;
+      margin-top: 4px;
     }
 
-    .stop-field {
+    .stop-input-group {
       display: flex;
       flex-direction: column;
+      gap: 2px;
     }
 
-    .stop-field label {
+    .stop-input-group label {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .stop-input-group input,
+    .stop-input-group select {
+      padding: 5px 7px;
+      border-radius: 5px;
+      border: 1px solid var(--border-color);
       font-size: 12px;
-      color: #666;
-      margin-bottom: 5px;
-      font-weight: 600;
+      background: #fff;
+      color: var(--text-main);
+      outline: none;
+    }
+    .stop-input-group input:focus,
+    .stop-input-group select:focus {
+      border-color: var(--accent-color);
     }
 
-    .stop-field select,
-    .stop-field input,
-    .stop-field textarea {
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 14px;
+    .stop-duration-control {
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
-
-    .stop-field textarea {
-      resize: vertical;
-      min-height: 60px;
-    }
-
-    .add-stop-btn {
-      width: 100%;
-      padding: 15px;
-      background: #2B3278;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
+    .stop-duration-control input[type="range"] {
+      flex: 1;
       cursor: pointer;
-      transition: all 0.3s ease;
-      margin-top: 15px;
+      accent-color: var(--accent-color);
     }
-
-    .add-stop-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-
-
-    .drag-handle {
-      cursor: move;
-      color: #999;
-      font-size: 18px;
-      margin-right: 10px;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #999;
-    }
-
-    .empty-state-icon {
-      font-size: 64px;
-      margin-bottom: 20px;
-    }
-
-    .success-message {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #4CAF50;
-      color: white;
-      padding: 15px 25px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      animation: slideIn 0.3s ease;
-      z-index: 10000;
-    }
-
-    @keyframes slideIn {
-      from {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    .stop-type-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 12px;
+    .stop-duration-val {
       font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-color);
+      min-width: 28px;
+      text-align: right;
+    }
+
+    .stop-angle-tag {
+      font-size: 10px;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-family: monospace;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .empty-stops {
+      text-align: center;
+      padding: 30px 16px;
+      color: var(--text-muted);
+    }
+    .empty-stops-icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+
+    /* Modal Quick Select Rooms */
+    .room-select-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      max-height: clamp(240px, 50vh, 420px);
+      overflow-y: auto;
+      padding: 6px 2px;
+    }
+
+    .room-select-card {
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+      background: #fff;
+      position: relative;
+    }
+    .room-select-card:hover {
+      border-color: var(--accent-color);
+      transform: translateY(-1px);
+    }
+    .room-select-card.selected {
+      border-color: var(--accent-color);
+      background: #eff6ff;
+    }
+
+    .room-select-order {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .room-select-card.selected .room-select-order {
+      background: var(--accent-color);
+    }
+
+    .room-select-thumb {
+      width: 40px;
+      height: 40px;
+      border-radius: 5px;
+      object-fit: cover;
+      background: #e2e8f0;
+    }
+
+    .room-select-info {
+      flex: 1;
+      overflow: hidden;
+    }
+    .room-select-name {
+      font-size: 12px;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-main);
+    }
+    .room-select-meta {
+      font-size: 10.5px;
+      color: var(--text-muted);
     }
 
-    .stop-type-badge.room {
-      background: #e3f2fd;
-      color: #1976d2;
+    /* Floating Notification */
+    .toast-notice {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 16px;
+      background: #1e293b;
+      color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      z-index: 99999;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slide-up 0.25s ease;
     }
-
-    .stop-type-badge.hotspot {
-      background: #fff3e0;
-      color: #f57c00;
+    @keyframes slide-up {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
   </style>
 </head>
@@ -326,69 +720,240 @@
   <div class="admin-header" id="adminHeaderMount"></div>
   <script src="/js/admin-nav.js"></script>
 
-  <!-- Tour Editor Content -->
-  <div class="tour-editor">
-    <div class="editor-header">
-      <h1>⚡ Quản lý Kịch bản Auto Tour</h1>
-      <div class="header-actions">
-        <button class="btn btn-primary btn-small" onclick="previewTour()">👁️ Xem trước</button>
-        <button class="btn btn-success btn-small" onclick="saveTourScenario()">💾 Lưu kịch bản</button>
+  <div class="tour-studio-wrapper">
+    
+    <!-- Top Action Header -->
+    <div class="studio-header">
+      <div class="studio-header-title">
+        <h1>⚡ Studio Kịch Bản Auto Tour 360</h1>
+        <span class="badge bg-primary" style="font-size: 11px;">WYSIWYG 360 Editor</span>
+      </div>
+      <div class="studio-header-actions">
+        <button class="btn-studio btn-studio-accent" onclick="openQuickRouteModal()">
+          ⚡ Chọn nhanh chuỗi phòng (1-Click)
+        </button>
+        <button class="btn-studio btn-studio-outline" onclick="playInStudioPreview()" id="previewTourBtn">
+          ▶ Chạy thử Tour
+        </button>
+        <button class="btn-studio btn-studio-success" onclick="saveTourScenario()">
+          💾 Lưu kịch bản
+        </button>
+        <button class="btn-studio btn-studio-outline" onclick="resetTourScenario()" title="Làm mới">
+          🧹 Xóa hết
+        </button>
       </div>
     </div>
 
-    <div class="scenario-info">
-      <div class="scenario-info-title">⚙️ Cấu hình chung tour</div>
-      <div class="scenario-grid">
-        <div class="scenario-field">
-          <label for="scenarioName"><strong>Tên kịch bản</strong></label>
-          <input type="text" id="scenarioName" placeholder="Ví dụ: Tour giới thiệu tổng quan, Tour chi tiết..." value="Tour mặc định">
-        </div>
-        <div class="scenario-field">
-          <label for="cameraPanDuration"><strong>Thời gian xoay camera (ms)</strong></label>
-          <input type="number" id="cameraPanDuration" min="1000" step="500" value="8000">
-          <small>Giá trị càng lớn thì xoay càng chậm</small>
-        </div>
-      </div>
-    </div>
-
-    <div class="tour-stops">
-      <h2>
-        <span>📍 Danh sách điểm dừng (<span id="stopCount">0</span>)</span>
-        <button class="add-stop-btn" style="width: auto; padding: 8px 20px; margin: 0;" onclick="addNewStop()">+ Thêm điểm</button>
-      </h2>
+    <!-- Main Studio Split Layout -->
+    <div class="studio-layout">
       
-      <div id="stopsContainer">
-        <div class="empty-state">
-          <div class="empty-state-icon">🎯</div>
-          <p>Chưa có điểm dừng nào</p>
-          <p style="font-size: 14px;">Nhấn "Thêm điểm" để bắt đầu tạo kịch bản tour</p>
+      <!-- LEFT: 360 Live Studio Viewer -->
+      <div class="studio-viewer-card">
+        <div class="viewer-toolbar-top">
+          <div class="viewer-room-select">
+            <label style="font-size: 12px; font-weight: 600;">🏠 Phòng:</label>
+            <select id="studioRoomSelect" onchange="onStudioRoomChanged(this.value)">
+              <!-- Loaded dynamically -->
+            </select>
+          </div>
+          <div class="viewer-badges">
+            <span class="v-badge v-badge-rec" id="recBadge">🔴 ĐANG GHI</span>
+            <span class="v-badge" id="yawBadge">Yaw: 0.0°</span>
+            <span class="v-badge" id="pitchBadge">Pitch: 0.0°</span>
+            <span class="v-badge" id="fovBadge">Zoom: 90°</span>
+          </div>
+        </div>
+
+        <div class="panorama-viewer-box">
+          <div id="pannellumContainer"></div>
+          <div class="viewer-overlay-crosshair"></div>
+        </div>
+
+        <div class="viewer-toolbar-bottom">
+          <div class="capture-btn-group">
+            <button class="btn-studio btn-studio-primary" onclick="captureCurrentViewAsStop()" title="Phím tắt: Phím Space">
+              📸 Chụp góc hiện tại (+ Điểm)
+            </button>
+            <button class="btn-studio btn-studio-outline" onclick="updateSelectedStopWithCurrentView()" id="btnUpdateCurrentStop" title="Ghi đè góc nhìn vào điểm đang chọn">
+              🔄 Cập nhật góc vào điểm chọn
+            </button>
+          </div>
+
+          <div>
+            <button class="btn-studio btn-studio-record" id="recordModeBtn" onclick="toggleRecordMode()">
+              🔴 Bắt đầu Ghi Tour (Walkthrough)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Storyboard & Stop Cards -->
+      <div class="studio-storyboard-card">
+        
+        <!-- Scenario global config -->
+        <div class="storyboard-config-box">
+          <div class="storyboard-config-grid">
+            <div class="cfg-field">
+              <label>Tên kịch bản Tour</label>
+              <input type="text" id="scenarioNameInput" value="Tour mặc định" placeholder="Tên kịch bản...">
+            </div>
+            <div class="cfg-field">
+              <label>Thời gian xoay lướt (ms)</label>
+              <input type="number" id="scenarioPanDurationInput" value="8000" min="1000" step="500">
+            </div>
+          </div>
+
+          <div class="batch-actions-bar">
+            <div class="batch-actions-left">
+              <span style="font-size: 10px; font-weight: 700; color: #64748b;">ÁP DỤNG TẤT CẢ:</span>
+              <button class="batch-btn" onclick="batchSetDuration(3000)">3s</button>
+              <button class="batch-btn" onclick="batchSetDuration(5000)">5s</button>
+              <button class="batch-btn" onclick="batchSetDuration(8000)">8s</button>
+              <button class="batch-btn" onclick="batchSetEffect('pan360')">Quay 360°</button>
+              <button class="batch-btn" onclick="batchSetEffect('slowPan')">Quét chậm</button>
+              <button class="batch-btn" onclick="batchSetEffect('lookAt')">Nhìn thẳng</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Storyboard Stops Header -->
+        <div class="storyboard-header">
+          <h2>
+            <span>📍 Danh sách chặng Tour</span>
+            <span class="stop-count-badge" id="stopCountBadge">0 điểm</span>
+          </h2>
+          <button class="btn-studio btn-studio-outline" style="padding: 3px 8px; font-size: 11px;" onclick="addNewEmptyStop()">
+            + Thêm chặng trống
+          </button>
+        </div>
+
+        <!-- Stops List (Sortable) -->
+        <div class="stops-container" id="stopsContainer">
+          <!-- Rendered dynamically -->
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Chọn nhanh chuỗi phòng (Multi-Select Route Builder) -->
+  <div class="modal fade" id="quickRouteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 14px; overflow: hidden;">
+        <div class="modal-header" style="background: var(--primary-color); color: #fff; padding: 12px 16px;">
+          <h5 class="modal-title" style="font-size: 16px;">⚡ Chọn nhanh chuỗi phòng để sinh lộ trình</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" style="padding: 16px;">
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">
+            Click lần lượt vào các phòng bạn muốn đi qua để tạo thứ tự (1, 2, 3...). Hệ thống sẽ tự động tạo kịch bản hoàn chỉnh.
+          </p>
+
+          <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+            <input type="text" id="routeRoomSearch" class="form-control form-control-sm" placeholder="Tìm kiếm phòng..." style="max-width: 220px;" oninput="filterQuickRooms(this.value)">
+            <select id="routeBuildingFilter" class="form-select form-select-sm" style="max-width: 180px;" onchange="filterQuickRooms()">
+              <option value="">Tất cả khu vực/tòa nhà</option>
+            </select>
+            <button class="btn btn-sm btn-outline-secondary" onclick="selectAllQuickRooms()">Tất cả</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="clearQuickRooms()">Bỏ chọn</button>
+          </div>
+
+          <div class="room-select-grid" id="quickRoomGrid">
+            <!-- Room cards dynamically -->
+          </div>
+
+          <div style="margin-top: 14px; padding: 10px 14px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <div>
+                <label style="font-size: 11px; font-weight: 600;">Thời gian mỗi chặng:</label>
+                <select id="quickDurationSelect" class="form-select form-select-sm" style="width: 95px;">
+                  <option value="3000">3 giây</option>
+                  <option value="5000" selected>5 giây</option>
+                  <option value="8000">8 giây</option>
+                  <option value="10000">10 giây</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 11px; font-weight: 600;">Hiệu ứng camera:</label>
+                <select id="quickEffectSelect" class="form-select form-select-sm" style="width: 125px;">
+                  <option value="pan360" selected>Quay tròn 360°</option>
+                  <option value="slowPan">Quét chậm 60°</option>
+                  <option value="lookAt">Nhìn thẳng</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 12px; font-weight: 700; color: var(--accent-color);" id="quickSelectedCount">
+                Đã chọn: 0 phòng
+              </span>
+              <button class="btn btn-primary btn-sm" onclick="applyQuickRoute()">
+                🚀 Sinh lộ trình ngay
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
+    /* ===== STATE ===== */
+    let rooms = [];
+    let buildings = [];
+    let currentViewerRoomId = null;
+    let pannellumInstance = null;
+    let viewerPositionTimer = null;
+    let isRecording = false;
+    let selectedStopIndex = null;
+    let isPlayingPreview = false;
+    let previewTimer = null;
+
     let tourScenario = {
       name: 'Tour mặc định',
       cameraPanDuration: 8000,
       stops: []
     };
 
-    let rooms = [];
+    let quickSelectedRoomIds = []; // Array of room IDs in selected sequence
 
-    // Load rooms and scenario
+    /* ===== INIT ===== */
     async function init() {
       await loadRooms();
+      await loadBuildings();
       await loadTourScenario();
+      initKeyboardShortcuts();
+      initSortable();
+
+      if (rooms.length > 0) {
+        populateRoomSelect();
+        const initialRoomId = tourScenario.stops[0]?.roomId || rooms[0].id;
+        loadRoomInViewer(initialRoomId);
+      }
+
       renderStops();
     }
 
+    /* ===== LOAD DATA ===== */
     async function loadRooms() {
       try {
         const res = await fetch('/api/rooms');
         rooms = await res.json();
       } catch (err) {
         console.error('Error loading rooms:', err);
+      }
+    }
+
+    async function loadBuildings() {
+      try {
+        const res = await fetch('/api/admin/buildings');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.buildings)) {
+          buildings = data.buildings;
+        }
+      } catch (e) {
+        console.warn('Cannot load buildings', e);
       }
     }
 
@@ -402,84 +967,241 @@
             cameraPanDuration: Number(data.scenario.cameraPanDuration) || 8000,
             stops: Array.isArray(data.scenario.stops) ? data.scenario.stops : []
           };
-          document.getElementById('scenarioName').value = tourScenario.name || 'Tour mặc định';
-          document.getElementById('cameraPanDuration').value = tourScenario.cameraPanDuration || 8000;
+          document.getElementById('scenarioNameInput').value = tourScenario.name;
+          document.getElementById('scenarioPanDurationInput').value = tourScenario.cameraPanDuration;
         }
       } catch (err) {
-        console.log('No scenario found, starting fresh');
+        console.log('No scenario found, using default');
       }
     }
 
-    function addNewStop() {
-      const stop = {
-        id: Date.now(),
-        type: 'room',
-        roomId: rooms[0]?.id || null,
-        title: '',
-        description: '',
-        duration: 10000,
-        cameraEffect: 'pan360'
-      };
+    function populateRoomSelect() {
+      const select = document.getElementById('studioRoomSelect');
+      select.innerHTML = rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+    }
+
+    function safeNumber(val, fallback = 0) {
+      if (val === null || val === undefined || val === '') return fallback;
+      const num = Number(val);
+      return Number.isFinite(num) ? num : fallback;
+    }
+
+    /* ===== 360 VIEWER (PANNELLUM) ===== */
+    function loadRoomInViewer(roomId, targetYaw = null, targetPitch = null, targetFov = 90) {
+      const room = rooms.find(r => r.id === Number(roomId));
+      if (!room) return;
+
+      currentViewerRoomId = Number(roomId);
+      const select = document.getElementById('studioRoomSelect');
+      if (select) select.value = currentViewerRoomId;
+
+      if (viewerPositionTimer) {
+        clearInterval(viewerPositionTimer);
+        viewerPositionTimer = null;
+      }
+
+      if (pannellumInstance) {
+        try { pannellumInstance.destroy(); } catch (e) {}
+        pannellumInstance = null;
+      }
+
+      const container = document.getElementById('pannellumContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      // Determine initial yaw/pitch from arguments or room/hotspot defaults safely
+      const startYaw = safeNumber(targetYaw, safeNumber(room.initialYaw, 0));
+      const startPitch = safeNumber(targetPitch, safeNumber(room.initialPitch, 0));
+      const startFov = safeNumber(targetFov, 90);
+
+      const imageUrl = room.image.startsWith('http') ? room.image : (window.location.origin + (room.image.startsWith('/') ? '' : '/') + room.image);
+
+      // Hotspots for Pannellum
+      const hotspots = [];
+      if (room.hotspots && Array.isArray(room.hotspots)) {
+        room.hotspots.forEach((hs, idx) => {
+          const targetRoom = rooms.find(r => r.id === hs.target);
+          hotspots.push({
+            pitch: safeNumber(hs.pitch, 0),
+            yaw: safeNumber(hs.yaw, 0),
+            type: 'info',
+            text: targetRoom ? `🚪 Bước sang: ${targetRoom.name}` : 'Chuyển phòng',
+            clickHandlerFunc: () => {
+              handleHotspotClick(hs, idx);
+            }
+          });
+        });
+      }
+
+      pannellumInstance = pannellum.viewer('pannellumContainer', {
+        type: 'equirectangular',
+        panorama: imageUrl,
+        autoLoad: true,
+        showControls: false,
+        mouseZoom: true,
+        hfov: startFov,
+        yaw: startYaw,
+        pitch: startPitch,
+        compass: false,
+        hotSpots: hotspots
+      });
+
+      // Poll current viewing coordinates
+      viewerPositionTimer = setInterval(() => {
+        if (!pannellumInstance) return;
+        try {
+          const yaw = pannellumInstance.getYaw();
+          const pitch = pannellumInstance.getPitch();
+          const hfov = pannellumInstance.getHfov();
+          if (Number.isFinite(yaw)) document.getElementById('yawBadge').textContent = `Yaw: ${yaw.toFixed(1)}°`;
+          if (Number.isFinite(pitch)) document.getElementById('pitchBadge').textContent = `Pitch: ${pitch.toFixed(1)}°`;
+          if (Number.isFinite(hfov)) document.getElementById('fovBadge').textContent = `Zoom: ${Math.round(hfov)}°`;
+        } catch (e) {}
+      }, 100);
+    }
+
+    function onStudioRoomChanged(roomId) {
+      const room = rooms.find(r => r.id === Number(roomId));
+      const initYaw = safeNumber(room?.initialYaw, 0);
+      const initPitch = safeNumber(room?.initialPitch, 0);
+      loadRoomInViewer(roomId, initYaw, initPitch);
+      if (isRecording) {
+        captureCurrentViewAsStop();
+      }
+    }
+
+    function handleHotspotClick(hs, idx) {
+      if (!hs.target) return;
+      const targetRoom = rooms.find(r => r.id === hs.target);
+      if (!targetRoom) return;
+
+      // Extract initial view set in room management (hs.initialYaw / hs.initialPitch)
+      const nextYaw = safeNumber(hs.initialYaw, safeNumber(targetRoom.initialYaw, 0));
+      const nextPitch = safeNumber(hs.initialPitch, safeNumber(targetRoom.initialPitch, 0));
+
+      if (isRecording) {
+        // Record current hotspot transition before switching
+        tourScenario.stops.push({
+          id: Date.now(),
+          type: 'hotspot',
+          roomId: currentViewerRoomId,
+          hotspotIndex: idx,
+          targetRoomId: hs.target,
+          title: `Chuyển tiếp sang ${targetRoom.name}`,
+          description: '',
+          duration: 3000,
+          cameraEffect: 'lookAt',
+          yaw: hs.yaw || 0,
+          pitch: hs.pitch || 0
+        });
+      }
+
+      // Load target room using its configured initial view angle
+      loadRoomInViewer(hs.target, nextYaw, nextPitch);
+
+      if (isRecording) {
+        // Record arrival in new room with the configured view direction
+        setTimeout(() => {
+          captureCurrentViewAsStop();
+        }, 500);
+      }
+    }
+
+    /* ===== CAPTURE & RECORDING ===== */
+    function captureCurrentViewAsStop() {
+      if (!pannellumInstance || !currentViewerRoomId) return;
       
-      tourScenario.stops.push(stop);
+      const currentRoom = rooms.find(r => r.id === currentViewerRoomId);
+      if (!currentRoom) return;
+
+      const yaw = Math.round(pannellumInstance.getYaw() * 10) / 10;
+      const pitch = Math.round(pannellumInstance.getPitch() * 10) / 10;
+      const fov = Math.round(pannellumInstance.getHfov());
+
+      const newStop = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        type: 'room',
+        roomId: currentViewerRoomId,
+        title: currentRoom.name,
+        description: '',
+        duration: 5000,
+        cameraEffect: 'pan360',
+        yaw: yaw,
+        pitch: pitch,
+        fov: fov
+      };
+
+      tourScenario.stops.push(newStop);
       renderStops();
+      scrollToLatestStop();
+      showToast(`📸 Đã chụp điểm dừng mới tại "${currentRoom.name}" (${yaw}°, ${pitch}°)`);
     }
 
-    function deleteStop(stopId) {
-      if (confirm('Xóa điểm dừng này?')) {
-        tourScenario.stops = tourScenario.stops.filter(s => s.id !== stopId);
-        renderStops();
+    function updateSelectedStopWithCurrentView() {
+      if (selectedStopIndex === null || !tourScenario.stops[selectedStopIndex]) {
+        showToast('⚠️ Vui lòng click chọn 1 chặng trên danh sách để cập nhật góc!');
+        return;
+      }
+
+      if (!pannellumInstance) return;
+
+      const yaw = Math.round(pannellumInstance.getYaw() * 10) / 10;
+      const pitch = Math.round(pannellumInstance.getPitch() * 10) / 10;
+      const fov = Math.round(pannellumInstance.getHfov());
+
+      const stop = tourScenario.stops[selectedStopIndex];
+      stop.roomId = currentViewerRoomId;
+      stop.yaw = yaw;
+      stop.pitch = pitch;
+      stop.fov = fov;
+
+      renderStops();
+      showToast(`🔄 Đã cập nhật góc nhìn mới cho chặng #${selectedStopIndex + 1}!`);
+    }
+
+    function toggleRecordMode() {
+      isRecording = !isRecording;
+      const btn = document.getElementById('recordModeBtn');
+      const badge = document.getElementById('recBadge');
+
+      if (isRecording) {
+        btn.classList.add('recording');
+        btn.innerHTML = '⏹ Dừng Ghi Tour';
+        badge.classList.add('active');
+        showToast('🔴 ĐÃ BẬT GHI TOUR: Mọi thao tác chuyển phòng sẽ tự động ghi thành kịch bản!');
+        // Capture initial view
+        captureCurrentViewAsStop();
+      } else {
+        btn.classList.remove('recording');
+        btn.innerHTML = '🔴 Bắt đầu Ghi Tour (Walkthrough)';
+        badge.classList.remove('active');
+        showToast('⏹ Đã dừng ghi tour.');
       }
     }
 
-    function moveStopUp(index) {
-      if (index > 0) {
-        const temp = tourScenario.stops[index];
-        tourScenario.stops[index] = tourScenario.stops[index - 1];
-        tourScenario.stops[index - 1] = temp;
-        renderStops();
-      }
-    }
-
-    function moveStopDown(index) {
-      if (index < tourScenario.stops.length - 1) {
-        const temp = tourScenario.stops[index];
-        tourScenario.stops[index] = tourScenario.stops[index + 1];
-        tourScenario.stops[index + 1] = temp;
-        renderStops();
-      }
-    }
-
-    function updateStop(stopId, field, value) {
-      const stop = tourScenario.stops.find(s => s.id === stopId);
-      if (stop) {
-        stop[field] = value;
-        
-        // If type changes, reset type-specific fields
-        if (field === 'type') {
-          if (value === 'room') {
-            delete stop.hotspotIndex;
-            delete stop.targetRoomId;
-          } else if (value === 'hotspot') {
-            delete stop.cameraEffect;
-          }
-          renderStops();
+    function initKeyboardShortcuts() {
+      window.addEventListener('keydown', (e) => {
+        // Space key outside input fields captures view
+        if (e.code === 'Space' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+          e.preventDefault();
+          captureCurrentViewAsStop();
         }
-      }
+      });
     }
 
+    /* ===== STORYBOARD RENDERING ===== */
     function renderStops() {
       const container = document.getElementById('stopsContainer');
-      const countEl = document.getElementById('stopCount');
-      
-      countEl.textContent = tourScenario.stops.length;
+      const countBadge = document.getElementById('stopCountBadge');
+
+      countBadge.textContent = `${tourScenario.stops.length} điểm`;
 
       if (tourScenario.stops.length === 0) {
         container.innerHTML = `
-          <div class="empty-state">
-            <div class="empty-state-icon">🎯</div>
-            <p>Chưa có điểm dừng nào</p>
-            <p style="font-size: 14px;">Nhấn "Thêm điểm" để bắt đầu tạo kịch bản tour</p>
+          <div class="empty-stops">
+            <div class="empty-stops-icon">🎯</div>
+            <h6 style="font-weight: 700; color: #475569; font-size: 13px;">Chưa có điểm dừng nào</h6>
+            <p style="font-size: 12px;">Bấm <b>"⚡ Chọn nhanh chuỗi phòng"</b> hoặc bấm <b>"📸 Chụp góc hiện tại"</b> để tạo kịch bản ngay.</p>
           </div>
         `;
         return;
@@ -487,63 +1209,53 @@
 
       container.innerHTML = tourScenario.stops.map((stop, index) => {
         const room = rooms.find(r => r.id === stop.roomId);
-        
+        const roomName = room ? room.name : 'Phòng không xác định';
+        const isSelected = selectedStopIndex === index;
+        const durationSec = ((stop.duration || 5000) / 1000).toFixed(1);
+
         return `
-          <div class="stop-item" data-id="${stop.id}">
-            <div class="stop-header">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <span class="drag-handle" title="Kéo để sắp xếp">☰</span>
-                <span class="stop-number">${index + 1}</span>
-                <span class="stop-type-badge ${stop.type}">${stop.type === 'room' ? 'Phòng' : 'Hotspot'}</span>
+          <div class="stop-card ${isSelected ? 'active-preview' : ''}" data-index="${index}" onclick="selectStopCard(${index})">
+            <div class="stop-card-head">
+              <div class="stop-card-left">
+                <span class="stop-drag-handle" title="Kéo thả để đổi thứ tự">☰</span>
+                <span class="stop-idx-circle">${index + 1}</span>
+                <div class="stop-room-title">
+                  <span>${roomName}</span>
+                  <span class="stop-angle-tag">🧭 ${stop.yaw ?? 0}° / ${stop.pitch ?? 0}°</span>
+                </div>
               </div>
-              <div class="stop-actions">
-                <button onclick="moveStopUp(${index})" ${index === 0 ? 'disabled' : ''}>↑</button>
-                <button onclick="moveStopDown(${index})" ${index === tourScenario.stops.length - 1 ? 'disabled' : ''}>↓</button>
-                <button class="delete-btn" onclick="deleteStop(${stop.id})">🗑️ Xóa</button>
+
+              <div class="stop-card-actions" onclick="event.stopPropagation()">
+                <button class="btn-stop-action" onclick="jumpViewerToStop(${index})" title="Xoay camera 360 sang điểm này">👁 Xem</button>
+                <button class="btn-stop-action" onclick="duplicateStop(${index})" title="Nhân bản">📋</button>
+                <button class="btn-stop-action delete" onclick="deleteStop(${index})" title="Xóa chặng này">🗑️</button>
               </div>
             </div>
-            
-            <div class="stop-content">
-              <div class="stop-field">
-                <label>Loại điểm dừng</label>
-                <select onchange="updateStop(${stop.id}, 'type', this.value)">
-                  <option value="room" ${stop.type === 'room' ? 'selected' : ''}>Phòng</option>
-                  <option value="hotspot" ${stop.type === 'hotspot' ? 'selected' : ''}>Hotspot</option>
+
+            <div class="stop-card-body" onclick="event.stopPropagation()">
+              <div class="stop-input-group">
+                <label>Hiệu ứng camera:</label>
+                <select onchange="updateStopField(${index}, 'cameraEffect', this.value)">
+                  <option value="pan360" ${stop.cameraEffect === 'pan360' ? 'selected' : ''}>Quay tròn 360°</option>
+                  <option value="slowPan" ${stop.cameraEffect === 'slowPan' ? 'selected' : ''}>Quét chậm 60°</option>
+                  <option value="lookAt" ${stop.cameraEffect === 'lookAt' ? 'selected' : ''}>Nhìn thẳng (Focus)</option>
+                  <option value="static" ${stop.cameraEffect === 'static' ? 'selected' : ''}>Tĩnh (Static)</option>
                 </select>
               </div>
 
-              <div class="stop-field">
-                <label>Chọn phòng</label>
-                <select onchange="updateStop(${stop.id}, 'roomId', parseInt(this.value))">
-                  ${rooms.map(r => `<option value="${r.id}" ${r.id === stop.roomId ? 'selected' : ''}>${r.name}</option>`).join('')}
-                </select>
-              </div>
-
-              ${stop.type === 'hotspot' ? `
-                <div class="stop-field">
-                  <label>Hotspot Index</label>
-                  <input type="number" value="${stop.hotspotIndex || 0}" min="0" 
-                         onchange="updateStop(${stop.id}, 'hotspotIndex', parseInt(this.value))">
+              <div class="stop-input-group">
+                <label>Thời gian dừng:</label>
+                <div class="stop-duration-control">
+                  <input type="range" min="1000" max="25000" step="500" value="${stop.duration || 5000}" 
+                         oninput="onDurationSliderChange(${index}, this.value)">
+                  <span class="stop-duration-val" id="durationVal_${index}">${durationSec}s</span>
                 </div>
-              ` : ''}
-
-              <div class="stop-field">
-                <label>Thời gian dừng (ms)</label>
-                <input type="number" value="${stop.duration || 5000}" min="1000" step="500"
-                       onchange="updateStop(${stop.id}, 'duration', parseInt(this.value))">
               </div>
 
-              <div class="stop-field" style="grid-column: 1 / -1;">
-                <label>Tiêu đề</label>
-                <input type="text" value="${stop.title || ''}" 
-                       onchange="updateStop(${stop.id}, 'title', this.value)"
-                       placeholder="Tiêu đề hiển thị khi tham quan...">
-              </div>
-
-              <div class="stop-field" style="grid-column: 1 / -1;">
-                <label>Mô tả</label>
-                <textarea onchange="updateStop(${stop.id}, 'description', this.value)"
-                          placeholder="Mô tả chi tiết về điểm này...">${stop.description || ''}</textarea>
+              <div class="stop-input-group" style="grid-column: 1 / -1;">
+                <label>Tiêu đề thuyết minh:</label>
+                <input type="text" value="${escapeHtml(stop.title || '')}" placeholder="Tiêu đề hiển thị..."
+                       onchange="updateStopField(${index}, 'title', this.value)">
               </div>
             </div>
           </div>
@@ -551,22 +1263,377 @@
       }).join('');
     }
 
-    async function saveTourScenario() {
-      tourScenario.name = document.getElementById('scenarioName').value;
-      const panDurationValue = Number(document.getElementById('cameraPanDuration').value);
-      tourScenario.cameraPanDuration = Math.max(1000, Number.isFinite(panDurationValue) ? panDurationValue : 8000);
+    function initSortable() {
+      const container = document.getElementById('stopsContainer');
+      if (!container) return;
+
+      new Sortable(container, {
+        handle: '.stop-drag-handle',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        onEnd: (evt) => {
+          const item = tourScenario.stops.splice(evt.oldIndex, 1)[0];
+          tourScenario.stops.splice(evt.newIndex, 0, item);
+          renderStops();
+        }
+      });
+    }
+
+    function selectStopCard(index) {
+      selectedStopIndex = index;
+      const cards = document.querySelectorAll('.stop-card');
+      cards.forEach((c, idx) => {
+        if (idx === index) c.classList.add('active-preview');
+        else c.classList.remove('active-preview');
+      });
+
+      jumpViewerToStop(index);
+    }
+
+    function jumpViewerToStop(index) {
+      const stop = tourScenario.stops[index];
+      if (!stop) return;
+
+      if (currentViewerRoomId !== stop.roomId) {
+        loadRoomInViewer(stop.roomId, stop.yaw || 0, stop.pitch || 0, stop.fov || 90);
+      } else if (pannellumInstance) {
+        try {
+          pannellumInstance.lookAt(stop.pitch || 0, stop.yaw || 0, stop.fov || 90, 800);
+        } catch (e) {}
+      }
+    }
+
+    function updateStopField(index, field, value) {
+      if (tourScenario.stops[index]) {
+        tourScenario.stops[index][field] = value;
+      }
+    }
+
+    function onDurationSliderChange(index, val) {
+      const ms = parseInt(val);
+      if (tourScenario.stops[index]) {
+        tourScenario.stops[index].duration = ms;
+      }
+      const label = document.getElementById(`durationVal_${index}`);
+      if (label) label.textContent = `${(ms / 1000).toFixed(1)}s`;
+    }
+
+    function deleteStop(index) {
+      tourScenario.stops.splice(index, 1);
+      if (selectedStopIndex === index) selectedStopIndex = null;
+      renderStops();
+    }
+
+    function duplicateStop(index) {
+      const original = tourScenario.stops[index];
+      if (!original) return;
+      const copy = JSON.parse(JSON.stringify(original));
+      copy.id = Date.now() + Math.floor(Math.random() * 1000);
+      tourScenario.stops.splice(index + 1, 0, copy);
+      renderStops();
+      showToast('📋 Đã nhân bản chặng dừng!');
+    }
+
+    function addNewEmptyStop() {
+      if (rooms.length === 0) return;
+      const newStop = {
+        id: Date.now(),
+        type: 'room',
+        roomId: currentViewerRoomId || rooms[0].id,
+        title: '',
+        description: '',
+        duration: 5000,
+        cameraEffect: 'pan360',
+        yaw: 0,
+        pitch: 0
+      };
+      tourScenario.stops.push(newStop);
+      renderStops();
+      scrollToLatestStop();
+    }
+
+    function scrollToLatestStop() {
+      const container = document.getElementById('stopsContainer');
+      if (container) {
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight;
+        }, 50);
+      }
+    }
+
+    /* ===== BATCH ACTIONS ===== */
+    function batchSetDuration(ms) {
+      if (tourScenario.stops.length === 0) return;
+      tourScenario.stops.forEach(s => s.duration = ms);
+      renderStops();
+      showToast(`⏱ Đã đặt thời gian ${(ms/1000)}s cho tất cả ${tourScenario.stops.length} điểm!`);
+    }
+
+    function batchSetEffect(effect) {
+      if (tourScenario.stops.length === 0) return;
+      tourScenario.stops.forEach(s => s.cameraEffect = effect);
+      renderStops();
+      showToast(`🎬 Đã áp dụng hiệu ứng "${effect}" cho tất cả các điểm!`);
+    }
+
+    /* ===== QUICK ROUTE BUILDER MODAL ===== */
+    function openQuickRouteModal() {
+      quickSelectedRoomIds = [];
+      populateQuickBuildingFilter();
+      renderQuickRoomGrid();
+      updateQuickSelectionCount();
+
+      const modal = new bootstrap.Modal(document.getElementById('quickRouteModal'));
+      modal.show();
+    }
+
+    function populateQuickBuildingFilter() {
+      const select = document.getElementById('routeBuildingFilter');
+      select.innerHTML = '<option value="">Tất cả khu vực/tòa nhà</option>' + 
+        buildings.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+    }
+
+    function renderQuickRoomGrid(searchTerm = '') {
+      const grid = document.getElementById('quickRoomGrid');
+      const buildingFilter = document.getElementById('routeBuildingFilter').value;
+
+      let filtered = rooms;
+      if (buildingFilter) {
+        filtered = filtered.filter(r => r.buildingId === buildingFilter);
+      }
+      if (searchTerm) {
+        const lower = searchTerm.toLowerCase();
+        filtered = filtered.filter(r => r.name.toLowerCase().includes(lower));
+      }
+
+      grid.innerHTML = filtered.map(room => {
+        const selectedIndex = quickSelectedRoomIds.indexOf(room.id);
+        const isSelected = selectedIndex !== -1;
+        const orderNum = isSelected ? (selectedIndex + 1) : '';
+
+        return `
+          <div class="room-select-card ${isSelected ? 'selected' : ''}" onclick="toggleQuickRoomSelect(${room.id})">
+            <div class="room-select-order">${orderNum}</div>
+            <img src="${room.image}" class="room-select-thumb" onerror="this.src='/images/logo-qi.png'">
+            <div class="room-select-info">
+              <div class="room-select-name" title="${room.name}">${room.name}</div>
+              <div class="room-select-meta">${room.floor ? `Tầng ${room.floor}` : 'Phòng'}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterQuickRooms() {
+      const search = document.getElementById('routeRoomSearch').value;
+      renderQuickRoomGrid(search);
+    }
+
+    function toggleQuickRoomSelect(roomId) {
+      const idx = quickSelectedRoomIds.indexOf(roomId);
+      if (idx !== -1) {
+        quickSelectedRoomIds.splice(idx, 1);
+      } else {
+        quickSelectedRoomIds.push(roomId);
+      }
+      renderQuickRoomGrid(document.getElementById('routeRoomSearch').value);
+      updateQuickSelectionCount();
+    }
+
+    function selectAllQuickRooms() {
+      const buildingFilter = document.getElementById('routeBuildingFilter').value;
+      let filtered = rooms;
+      if (buildingFilter) filtered = filtered.filter(r => r.buildingId === buildingFilter);
       
+      quickSelectedRoomIds = filtered.map(r => r.id);
+      renderQuickRoomGrid(document.getElementById('routeRoomSearch').value);
+      updateQuickSelectionCount();
+    }
+
+    function clearQuickRooms() {
+      quickSelectedRoomIds = [];
+      renderQuickRoomGrid(document.getElementById('routeRoomSearch').value);
+      updateQuickSelectionCount();
+    }
+
+    function updateQuickSelectionCount() {
+      const countEl = document.getElementById('quickSelectedCount');
+      if (countEl) countEl.textContent = `Đã chọn: ${quickSelectedRoomIds.length} phòng`;
+    }
+
+    function applyQuickRoute() {
+      if (quickSelectedRoomIds.length === 0) {
+        alert('Vui lòng chọn ít nhất 1 phòng để tạo lộ trình!');
+        return;
+      }
+
+      const duration = parseInt(document.getElementById('quickDurationSelect').value) || 5000;
+      const effect = document.getElementById('quickEffectSelect').value || 'pan360';
+
+      const newStops = quickSelectedRoomIds.map((roomId, idx) => {
+        const room = rooms.find(r => r.id === roomId);
+        let roomYaw = room?.initialYaw ?? 0;
+        let roomPitch = room?.initialPitch ?? 0;
+
+        // If there's a previous room in the route, check if it has a hotspot targeting this room with a configured initial view
+        if (idx > 0) {
+          const prevRoomId = quickSelectedRoomIds[idx - 1];
+          const prevRoom = rooms.find(r => r.id === prevRoomId);
+          const connectingHs = prevRoom?.hotspots?.find(h => h.target === roomId);
+          if (connectingHs && connectingHs.initialYaw !== undefined && connectingHs.initialYaw !== null) {
+            roomYaw = Number(connectingHs.initialYaw);
+            roomPitch = Number(connectingHs.initialPitch || 0);
+          }
+        }
+
+        return {
+          id: Date.now() + idx * 10,
+          type: 'room',
+          roomId: roomId,
+          title: room ? room.name : '',
+          description: '',
+          duration: duration,
+          cameraEffect: effect,
+          yaw: roomYaw,
+          pitch: roomPitch
+        };
+      });
+
+      tourScenario.stops = newStops;
+      renderStops();
+
+      // Close modal
+      const modalEl = document.getElementById('quickRouteModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+
+      if (newStops.length > 0) {
+        loadRoomInViewer(newStops[0].roomId);
+      }
+
+      showToast(`🚀 Đã sinh thành công lộ trình gồm ${newStops.length} phòng!`);
+    }
+
+    let previewAnimId = null;
+
+    /* ===== IN-STUDIO TOUR PLAYBACK ===== */
+    function playInStudioPreview() {
+      if (tourScenario.stops.length === 0) {
+        alert('Chưa có điểm dừng nào để chạy thử!');
+        return;
+      }
+
+      if (isPlayingPreview) {
+        stopInStudioPreview();
+        return;
+      }
+
+      isPlayingPreview = true;
+      const btn = document.getElementById('previewTourBtn');
+      btn.innerHTML = '⏹ Dừng Chạy Thử';
+      btn.classList.add('btn-studio-record');
+
+      let currentStep = 0;
+
+      function playStep() {
+        if (!isPlayingPreview || currentStep >= tourScenario.stops.length) {
+          stopInStudioPreview();
+          showToast('🎉 Đã hoàn thành xem thử kịch bản!');
+          return;
+        }
+
+        const stop = tourScenario.stops[currentStep];
+        selectStopCard(currentStep);
+
+        // Convert duration to seconds and milliseconds
+        const durationSec = safeNumber(stop.duration, 5);
+        const durationMs = durationSec > 50 ? durationSec : durationSec * 1000;
+
+        // Switch room if this stop is in a different room
+        const isNewRoom = stop.roomId && stop.roomId !== currentViewerRoomId;
+        if (isNewRoom) {
+          loadRoomInViewer(stop.roomId, safeNumber(stop.yaw, 0), safeNumber(stop.pitch, 0), safeNumber(stop.fov, 90));
+        }
+
+        const startDelay = isNewRoom ? 450 : 50;
+
+        previewTimer = setTimeout(() => {
+          if (!isPlayingPreview || !pannellumInstance) return;
+
+          const targetPitch = safeNumber(stop.pitch, 0);
+          const targetFov = safeNumber(stop.fov, 90);
+          try {
+            pannellumInstance.setPitch(targetPitch);
+            pannellumInstance.setHfov(targetFov);
+            pannellumInstance.stopAutoRotate();
+          } catch (e) {}
+
+          const effect = stop.cameraEffect || 'pan360';
+          const rotateDuration = Math.max(500, durationMs - startDelay);
+          const durationSeconds = rotateDuration / 1000;
+
+          if (effect === 'pan360' || !effect) {
+            // Quay trọn vẹn 360 độ (360 / duration giây = số độ mỗi giây)
+            const speed = 360 / Math.max(1, durationSeconds);
+            try {
+              pannellumInstance.startAutoRotate(speed);
+            } catch (e) {}
+          } else if (effect === 'slowPan') {
+            // Quét nhẹ 90 độ
+            const speed = 90 / Math.max(1, durationSeconds);
+            try {
+              pannellumInstance.startAutoRotate(speed);
+            } catch (e) {}
+          } else {
+            try {
+              pannellumInstance.stopAutoRotate();
+            } catch (e) {}
+          }
+
+          // Advance to next step after rotateDuration
+          currentStep++;
+          previewTimer = setTimeout(() => {
+            if (pannellumInstance) {
+              try { pannellumInstance.stopAutoRotate(); } catch (e) {}
+            }
+            playStep();
+          }, rotateDuration);
+        }, startDelay);
+      }
+
+      playStep();
+    }
+
+    function stopInStudioPreview() {
+      isPlayingPreview = false;
+      if (previewTimer) {
+        clearTimeout(previewTimer);
+        previewTimer = null;
+      }
+      if (pannellumInstance) {
+        try { pannellumInstance.stopAutoRotate(); } catch (e) {}
+      }
+      const btn = document.getElementById('previewTourBtn');
+      btn.innerHTML = '▶ Chạy thử Tour';
+      btn.classList.remove('btn-studio-record');
+    }
+
+    /* ===== SAVE SCENARIO ===== */
+    async function saveTourScenario() {
+      tourScenario.name = document.getElementById('scenarioNameInput').value || 'Tour mặc định';
+      const panDur = parseInt(document.getElementById('scenarioPanDurationInput').value);
+      tourScenario.cameraPanDuration = Math.max(1000, Number.isFinite(panDur) ? panDur : 8000);
+
       try {
         const res = await fetch('/api/admin/tour-scenario', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(tourScenario)
         });
-        
+
         const data = await res.json();
-        
         if (data.success) {
-          showSuccessMessage('✅ Đã lưu kịch bản thành công!');
+          showToast('💾 Đã lưu kịch bản Tour thành công!');
         } else {
           alert('Lỗi: ' + data.error);
         }
@@ -575,21 +1642,40 @@
       }
     }
 
-    function showSuccessMessage(message) {
-      const div = document.createElement('div');
-      div.className = 'success-message';
-      div.textContent = message;
-      document.body.appendChild(div);
-      
+    function resetTourScenario() {
+      if (confirm('Bạn có chắc chắn muốn xóa toàn bộ các điểm trong kịch bản để tạo lại từ đầu?')) {
+        tourScenario.stops = [];
+        renderStops();
+        showToast('🧹 Đã xóa toàn bộ kịch bản.');
+      }
+    }
+
+    /* ===== HELPERS ===== */
+    function showToast(msg) {
+      const existing = document.querySelector('.toast-notice');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.className = 'toast-notice';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+
       setTimeout(() => {
-        div.remove();
-      }, 3000);
+        toast.remove();
+      }, 3500);
     }
 
-    function previewTour() {
-      window.open('/', '_blank');
+    function escapeHtml(str) {
+      return (str || '').replace(/[&<>"']/g, m => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      })[m]);
     }
 
+    // Start
     init();
   </script>
 </body>
