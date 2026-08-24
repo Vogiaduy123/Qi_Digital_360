@@ -754,17 +754,13 @@ router.patch("/rooms/:roomId/media-hotspots/:index", async (req, res) => {
     // Build composite payload if mediaItems or iconUrl are present
     let finalMediaUrl = mediaUrl;
     if (mediaItems !== undefined || iconUrl !== undefined) {
-      let basePayload = {};
-      if (oldMediaUrl && typeof oldMediaUrl === 'string' && (oldMediaUrl.startsWith('{') || oldMediaUrl.startsWith('{"'))) {
-        try { basePayload = JSON.parse(oldMediaUrl); } catch {}
-      }
       const payload = {
-        ...basePayload,
         ...(mediaItems || {}),
         ...(iconUrl !== undefined ? { iconUrl: iconUrl || undefined } : {}),
         ...(mediaUrl !== undefined ? { mediaUrl: mediaUrl || undefined } : {}),
-        mediaType: mediaType || basePayload.mediaType || "all"
+        mediaType: mediaType || "all"
       };
+      Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
       finalMediaUrl = JSON.stringify(payload);
     }
 

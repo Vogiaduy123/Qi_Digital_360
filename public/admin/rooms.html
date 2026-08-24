@@ -28,25 +28,30 @@
 
     /* Media Hotspot Modal - Checkbox Section Styles */
     .media-section-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
       border-radius: 10px;
       padding: 12px 14px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       transition: all 0.25s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .media-section-card:hover {
+      border-color: #cbd5e1;
     }
     .media-section-card.active {
-      background: rgba(56, 189, 248, 0.05);
-      border-color: rgba(56, 189, 248, 0.35);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+      background: #f0f9ff;
+      border-color: #38bdf8;
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.12);
     }
     .media-section-card.stall-card {
-      background: rgba(16, 185, 129, 0.04);
-      border-color: rgba(16, 185, 129, 0.2);
+      background: #f0fdf4;
+      border-color: #bbf7d0;
     }
     .media-section-card.stall-card.active {
-      background: rgba(16, 185, 129, 0.09);
-      border-color: rgba(16, 185, 129, 0.4);
+      background: #ecfdf5;
+      border-color: #10b981;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
     }
     .media-section-header {
       display: flex;
@@ -57,34 +62,36 @@
     .media-toggle-label {
       display: inline-flex;
       align-items: center;
-      gap: 9px;
+      gap: 10px;
       cursor: pointer;
       margin: 0;
       user-select: none;
     }
     .media-toggle-label input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
+      width: 19px;
+      height: 19px;
       cursor: pointer;
-      accent-color: #38bdf8;
+      accent-color: #0284c7;
       margin: 0;
     }
     .media-section-card.stall-card .media-toggle-label input[type="checkbox"] {
-      accent-color: #10b981;
+      accent-color: #059669;
     }
     .media-section-title {
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 700;
-      color: #f1f5f9;
+      color: #1e293b;
       display: flex;
       align-items: center;
       gap: 6px;
     }
     .media-section-card.stall-card .media-section-title {
-      color: #34d399;
+      color: #065f46;
     }
     .media-section-body {
       margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px dashed #cbd5e1;
       transition: all 0.25s ease;
     }
     .media-section-body.collapsed {
@@ -92,19 +99,35 @@
     }
     .media-status-tag {
       font-size: 11px;
-      font-weight: 600;
-      padding: 2px 8px;
+      font-weight: 700;
+      padding: 3px 9px;
       border-radius: 20px;
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text-muted);
+      background: #e2e8f0;
+      color: #64748b;
+      letter-spacing: 0.3px;
     }
     .media-section-card.active .media-status-tag {
-      background: rgba(56, 189, 248, 0.2);
-      color: #38bdf8;
+      background: #e0f2fe;
+      color: #0369a1;
     }
     .media-section-card.stall-card.active .media-status-tag {
-      background: rgba(16, 185, 129, 0.2);
-      color: #10b981;
+      background: #d1fae5;
+      color: #047857;
+    }
+
+    /* Style inputs inside media sections for great clarity */
+    .media-section-card input[type="text"],
+    .media-section-card textarea {
+      background: #ffffff !important;
+      color: #0f172a !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 6px !important;
+    }
+    .media-section-card input[type="text"]:focus,
+    .media-section-card textarea:focus {
+      border-color: #0284c7 !important;
+      outline: none !important;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
     }
   </style>
 </head>

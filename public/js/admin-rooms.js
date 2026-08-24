@@ -3290,7 +3290,20 @@
             }
           }
 
+          const enabledTypes = {
+            stall: isStallEnabled,
+            images: isImagesEnabled,
+            pdf: isPdfEnabled,
+            video: isVideoEnabled,
+            youtube: isYoutubeEnabled,
+            '3d': is3dEnabled,
+            facebook: isFacebookEnabled,
+            web: isWebEnabled,
+            polygon: isPolygonEnabled
+          };
+
           const mediaItems = {
+            enabledTypes: enabledTypes,
             images: (isImagesEnabled && finalImages.length > 0) ? finalImages : undefined,
             pdfUrl: (isPdfEnabled && pdfUrl) ? pdfUrl : undefined,
             videoUrl: (isVideoEnabled && videoUrl) ? videoUrl : undefined,
@@ -3528,22 +3541,35 @@
         renderStallSections();
       }
 
-      // Set Checkbox active states based on whether data exists
-      document.getElementById('enableStallCardCheck').checked = !!stallCard;
-      document.getElementById('enableImagesCheck').checked = images.length > 0;
-      document.getElementById('enablePdfCheck').checked = !!pdfUrl;
-      document.getElementById('enableVideoCheck').checked = !!videoUrl;
-      document.getElementById('enableYoutubeCheck').checked = !!ytUrl;
-      document.getElementById('enable3dCheck').checked = !!model3dUrl;
-      document.getElementById('enableFacebookCheck').checked = !!fbUrl;
-      document.getElementById('enableWebCheck').checked = !!webUrl;
-
       // Restore polygon for 3d / highlight
       polygonPoints = (Array.isArray(media.highlightPolygon)) ? media.highlightPolygon.map(p => [...p]) : [];
-      document.getElementById('enablePolygonCheck').checked = polygonPoints.length >= 3;
       const polyStatus = document.getElementById('polygonStatus');
       if (polyStatus && polygonPoints.length > 0) polyStatus.textContent = `✅ ${polygonPoints.length} điểm đã lưu.`;
       setTimeout(() => updatePolygonPreviewHotspots(), 500);
+
+      // Restore Checkbox active states from enabledTypes if present, otherwise from content
+      const enabledTypes = items.enabledTypes || media.enabledTypes || null;
+      if (enabledTypes) {
+        document.getElementById('enableStallCardCheck').checked = !!enabledTypes.stall;
+        document.getElementById('enableImagesCheck').checked = !!enabledTypes.images;
+        document.getElementById('enablePdfCheck').checked = !!enabledTypes.pdf;
+        document.getElementById('enableVideoCheck').checked = !!enabledTypes.video;
+        document.getElementById('enableYoutubeCheck').checked = !!enabledTypes.youtube;
+        document.getElementById('enable3dCheck').checked = !!enabledTypes['3d'];
+        document.getElementById('enableFacebookCheck').checked = !!enabledTypes.facebook;
+        document.getElementById('enableWebCheck').checked = !!enabledTypes.web;
+        document.getElementById('enablePolygonCheck').checked = !!enabledTypes.polygon;
+      } else {
+        document.getElementById('enableStallCardCheck').checked = !!stallCard;
+        document.getElementById('enableImagesCheck').checked = images.length > 0;
+        document.getElementById('enablePdfCheck').checked = !!pdfUrl;
+        document.getElementById('enableVideoCheck').checked = !!videoUrl;
+        document.getElementById('enableYoutubeCheck').checked = !!ytUrl;
+        document.getElementById('enable3dCheck').checked = !!model3dUrl;
+        document.getElementById('enableFacebookCheck').checked = !!fbUrl;
+        document.getElementById('enableWebCheck').checked = !!webUrl;
+        document.getElementById('enablePolygonCheck').checked = polygonPoints.length >= 3;
+      }
 
       // Update visuals of all section cards
       if (typeof updateAllMediaSectionStates === 'function') updateAllMediaSectionStates();
