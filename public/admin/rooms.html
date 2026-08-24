@@ -25,6 +25,87 @@
       border-radius: 50%;
       z-index: 999999 !important;
     }
+
+    /* Media Hotspot Modal - Checkbox Section Styles */
+    .media-section-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      transition: all 0.25s ease;
+    }
+    .media-section-card.active {
+      background: rgba(56, 189, 248, 0.05);
+      border-color: rgba(56, 189, 248, 0.35);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    }
+    .media-section-card.stall-card {
+      background: rgba(16, 185, 129, 0.04);
+      border-color: rgba(16, 185, 129, 0.2);
+    }
+    .media-section-card.stall-card.active {
+      background: rgba(16, 185, 129, 0.09);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+    .media-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .media-toggle-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      cursor: pointer;
+      margin: 0;
+      user-select: none;
+    }
+    .media-toggle-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #38bdf8;
+      margin: 0;
+    }
+    .media-section-card.stall-card .media-toggle-label input[type="checkbox"] {
+      accent-color: #10b981;
+    }
+    .media-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .media-section-card.stall-card .media-section-title {
+      color: #34d399;
+    }
+    .media-section-body {
+      margin-top: 12px;
+      transition: all 0.25s ease;
+    }
+    .media-section-body.collapsed {
+      display: none !important;
+    }
+    .media-status-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+    }
+    .media-section-card.active .media-status-tag {
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+    }
+    .media-section-card.stall-card.active .media-status-tag {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+    }
   </style>
 </head>
 
@@ -529,19 +610,23 @@
         </div>
 
         <div style="font-weight:700;color:var(--accent-light);font-size:13px;margin:15px 0 10px 0;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:6px;">
-          📂 ĐÍNH KÈM TƯ LIỆU ĐA PHƯƠNG TIỆN <span style="font-size:11px;font-weight:400;color:var(--text-muted);">(Mục nào để trống sẽ tự động không hiển thị)</span>
+          📂 ĐÍNH KÈM TƯ LIỆU ĐA PHƯƠNG TIỆN <span style="font-size:11px;font-weight:400;color:var(--text-muted);">(Tích chọn để bật & lưu tư liệu muốn hiển thị)</span>
         </div>
 
         <!-- 0. Stall Info Card (Thẻ Thông Tin Sạp Hàng Hóa) Section -->
-        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:14px;margin-bottom:18px;">
-          <div style="font-weight:700;color:#34d399;font-size:13.5px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+        <div class="media-section-card stall-card" id="secCard_stall">
+          <div class="media-section-header">
+            <label class="media-toggle-label">
+              <input type="checkbox" id="enableStallCardCheck" onchange="onMediaSectionToggle('stall')">
+              <span class="media-section-title"><span>🏪</span> THẺ THÔNG TIN SẠP HÀNG HÓA (STALL CARD)</span>
+            </label>
             <div style="display:flex;align-items:center;gap:6px;">
-              <span>🏪</span> <span>THẺ THÔNG TIN SẠP HÀNG HÓA (STALL CARD)</span>
+              <span class="media-status-tag" id="statusTag_stall">Tắt</span>
+              <button type="button" class="btn btn-small" onclick="toggleStallCardSection()" id="stallToggleBtn" style="padding:3px 8px;font-size:11px;background:rgba(255,255,255,0.1);color:#fff;margin:0;">▼ Mở rộng / Thu gọn</button>
             </div>
-            <button type="button" class="btn btn-small" onclick="toggleStallCardSection()" id="stallToggleBtn" style="padding:3px 8px;font-size:11px;background:rgba(255,255,255,0.1);color:#fff;margin:0;">▼ Mở rộng / Thu gọn</button>
           </div>
 
-          <div id="stallCardFormBody">
+          <div id="stallCardFormBody" class="media-section-body collapsed">
             <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
               Tạo thẻ hồ sơ 2 cột chuyên nghiệp cho gian hàng (Khung ảnh viền đôi + Danh sách mục timeline động).
             </p>
@@ -572,13 +657,13 @@
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
               <div class="form-group" style="margin-bottom:0;">
                 <label style="font-size:12px;font-weight:600;">Mã sạp / Số hiệu sạp:</label>
-                <input type="text" id="stallBadge" placeholder="Ví dụ: SẠP SỐ: A-15 • KHU NÔNG SẢN" style="font-size:12px;">
+                <input type="text" id="stallBadge" placeholder="Ví dụ: SẠP SỐ: A-15 • KHU NÔNG SẢN" style="font-size:12px;" oninput="onMediaFieldInput('stall')">
               </div>
               <div class="form-group" style="margin-bottom:0;">
                 <label style="font-size:12px;font-weight:600;">Màu nền chủ đạo cột trái:</label>
                 <div style="display:flex;gap:6px;align-items:center;">
-                  <input type="color" id="stallThemeColor" value="#0d3834" style="width:40px;height:34px;padding:0;border:none;border-radius:6px;cursor:pointer;background:transparent;" onchange="document.getElementById('stallThemeColorText').value = this.value">
-                  <input type="text" id="stallThemeColorText" value="#0d3834" style="flex:1;font-size:12px;" onchange="document.getElementById('stallThemeColor').value = this.value">
+                  <input type="color" id="stallThemeColor" value="#0d3834" style="width:40px;height:34px;padding:0;border:none;border-radius:6px;cursor:pointer;background:transparent;" onchange="document.getElementById('stallThemeColorText').value = this.value; onMediaFieldInput('stall');">
+                  <input type="text" id="stallThemeColorText" value="#0d3834" style="flex:1;font-size:12px;" onchange="document.getElementById('stallThemeColor').value = this.value; onMediaFieldInput('stall');">
                 </div>
               </div>
             </div>
@@ -587,7 +672,7 @@
             <div class="form-group" style="margin-bottom:10px;">
               <label style="font-size:12px;font-weight:600;">Ảnh đại diện sạp hàng / Logo:</label>
               <div style="display:flex;gap:8px;align-items:center;">
-                <input type="text" id="stallAvatarUrl" placeholder="Link ảnh hoặc tải ảnh từ máy..." style="flex:1;font-size:12px;" oninput="updateStallAvatarPreview()">
+                <input type="text" id="stallAvatarUrl" placeholder="Link ảnh hoặc tải ảnh từ máy..." style="flex:1;font-size:12px;" oninput="updateStallAvatarPreview(); onMediaFieldInput('stall');">
                 <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:7px 10px;font-size:12px;">
                   📁 Tải ảnh
                   <input type="file" id="stallAvatarFileInput" accept="image/*" style="display:none;" onchange="handleStallAvatarSelect(event)">
@@ -602,11 +687,11 @@
             <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:10px;margin-bottom:12px;">
               <div class="form-group" style="margin-bottom:0;">
                 <label style="font-size:12px;font-weight:600;">Tiêu đề cột trái:</label>
-                <input type="text" id="stallSidebarTitle" placeholder="Ví dụ: CAM KẾT CHẤT LƯỢNG" value="CAM KẾT CHẤT LƯỢNG" style="font-size:12px;">
+                <input type="text" id="stallSidebarTitle" placeholder="Ví dụ: CAM KẾT CHẤT LƯỢNG" value="CAM KẾT CHẤT LƯỢNG" style="font-size:12px;" oninput="onMediaFieldInput('stall')">
               </div>
               <div class="form-group" style="margin-bottom:0;">
                 <label style="font-size:12px;font-weight:600;">Nội dung cột trái (Mỗi dòng 1 ý):</label>
-                <textarea id="stallSidebarContent" rows="2" placeholder="- Nguồn hàng tươi sạch mỗi ngày&#10;- Đạt chuẩn an toàn thực phẩm VietGAP&#10;- Đổi trả nếu hàng không đạt" style="font-size:12px;"></textarea>
+                <textarea id="stallSidebarContent" rows="2" placeholder="- Nguồn hàng tươi sạch mỗi ngày&#10;- Đạt chuẩn an toàn thực phẩm VietGAP&#10;- Đổi trả nếu hàng không đạt" style="font-size:12px;" oninput="onMediaFieldInput('stall')"></textarea>
               </div>
             </div>
 
@@ -631,73 +716,129 @@
         </div>
 
         <!-- 1. Image / Gallery Section -->
-        <div class="form-group" style="margin-bottom:14px;">
-          <label style="font-size:13px;font-weight:600;">🖼️ Hình ảnh / Bộ sưu tập ảnh:</label>
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-            <input type="text" id="mediaImagesUrl" placeholder="Link ảnh hoặc nhiều link cách nhau bởi dấu phẩy..." style="flex:1;font-size:13px;">
-            <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;" title="Tải nhiều ảnh từ máy">
-              📁 Tải ảnh
-              <input type="file" id="mediaImagesFilesInput" accept="image/*" multiple style="display:none;" onchange="handleMediaImagesSelect(event)">
+        <div class="media-section-card" id="secCard_images">
+          <div class="media-section-header">
+            <label class="media-toggle-label">
+              <input type="checkbox" id="enableImagesCheck" onchange="onMediaSectionToggle('images')">
+              <span class="media-section-title"><span>🖼️</span> Hình ảnh / Bộ sưu tập ảnh</span>
             </label>
+            <span class="media-status-tag" id="statusTag_images">Tắt</span>
           </div>
-          <div id="mediaImagesListInfo" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+          <div id="mediaImagesFormBody" class="media-section-body collapsed">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+              <input type="text" id="mediaImagesUrl" placeholder="Link ảnh hoặc nhiều link cách nhau bởi dấu phẩy..." style="flex:1;font-size:13px;" oninput="onMediaFieldInput('images')">
+              <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;" title="Tải nhiều ảnh từ máy">
+                📁 Tải ảnh
+                <input type="file" id="mediaImagesFilesInput" accept="image/*" multiple style="display:none;" onchange="handleMediaImagesSelect(event)">
+              </label>
+            </div>
+            <div id="mediaImagesListInfo" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+          </div>
         </div>
 
         <!-- 2. PDF Document Section -->
-        <div class="form-group" style="margin-bottom:14px;">
-          <label style="font-size:13px;font-weight:600;">📄 Tài liệu PDF:</label>
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-            <input type="text" id="mediaPdfUrl" placeholder="https://.../document.pdf hoặc tải file..." style="flex:1;font-size:13px;">
-            <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;">
-              📁 Tải PDF
-              <input type="file" id="mediaPdfFileInput" accept=".pdf,application/pdf" style="display:none;" onchange="handleMediaPdfSelect(event)">
+        <div class="media-section-card" id="secCard_pdf">
+          <div class="media-section-header">
+            <label class="media-toggle-label">
+              <input type="checkbox" id="enablePdfCheck" onchange="onMediaSectionToggle('pdf')">
+              <span class="media-section-title"><span>📄</span> Tài liệu PDF</span>
             </label>
+            <span class="media-status-tag" id="statusTag_pdf">Tắt</span>
           </div>
-          <div id="mediaPdfFileInfo" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+          <div id="mediaPdfFormBody" class="media-section-body collapsed">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+              <input type="text" id="mediaPdfUrl" placeholder="https://.../document.pdf hoặc tải file..." style="flex:1;font-size:13px;" oninput="onMediaFieldInput('pdf')">
+              <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;">
+                📁 Tải PDF
+                <input type="file" id="mediaPdfFileInput" accept=".pdf,application/pdf" style="display:none;" onchange="handleMediaPdfSelect(event)">
+              </label>
+            </div>
+            <div id="mediaPdfFileInfo" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+          </div>
         </div>
 
         <!-- 3. Video Section -->
-        <div class="form-group" style="margin-bottom:14px;">
-          <label style="font-size:13px;font-weight:600;">🎥 Video (MP4 / WebM):</label>
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-            <input type="text" id="mediaVideoUrl" placeholder="https://.../video.mp4 hoặc tải file..." style="flex:1;font-size:13px;">
-            <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;">
-              📁 Tải Video
-              <input type="file" id="mediaVideoFileInput" accept="video/mp4,video/webm,video/*" style="display:none;" onchange="handleMediaVideoSelect(event)">
+        <div class="media-section-card" id="secCard_video">
+          <div class="media-section-header">
+            <label class="media-toggle-label">
+              <input type="checkbox" id="enableVideoCheck" onchange="onMediaSectionToggle('video')">
+              <span class="media-section-title"><span>🎥</span> Video tải lên (MP4 / WebM)</span>
             </label>
+            <span class="media-status-tag" id="statusTag_video">Tắt</span>
           </div>
-          <div id="mediaVideoFileInfo" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+          <div id="mediaVideoFormBody" class="media-section-body collapsed">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+              <input type="text" id="mediaVideoUrl" placeholder="https://.../video.mp4 hoặc tải file..." style="flex:1;font-size:13px;" oninput="onMediaFieldInput('video')">
+              <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;">
+                📁 Tải Video
+                <input type="file" id="mediaVideoFileInput" accept="video/mp4,video/webm,video/*" style="display:none;" onchange="handleMediaVideoSelect(event)">
+              </label>
+            </div>
+            <div id="mediaVideoFileInfo" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+          </div>
         </div>
 
         <!-- 4. YouTube Section -->
-        <div class="form-group" style="margin-bottom:14px;">
-          <label style="font-size:13px;font-weight:600;">▶️ Link Video YouTube:</label>
-          <input type="text" id="mediaYoutubeUrl" placeholder="https://www.youtube.com/watch?v=... hoặc https://youtu.be/..." style="font-size:13px;">
+        <div class="media-section-card" id="secCard_youtube">
+          <div class="media-section-header">
+            <label class="media-toggle-label">
+              <input type="checkbox" id="enableYoutubeCheck" onchange="onMediaSectionToggle('youtube')">
+              <span class="media-section-title"><span>▶️</span> Link Video YouTube</span>
+            </label>
+            <span class="media-status-tag" id="statusTag_youtube">Tắt</span>
+          </div>
+          <div id="mediaYoutubeFormBody" class="media-section-body collapsed">
+            <input type="text" id="mediaYoutubeUrl" placeholder="https://www.youtube.com/watch?v=... hoặc https://youtu.be/..." style="font-size:13px;" oninput="onMediaFieldInput('youtube')">
+          </div>
         </div>
 
         <!-- 5. 3D Model Section -->
-        <div class="form-group" style="margin-bottom:14px;">
-          <label style="font-size:13px;font-weight:600;">🧊 Mô hình 3D (.glb, .gltf):</label>
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-            <input type="text" id="media3dUrl" placeholder="https://.../model.glb hoặc tải file..." style="flex:1;font-size:13px;">
-            <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;">
-              📁 Tải 3D (.glb)
-              <input type="file" id="media3dFileInput" accept=".glb,.gltf" style="display:none;" onchange="handleMedia3dSelect(event)">
+        <div class="media-section-card" id="secCard_3d">
+          <div class="media-section-header">
+            <label class="media-toggle-label">
+              <input type="checkbox" id="enable3dCheck" onchange="onMediaSectionToggle('3d')">
+              <span class="media-section-title"><span>🧊</span> Mô hình 3D (.glb, .gltf)</span>
             </label>
+            <span class="media-status-tag" id="statusTag_3d">Tắt</span>
           </div>
-          <div id="media3dFileInfo" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+          <div id="media3dFormBody" class="media-section-body collapsed">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+              <input type="text" id="media3dUrl" placeholder="https://.../model.glb hoặc tải file..." style="flex:1;font-size:13px;" oninput="onMediaFieldInput('3d')">
+              <label class="btn btn-small btn-primary" style="margin:0;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 12px;">
+                📁 Tải 3D (.glb)
+                <input type="file" id="media3dFileInput" accept=".glb,.gltf" style="display:none;" onchange="handleMedia3dSelect(event)">
+              </label>
+            </div>
+            <div id="media3dFileInfo" style="font-size:12px;color:var(--text-muted);margin-top:4px;"></div>
+          </div>
         </div>
 
         <!-- 6. Facebook Section -->
-        <div class="form-group" style="margin-bottom:14px;">
-          <label style="font-size:13px;font-weight:600;">👍 Link Facebook (Bài viết / Video / Trang):</label>
-          <input type="text" id="mediaFacebookUrl" placeholder="https://www.facebook.com/..." style="font-size:13px;">
+        <div class="media-section-card" id="secCard_facebook">
+          <div class="media-section-header">
+            <label class="media-toggle-label">
+              <input type="checkbox" id="enableFacebookCheck" onchange="onMediaSectionToggle('facebook')">
+              <span class="media-section-title"><span>👍</span> Link Facebook (Bài viết / Video / Trang)</span>
+            </label>
+            <span class="media-status-tag" id="statusTag_facebook">Tắt</span>
+          </div>
+          <div id="mediaFacebookFormBody" class="media-section-body collapsed">
+            <input type="text" id="mediaFacebookUrl" placeholder="https://www.facebook.com/..." style="font-size:13px;" oninput="onMediaFieldInput('facebook')">
+          </div>
         </div>
 
         <!-- 7. Web Link Section -->
-        <div class="form-group" style="margin-bottom:16px;">
-          <label style="font-size:13px;font-weight:600;">🌐 Liên kết Trang web / Iframe ngoài:</label>
-          <input type="text" id="mediaWebUrl" placeholder="https://example.com/..." style="font-size:13px;">
+        <div class="media-section-card" id="secCard_web">
+          <div class="media-section-header">
+            <label class="media-toggle-label">
+              <input type="checkbox" id="enableWebCheck" onchange="onMediaSectionToggle('web')">
+              <span class="media-section-title"><span>🌐</span> Liên kết Trang web / Iframe ngoài</span>
+            </label>
+            <span class="media-status-tag" id="statusTag_web">Tắt</span>
+          </div>
+          <div id="mediaWebFormBody" class="media-section-body collapsed">
+            <input type="text" id="mediaWebUrl" placeholder="https://example.com/..." style="font-size:13px;" oninput="onMediaFieldInput('web')">
+          </div>
         </div>
 
         <!-- Hidden Yaw and Pitch fields -->
@@ -708,21 +849,28 @@
           <input type="hidden" id="mediaUrl" value="">
         </div>
 
-        <div id="polygonHighlightSection" style="margin-bottom:16px;">
-          <label style="display:block;margin-bottom:6px;font-weight:600;color:var(--text-muted);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">
-            🔷 Vùng Highlight 3D (tùy chọn)
-          </label>
-          <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:8px;padding:12px;">
-            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
-              Vẽ vùng bao quanh vật thể trên ảnh 360 để tạo highlight màu xanh trong tour.<br>
-              <em>Cần ít nhất 3 điểm. Sau khi bật vẽ, click lên ảnh panorama phía trên.</em>
-            </p>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
-              <button type="button" id="polygonDrawBtn" onclick="togglePolygonDrawMode()" style="padding:7px 12px;background:var(--accent);color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✏️ Bắt đầu vẽ</button>
-              <button type="button" onclick="undoPolygonPoint()" style="padding:7px 12px;background:rgba(251,191,36,0.2);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);border-radius:6px;font-size:12px;cursor:pointer;">↩️ Xóa điểm cuối</button>
-              <button type="button" onclick="clearPolygon()" style="padding:7px 12px;background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;font-size:12px;cursor:pointer;">🗑️ Xóa tất cả</button>
+        <!-- 8. Polygon Highlight Section -->
+        <div class="media-section-card" id="secCard_polygon" style="margin-bottom:16px;">
+          <div class="media-section-header">
+            <label class="media-toggle-label">
+              <input type="checkbox" id="enablePolygonCheck" onchange="onMediaSectionToggle('polygon')">
+              <span class="media-section-title"><span>🔷</span> Vùng Highlight 3D (tùy chọn)</span>
+            </label>
+            <span class="media-status-tag" id="statusTag_polygon">Tắt</span>
+          </div>
+          <div id="polygonHighlightBody" class="media-section-body collapsed">
+            <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:8px;padding:12px;">
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+                Vẽ vùng bao quanh vật thể trên ảnh 360 để tạo highlight màu xanh trong tour.<br>
+                <em>Cần ít nhất 3 điểm. Sau khi bật vẽ, click lên ảnh panorama phía trên.</em>
+              </p>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                <button type="button" id="polygonDrawBtn" onclick="togglePolygonDrawMode()" style="padding:7px 12px;background:var(--accent);color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">✏️ Bắt đầu vẽ</button>
+                <button type="button" onclick="undoPolygonPoint()" style="padding:7px 12px;background:rgba(251,191,36,0.2);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);border-radius:6px;font-size:12px;cursor:pointer;">↩️ Xóa điểm cuối</button>
+                <button type="button" onclick="clearPolygon()" style="padding:7px 12px;background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.3);border-radius:6px;font-size:12px;cursor:pointer;">🗑️ Xóa tất cả</button>
+              </div>
+              <div id="polygonStatus" style="font-size:11px;color:var(--accent-light);min-height:16px;"></div>
             </div>
-            <div id="polygonStatus" style="font-size:11px;color:var(--accent-light);min-height:16px;"></div>
           </div>
         </div>
 

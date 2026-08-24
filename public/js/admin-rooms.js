@@ -2716,6 +2716,68 @@
       }
     }
 
+    /* ===== MEDIA SECTION TOGGLE HANDLERS ===== */
+    window.onMediaSectionToggle = function(type) {
+      const secMap = {
+        stall: { checkId: 'enableStallCardCheck', cardId: 'secCard_stall', bodyId: 'stallCardFormBody', tagId: 'statusTag_stall' },
+        images: { checkId: 'enableImagesCheck', cardId: 'secCard_images', bodyId: 'mediaImagesFormBody', tagId: 'statusTag_images' },
+        pdf: { checkId: 'enablePdfCheck', cardId: 'secCard_pdf', bodyId: 'mediaPdfFormBody', tagId: 'statusTag_pdf' },
+        video: { checkId: 'enableVideoCheck', cardId: 'secCard_video', bodyId: 'mediaVideoFormBody', tagId: 'statusTag_video' },
+        youtube: { checkId: 'enableYoutubeCheck', cardId: 'secCard_youtube', bodyId: 'mediaYoutubeFormBody', tagId: 'statusTag_youtube' },
+        '3d': { checkId: 'enable3dCheck', cardId: 'secCard_3d', bodyId: 'media3dFormBody', tagId: 'statusTag_3d' },
+        facebook: { checkId: 'enableFacebookCheck', cardId: 'secCard_facebook', bodyId: 'mediaFacebookFormBody', tagId: 'statusTag_facebook' },
+        web: { checkId: 'enableWebCheck', cardId: 'secCard_web', bodyId: 'mediaWebFormBody', tagId: 'statusTag_web' },
+        polygon: { checkId: 'enablePolygonCheck', cardId: 'secCard_polygon', bodyId: 'polygonHighlightBody', tagId: 'statusTag_polygon' }
+      };
+
+      const cfg = secMap[type];
+      if (!cfg) return;
+      const check = document.getElementById(cfg.checkId);
+      const card = document.getElementById(cfg.cardId);
+      const body = document.getElementById(cfg.bodyId);
+      const tag = document.getElementById(cfg.tagId);
+
+      const isChecked = check ? check.checked : false;
+      if (card) {
+        if (isChecked) card.classList.add('active');
+        else card.classList.remove('active');
+      }
+      if (body) {
+        if (isChecked) body.classList.remove('collapsed');
+        else body.classList.add('collapsed');
+      }
+      if (tag) {
+        tag.textContent = isChecked ? 'Đang bật' : 'Tắt';
+      }
+    };
+
+    window.onMediaFieldInput = function(type) {
+      const checkMap = {
+        stall: 'enableStallCardCheck',
+        images: 'enableImagesCheck',
+        pdf: 'enablePdfCheck',
+        video: 'enableVideoCheck',
+        youtube: 'enableYoutubeCheck',
+        '3d': 'enable3dCheck',
+        facebook: 'enableFacebookCheck',
+        web: 'enableWebCheck',
+        polygon: 'enablePolygonCheck'
+      };
+      const checkId = checkMap[type];
+      if (checkId) {
+        const chk = document.getElementById(checkId);
+        if (chk && !chk.checked) {
+          chk.checked = true;
+          window.onMediaSectionToggle(type);
+        }
+      }
+    };
+
+    window.updateAllMediaSectionStates = function() {
+      const types = ['stall', 'images', 'pdf', 'video', 'youtube', '3d', 'facebook', 'web', 'polygon'];
+      types.forEach(t => window.onMediaSectionToggle(t));
+    };
+
     function clearMediaHotspotIcon() {
       selectedMediaIconFile = null;
       const fileInput = document.getElementById('mediaHotspotIconFile');
@@ -2732,6 +2794,7 @@
       selectedMediaImagesFiles = files;
       const info = document.getElementById('mediaImagesListInfo');
       if (info) info.textContent = `📎 Đã chọn ${files.length} ảnh: ${files.map(f => f.name).join(', ')}`;
+      if (typeof onMediaFieldInput === 'function') onMediaFieldInput('images');
     }
     window.handleMediaImagesSelect = handleMediaImagesSelect;
 
@@ -2741,6 +2804,7 @@
       selectedMediaPdfFile = file;
       const info = document.getElementById('mediaPdfFileInfo');
       if (info) info.textContent = `📎 Đã chọn: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      if (typeof onMediaFieldInput === 'function') onMediaFieldInput('pdf');
     }
     window.handleMediaPdfSelect = handleMediaPdfSelect;
 
@@ -2750,6 +2814,7 @@
       selectedMediaVideoFile = file;
       const info = document.getElementById('mediaVideoFileInfo');
       if (info) info.textContent = `📎 Đã chọn: ${file.name} (${(file.size / (1024*1024)).toFixed(1)} MB)`;
+      if (typeof onMediaFieldInput === 'function') onMediaFieldInput('video');
     }
     window.handleMediaVideoSelect = handleMediaVideoSelect;
 
@@ -2759,6 +2824,7 @@
       selectedMedia3dFile = file;
       const info = document.getElementById('media3dFileInfo');
       if (info) info.textContent = `📎 Đã chọn: ${file.name} (${(file.size / (1024*1024)).toFixed(1)} MB)`;
+      if (typeof onMediaFieldInput === 'function') onMediaFieldInput('3d');
     }
     window.handleMedia3dSelect = handleMedia3dSelect;
 
@@ -2779,31 +2845,32 @@
       }
 
       const uploadData = await uploadRes.json();
-      if (!uploadRes.ok || !uploadData.success || !uploadData.media?.url) {
+      if (!uploadData.success || !uploadData.url) {
         throw new Error(uploadData.error || `Upload file "${file.name}" thất bại`);
       }
-      return uploadData.media.url;
+      return uploadData.url;
     }
 
-    let selectedStallAvatarFile = null;
+    /* ===== STALL INFO CARD (THẺ THÔNG TIN SẠP HÀNG) ===== */
     let stallSections = [];
+    let selectedStallAvatarFile = null;
 
     function renderStallSections() {
       const container = document.getElementById('stallSectionsContainer');
       if (!container) return;
 
       if (!stallSections || stallSections.length === 0) {
-        container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:10px;background:rgba(255,255,255,0.02);border-radius:6px;">Chưa có mục nào. Nhấn "+ Thêm mục" hoặc các nút mẫu phía trên để tạo.</div>';
+        container.innerHTML = '<div style="font-size:11.5px;color:var(--text-muted);text-align:center;padding:12px;border:1px dashed rgba(255,255,255,0.1);border-radius:6px;">Chưa có mục nào. Nhấn "+ Thêm mục" hoặc các nút mẫu phía trên để tạo.</div>';
         return;
       }
 
       container.innerHTML = stallSections.map((sec, idx) => `
-        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:8px;position:relative;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <input type="text" placeholder="Tiêu đề mục (VD: THÔNG TIN LIÊN HỆ)" value="${(sec.title || '').replace(/"/g, '&quot;')}" oninput="stallSections[${idx}].title = this.value" style="flex:1;font-weight:700;font-size:12px;padding:4px 8px;border-radius:4px;margin-right:6px;">
-            <button type="button" onclick="removeStallSection(${idx})" style="background:rgba(239,68,68,0.2);color:#f87171;border:none;border-radius:4px;padding:3px 6px;font-size:11px;cursor:pointer;" title="Xóa mục này">🗑️</button>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+            <input type="text" value="${(sec.title || '').replace(/"/g, '&quot;')}" placeholder="Tiêu đề mục (Ví dụ: THÔNG TIN LIÊN HỆ)" style="flex:1;font-size:11.5px;font-weight:700;padding:4px 8px;height:auto;" onchange="updateStallSection(${idx}, 'title', this.value); onMediaFieldInput('stall');">
+            <button type="button" class="btn btn-small" onclick="removeStallSection(${idx})" style="padding:2px 6px;font-size:11px;background:#ef4444;color:#fff;margin:0;" title="Xóa mục này">✕</button>
           </div>
-          <textarea rows="2" placeholder="Nội dung mục (Mỗi dòng một ý)..." oninput="stallSections[${idx}].content = this.value" style="width:100%;font-size:12px;padding:6px;border-radius:4px;">${sec.content || ''}</textarea>
+          <textarea rows="2" placeholder="Nội dung chi tiết (Mỗi dòng 1 thông tin)..." style="font-size:11.5px;padding:4px 8px;margin:0;" onchange="updateStallSection(${idx}, 'content', this.value); onMediaFieldInput('stall');">${sec.content || ''}</textarea>
         </div>
       `).join('');
     }
@@ -2812,6 +2879,13 @@
     window.addStallSection = function(title = '', content = '') {
       stallSections.push({ title, content });
       renderStallSections();
+      if (typeof onMediaFieldInput === 'function') onMediaFieldInput('stall');
+    };
+
+    window.updateStallSection = function(idx, field, value) {
+      if (stallSections[idx]) {
+        stallSections[idx][field] = value;
+      }
     };
 
     window.removeStallSection = function(idx) {
@@ -2821,28 +2895,18 @@
 
     window.addStallSectionTemplate = function(type) {
       if (type === 'contact') {
-        stallSections.push({
-          title: 'THÔNG TIN LIÊN HỆ & VỊ TRÍ',
-          content: '👤 Chủ sạp: Bà Nguyễn Thu Trang\n📞 Hotline / Zalo: 0988.123.456\n📍 Vị trí: Sạp A-15, Tầng 1 (Cổng Số 2)\n⏰ Thời gian mở cửa: 06:00 - 18:30'
-        });
+        window.addStallSection('THÔNG TIN LIÊN HỆ & VỊ TRÍ', '👤 Chủ sạp: \n📞 Hotline / Zalo: \n📍 Vị trí: Sạp ...\n⏰ Giờ mở cửa: 06:00 - 18:00');
       } else if (type === 'products') {
-        stallSections.push({
-          title: 'MẶT HÀNG KINH DOANH CHÍNH',
-          content: '🍇 Nho Ninh Thuận\n🥭 Xoài Cát Hòa Lộc\n🍊 Cam Sành Tiền Giang\n🥑 Bơ Sáp Đắk Lắk\n📦 Đóng thùng sỉ gửi tỉnh'
-        });
+        window.addStallSection('MẶT HÀNG KINH DOANH CHÍNH', 'Mặt hàng 1\nMặt hàng 2\nMặt hàng 3\nMặt hàng 4');
       } else if (type === 'policy') {
-        stallSections.push({
-          title: 'CHÍNH SÁCH & PHƯƠNG THỨC THANH TOÁN',
-          content: '🚚 Giao hàng: Miễn phí ship đơn từ 300k bán kính 5km\n💳 Thanh toán: Chuyển khoản QR, MoMo, Tiền mặt\n🏷️ Ưu đãi: Chiết khấu 5-10% cho đơn hàng số lượng lớn'
-        });
+        window.addStallSection('CHÍNH SÁCH & PHƯƠNG THỨC THANH TOÁN', '🚚 Giao hàng: Miễn phí ship đơn từ 300k bán kính 5km\n💳 Thanh toán: Chuyển khoản QR, MoMo, Tiền mặt\n🏷️ Ưu đãi: Chiết khấu 5-10% cho đơn hàng số lượng lớn');
       }
-      renderStallSections();
     };
 
     window.toggleStallCardSection = function() {
       const body = document.getElementById('stallCardFormBody');
       if (body) {
-        body.style.display = body.style.display === 'none' ? 'block' : 'none';
+        body.classList.toggle('collapsed');
       }
     };
 
@@ -2858,6 +2922,7 @@
       }
       const urlInput = document.getElementById('stallAvatarUrl');
       if (urlInput) urlInput.value = file.name;
+      if (typeof onMediaFieldInput === 'function') onMediaFieldInput('stall');
     };
 
     const STALL_PRESET_TEMPLATES = {
@@ -3062,9 +3127,7 @@
       stallSections = Array.isArray(tpl.sections) ? tpl.sections.map(s => ({ title: s.title, content: s.content })) : [];
       renderStallSections();
 
-      // Ensure form body is open
-      const formBody = document.getElementById('stallCardFormBody');
-      if (formBody) formBody.style.display = 'block';
+      if (typeof onMediaFieldInput === 'function') onMediaFieldInput('stall');
 
       // Visual feedback
       const selectEl = document.getElementById('stallTemplateSelect');
@@ -3115,6 +3178,18 @@
       if (model3dInfo) model3dInfo.textContent = '';
       editingMediaHotspotIndex = null;
       if (typeof clearPolygon === 'function') clearPolygon();
+
+      // Reset all checkbox toggles
+      const checkIds = [
+        'enableStallCardCheck', 'enableImagesCheck', 'enablePdfCheck',
+        'enableVideoCheck', 'enableYoutubeCheck', 'enable3dCheck',
+        'enableFacebookCheck', 'enableWebCheck', 'enablePolygonCheck'
+      ];
+      checkIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = false;
+      });
+      if (typeof updateAllMediaSectionStates === 'function') updateAllMediaSectionStates();
     }
     window.closeMediaHotspotModal = closeMediaHotspotModal;
 
@@ -3131,14 +3206,25 @@
         const title = document.getElementById('mediaTitle').value.trim();
         const description = document.getElementById('mediaDescription').value.trim();
 
+        // Check enabled states
+        const isStallEnabled = !!document.getElementById('enableStallCardCheck')?.checked;
+        const isImagesEnabled = !!document.getElementById('enableImagesCheck')?.checked;
+        const isPdfEnabled = !!document.getElementById('enablePdfCheck')?.checked;
+        const isVideoEnabled = !!document.getElementById('enableVideoCheck')?.checked;
+        const isYoutubeEnabled = !!document.getElementById('enableYoutubeCheck')?.checked;
+        const is3dEnabled = !!document.getElementById('enable3dCheck')?.checked;
+        const isFacebookEnabled = !!document.getElementById('enableFacebookCheck')?.checked;
+        const isWebEnabled = !!document.getElementById('enableWebCheck')?.checked;
+        const isPolygonEnabled = !!document.getElementById('enablePolygonCheck')?.checked;
+
         let iconUrl = (document.getElementById('mediaHotspotIconUrl')?.value || '').trim();
-        let imagesUrlText = (document.getElementById('mediaImagesUrl')?.value || '').trim();
-        let pdfUrl = (document.getElementById('mediaPdfUrl')?.value || '').trim();
-        let videoUrl = (document.getElementById('mediaVideoUrl')?.value || '').trim();
-        let youtubeUrl = (document.getElementById('mediaYoutubeUrl')?.value || '').trim();
-        let model3dUrl = (document.getElementById('media3dUrl')?.value || '').trim();
-        let facebookUrl = (document.getElementById('mediaFacebookUrl')?.value || '').trim();
-        let webUrl = (document.getElementById('mediaWebUrl')?.value || '').trim();
+        let imagesUrlText = isImagesEnabled ? (document.getElementById('mediaImagesUrl')?.value || '').trim() : '';
+        let pdfUrl = isPdfEnabled ? (document.getElementById('mediaPdfUrl')?.value || '').trim() : '';
+        let videoUrl = isVideoEnabled ? (document.getElementById('mediaVideoUrl')?.value || '').trim() : '';
+        let youtubeUrl = isYoutubeEnabled ? (document.getElementById('mediaYoutubeUrl')?.value || '').trim() : '';
+        let model3dUrl = is3dEnabled ? (document.getElementById('media3dUrl')?.value || '').trim() : '';
+        let facebookUrl = isFacebookEnabled ? (document.getElementById('mediaFacebookUrl')?.value || '').trim() : '';
+        let webUrl = isWebEnabled ? (document.getElementById('mediaWebUrl')?.value || '').trim() : '';
 
         try {
           // 1. Upload custom icon if selected
@@ -3146,76 +3232,80 @@
             iconUrl = await uploadSingleFile(selectedMediaIconFile);
           }
 
-          // 2. Upload images if selected
+          // 2. Upload images if enabled
           let finalImages = [];
-          if (imagesUrlText) {
-            finalImages = imagesUrlText.split(',').map(s => s.trim()).filter(Boolean);
-          }
-          if (selectedMediaImagesFiles && selectedMediaImagesFiles.length > 0) {
-            for (const imgFile of selectedMediaImagesFiles) {
-              const uploadedImgUrl = await uploadSingleFile(imgFile);
-              if (uploadedImgUrl) finalImages.push(uploadedImgUrl);
+          if (isImagesEnabled) {
+            if (imagesUrlText) {
+              finalImages = imagesUrlText.split(',').map(s => s.trim()).filter(Boolean);
+            }
+            if (selectedMediaImagesFiles && selectedMediaImagesFiles.length > 0) {
+              for (const imgFile of selectedMediaImagesFiles) {
+                const uploadedImgUrl = await uploadSingleFile(imgFile);
+                if (uploadedImgUrl) finalImages.push(uploadedImgUrl);
+              }
             }
           }
 
-          // 3. Upload PDF if selected
-          if (selectedMediaPdfFile) {
+          // 3. Upload PDF if enabled
+          if (isPdfEnabled && selectedMediaPdfFile) {
             pdfUrl = await uploadSingleFile(selectedMediaPdfFile);
           }
 
-          // 4. Upload Video if selected
-          if (selectedMediaVideoFile) {
+          // 4. Upload Video if enabled
+          if (isVideoEnabled && selectedMediaVideoFile) {
             videoUrl = await uploadSingleFile(selectedMediaVideoFile);
           }
 
-          // 5. Upload 3D model if selected
-          if (selectedMedia3dFile) {
+          // 5. Upload 3D model if enabled
+          if (is3dEnabled && selectedMedia3dFile) {
             model3dUrl = await uploadSingleFile(selectedMedia3dFile);
           }
 
-          // 6. Upload Stall Avatar if selected
-          let stallAvatarUrl = (document.getElementById('stallAvatarUrl')?.value || '').trim();
-          if (selectedStallAvatarFile) {
-            stallAvatarUrl = await uploadSingleFile(selectedStallAvatarFile);
-          }
-          const stallBadge = (document.getElementById('stallBadge')?.value || '').trim();
-          const stallThemeColor = (document.getElementById('stallThemeColor')?.value || '').trim();
-          const stallSidebarTitle = (document.getElementById('stallSidebarTitle')?.value || '').trim();
-          const stallSidebarContent = (document.getElementById('stallSidebarContent')?.value || '').trim();
-          
-          let validStallSections = stallSections.map(s => ({
-            title: (s.title || '').trim(),
-            content: (s.content || '').trim()
-          })).filter(s => s.title || s.content);
-
+          // 6. Upload Stall Avatar if enabled
           let stallCard = null;
-          if (stallAvatarUrl || stallBadge || stallSidebarTitle || stallSidebarContent || validStallSections.length > 0) {
-            stallCard = {
-              avatar: stallAvatarUrl || undefined,
-              badge: stallBadge || undefined,
-              themeColor: stallThemeColor || '#0d3834',
-              sidebarTitle: stallSidebarTitle || undefined,
-              sidebarContent: stallSidebarContent || undefined,
-              sections: validStallSections
-            };
+          if (isStallEnabled) {
+            let stallAvatarUrl = (document.getElementById('stallAvatarUrl')?.value || '').trim();
+            if (selectedStallAvatarFile) {
+              stallAvatarUrl = await uploadSingleFile(selectedStallAvatarFile);
+            }
+            const stallBadge = (document.getElementById('stallBadge')?.value || '').trim();
+            const stallThemeColor = (document.getElementById('stallThemeColor')?.value || '').trim();
+            const stallSidebarTitle = (document.getElementById('stallSidebarTitle')?.value || '').trim();
+            const stallSidebarContent = (document.getElementById('stallSidebarContent')?.value || '').trim();
+            
+            let validStallSections = stallSections.map(s => ({
+              title: (s.title || '').trim(),
+              content: (s.content || '').trim()
+            })).filter(s => s.title || s.content);
+
+            if (stallAvatarUrl || stallBadge || stallSidebarTitle || stallSidebarContent || validStallSections.length > 0) {
+              stallCard = {
+                avatar: stallAvatarUrl || undefined,
+                badge: stallBadge || undefined,
+                themeColor: stallThemeColor || '#0d3834',
+                sidebarTitle: stallSidebarTitle || undefined,
+                sidebarContent: stallSidebarContent || undefined,
+                sections: validStallSections
+              };
+            }
           }
 
           const mediaItems = {
-            images: finalImages.length > 0 ? finalImages : undefined,
-            pdfUrl: pdfUrl || undefined,
-            videoUrl: videoUrl || undefined,
-            youtubeUrl: youtubeUrl || undefined,
-            model3dUrl: model3dUrl || undefined,
-            facebookUrl: facebookUrl || undefined,
-            webUrl: webUrl || undefined,
-            stallCard: stallCard || undefined
+            images: (isImagesEnabled && finalImages.length > 0) ? finalImages : undefined,
+            pdfUrl: (isPdfEnabled && pdfUrl) ? pdfUrl : undefined,
+            videoUrl: (isVideoEnabled && videoUrl) ? videoUrl : undefined,
+            youtubeUrl: (isYoutubeEnabled && youtubeUrl) ? youtubeUrl : undefined,
+            model3dUrl: (is3dEnabled && model3dUrl) ? model3dUrl : undefined,
+            facebookUrl: (isFacebookEnabled && facebookUrl) ? facebookUrl : undefined,
+            webUrl: (isWebEnabled && webUrl) ? webUrl : undefined,
+            stallCard: (isStallEnabled && stallCard) ? stallCard : undefined
           };
 
           // Clean undefined keys
           Object.keys(mediaItems).forEach(k => mediaItems[k] === undefined && delete mediaItems[k]);
 
           // Pick primary mediaUrl for backward compatibility
-          const primaryMediaUrl = (stallCard && stallCard.avatar) || finalImages[0] || pdfUrl || videoUrl || youtubeUrl || model3dUrl || facebookUrl || webUrl || '';
+          const primaryMediaUrl = (stallCard && stallCard.avatar) || (finalImages.length > 0 ? finalImages[0] : '') || pdfUrl || videoUrl || youtubeUrl || model3dUrl || facebookUrl || webUrl || '';
 
           const mediaHotspot = {
             yaw: parseFloat(document.getElementById('mediaYaw').value) || 0,
@@ -3226,7 +3316,7 @@
             mediaType: stallCard ? 'stall' : 'all',
             mediaUrl: primaryMediaUrl,
             mediaItems: Object.keys(mediaItems).length > 0 ? mediaItems : null,
-            highlightPolygon: polygonPoints.length >= 3 ? polygonPoints.map(p => [...p]) : null
+            highlightPolygon: (isPolygonEnabled && polygonPoints.length >= 3) ? polygonPoints.map(p => [...p]) : null
           };
 
           let url = `/api/admin/rooms/${selectedRoomId}/media-hotspots`;
@@ -3438,11 +3528,25 @@
         renderStallSections();
       }
 
+      // Set Checkbox active states based on whether data exists
+      document.getElementById('enableStallCardCheck').checked = !!stallCard;
+      document.getElementById('enableImagesCheck').checked = images.length > 0;
+      document.getElementById('enablePdfCheck').checked = !!pdfUrl;
+      document.getElementById('enableVideoCheck').checked = !!videoUrl;
+      document.getElementById('enableYoutubeCheck').checked = !!ytUrl;
+      document.getElementById('enable3dCheck').checked = !!model3dUrl;
+      document.getElementById('enableFacebookCheck').checked = !!fbUrl;
+      document.getElementById('enableWebCheck').checked = !!webUrl;
+
       // Restore polygon for 3d / highlight
       polygonPoints = (Array.isArray(media.highlightPolygon)) ? media.highlightPolygon.map(p => [...p]) : [];
+      document.getElementById('enablePolygonCheck').checked = polygonPoints.length >= 3;
       const polyStatus = document.getElementById('polygonStatus');
       if (polyStatus && polygonPoints.length > 0) polyStatus.textContent = `✅ ${polygonPoints.length} điểm đã lưu.`;
       setTimeout(() => updatePolygonPreviewHotspots(), 500);
+
+      // Update visuals of all section cards
+      if (typeof updateAllMediaSectionStates === 'function') updateAllMediaSectionStates();
 
       const modal = document.getElementById('mediaHotspotModal');
       const modalHeader = document.getElementById('mediaModalTitle');
