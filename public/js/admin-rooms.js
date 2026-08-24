@@ -2845,10 +2845,11 @@
       }
 
       const uploadData = await uploadRes.json();
-      if (!uploadData.success || !uploadData.url) {
+      const uploadedUrl = uploadData.url || uploadData.media?.url;
+      if (!uploadData.success || !uploadedUrl) {
         throw new Error(uploadData.error || `Upload file "${file.name}" thất bại`);
       }
-      return uploadData.url;
+      return uploadedUrl;
     }
 
     /* ===== STALL INFO CARD (THẺ THÔNG TIN SẠP HÀNG) ===== */

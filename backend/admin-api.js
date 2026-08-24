@@ -636,7 +636,7 @@ router.post("/media/upload", uploadMediaWithJsonError, async (req, res) => {
     };
 
     console.log("📁 Media uploaded to Cloud:", mediaInfo.url);
-    res.json({ success: true, media: mediaInfo });
+    res.json({ success: true, url: cloudUrl, media: mediaInfo });
   } catch (err) {
     console.error("❌ Media upload error:", err);
     res.status(500).json({ success: false, error: err.message });
