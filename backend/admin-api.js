@@ -1250,24 +1250,181 @@ router.delete("/buildings/:id", async (req, res) => {
   }
 });
 
-/* ===== TOUR SCENARIOS ===== */
+/* ===== MULTI TOUR SCENARIOS API ===== */
 
-// GET tour scenario
-router.get("/tour-scenario", async (req, res) => {
+async function getStoredTourScenarios() {
+  let scenarios = await db.getAppConfig('tour_scenarios');
+  if (!Array.isArray(scenarios) || scenarios.length === 0) {
+    const legacy = await db.getAppConfig('tour_scenario');
+    if (legacy && (legacy.name || (Array.isArray(legacy.stops) && legacy.stops.length > 0))) {
+      scenarios = [{
+        id: Date.now(),
+        name: legacy.name || 'Kịch bản mặc định',
+        description: legacy.description || 'Kịch bản tour tự động',
+        isDefault: true,
+        cameraPanDuration: Number(legacy.cameraPanDuration) || 8000,
+        stops: Array.isArray(legacy.stops) ? legacy.stops : []
+      }];
+    } else {
+      scenarios = [{
+        id: 1,
+        name: 'Kịch bản mặc định',
+        description: 'Kịch bản tour tham quan tiêu chuẩn',
+        isDefault: true,
+        cameraPanDuration: 8000,
+        stops: []
+      }];
+    }
+    try {
+      await db.saveAppConfig('tour_scenarios', scenarios);
+    } catch (e) {
+      console.warn('Could not auto-migrate tour_scenarios config:', e);
+    }
+  }
+  return scenarios;
+}
+
+// GET all tour scenarios
+router.get("/tour-scenarios", async (req, res) => {
   try {
-    const scenario = await db.getAppConfig('tour_scenario');
-    res.json({ success: true, scenario: scenario || {} });
+    const scenarios = await getStoredTourScenarios();
+    res.json({ success: true, scenarios });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// SAVE tour scenario
+// SAVE or UPSERT scenario(s)
+router.post("/tour-scenarios", async (req, res) => {
+  try {
+    let scenarios = await getStoredTourScenarios();
+    const body = req.body;
+
+    if (Array.isArray(body)) {
+      scenarios = body;
+    } else if (body && Array.isArray(body.scenarios)) {
+      scenarios = body.scenarios;
+    } else if (body && body.id) {
+      const idx = scenarios.findIndex(s => String(s.id) === String(body.id));
+      if (idx >= 0) {
+        scenarios[idx] = { ...scenarios[idx], ...body };
+      } else {
+        scenarios.push(body);
+      }
+    } else if (body && body.name) {
+      const newScenario = {
+        id: Date.now(),
+        name: body.name || 'Kịch bản mới',
+        description: body.description || '',
+        isDefault: scenarios.length === 0,
+        cameraPanDuration: Number(body.cameraPanDuration) || 8000,
+        stops: Array.isArray(body.stops) ? body.stops : []
+      };
+      scenarios.push(newScenario);
+    }
+
+    // Ensure at least one default
+    if (!scenarios.some(s => s.isDefault) && scenarios.length > 0) {
+      scenarios[0].isDefault = true;
+    }
+
+    await db.saveAppConfig('tour_scenarios', scenarios);
+
+    // Sync active default scenario to legacy tour_scenario for client view
+    const defaultScenario = scenarios.find(s => s.isDefault) || scenarios[0] || {};
+    await db.saveAppConfig('tour_scenario', defaultScenario);
+
+    res.json({ success: true, message: "Đã lưu kịch bản thành công", scenarios });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// SET scenario as default
+router.post("/tour-scenarios/:id/set-default", async (req, res) => {
+  try {
+    const scenarioId = req.params.id;
+    let scenarios = await getStoredTourScenarios();
+    let found = false;
+
+    scenarios = scenarios.map(s => {
+      if (String(s.id) === String(scenarioId)) {
+        found = true;
+        return { ...s, isDefault: true };
+      }
+      return { ...s, isDefault: false };
+    });
+
+    if (!found) {
+      return res.status(404).json({ success: false, error: "Không tìm thấy kịch bản" });
+    }
+
+    await db.saveAppConfig('tour_scenarios', scenarios);
+
+    // Sync to legacy tour_scenario
+    const active = scenarios.find(s => s.isDefault) || {};
+    await db.saveAppConfig('tour_scenario', active);
+
+    res.json({ success: true, message: "Đã đặt làm kịch bản mặc định", scenarios });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE scenario
+router.delete("/tour-scenarios/:id", async (req, res) => {
+  try {
+    const scenarioId = req.params.id;
+    let scenarios = await getStoredTourScenarios();
+    if (scenarios.length <= 1) {
+      return res.status(400).json({ success: false, error: "Không thể xóa kịch bản duy nhất còn lại" });
+    }
+
+    const wasDefault = scenarios.find(s => String(s.id) === String(scenarioId))?.isDefault;
+    scenarios = scenarios.filter(s => String(s.id) !== String(scenarioId));
+
+    if (wasDefault && scenarios.length > 0) {
+      scenarios[0].isDefault = true;
+    }
+
+    await db.saveAppConfig('tour_scenarios', scenarios);
+
+    // Sync active to legacy tour_scenario
+    const active = scenarios.find(s => s.isDefault) || scenarios[0] || {};
+    await db.saveAppConfig('tour_scenario', active);
+
+    res.json({ success: true, message: "Đã xóa kịch bản", scenarios });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Legacy single scenario compatibility endpoints
+router.get("/tour-scenario", async (req, res) => {
+  try {
+    const scenarios = await getStoredTourScenarios();
+    const active = scenarios.find(s => s.isDefault) || scenarios[0] || {};
+    res.json({ success: true, scenario: active });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post("/tour-scenario", async (req, res) => {
   const scenario = req.body;
   try {
+    let scenarios = await getStoredTourScenarios();
+    const idx = scenarios.findIndex(s => s.isDefault);
+    if (idx >= 0) {
+      scenarios[idx] = { ...scenarios[idx], ...scenario, isDefault: true };
+    } else if (scenarios.length > 0) {
+      scenarios[0] = { ...scenarios[0], ...scenario, isDefault: true };
+    } else {
+      scenarios.push({ ...scenario, id: Date.now(), isDefault: true });
+    }
+    await db.saveAppConfig('tour_scenarios', scenarios);
     await db.saveAppConfig('tour_scenario', scenario);
-    res.json({ success: true, message: "Tour scenario saved successfully" });
+    res.json({ success: true, message: "Tour scenario saved successfully", scenarios });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

@@ -1122,6 +1122,90 @@
       from { transform: translateY(20px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+
+    /* ===== MULTI-SCENARIO TOP BAR ===== */
+    .studio-scenario-bar {
+      background: #ffffff;
+      padding: 12px 18px;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      border: 1px solid #e2e8f0;
+    }
+    .scenario-selector-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .scenario-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e293b;
+      white-space: nowrap;
+    }
+    .scenario-select {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1.5px solid #cbd5e1;
+      font-size: 13px;
+      font-weight: 600;
+      color: #0f172a;
+      background-color: #f8fafc;
+      min-width: 220px;
+      max-width: 320px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .scenario-select:focus {
+      border-color: var(--accent-color);
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+    .badge-default-tour {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+    }
+    .badge-secondary-tour {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+    .scenario-management-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-studio-danger {
+      background: #fff;
+      color: #ef4444;
+      border: 1px solid #fecaca;
+    }
+    .btn-studio-danger:hover {
+      background: #fef2f2;
+      border-color: #ef4444;
+    }
   </style>
 </head>
 <body>
@@ -1131,24 +1215,38 @@
 
   <div class="tour-studio-wrapper">
     
-    <!-- Top Action Header -->
-    <div class="studio-header">
-      <div class="studio-header-title">
-        <h1>⚡ Studio Kịch Bản Auto Tour 360</h1>
-        <span class="badge bg-primary" style="font-size: 11px;">WYSIWYG 360 Editor</span>
+    <!-- Top Scenario Management & Action Header -->
+    <div class="studio-scenario-bar">
+      <div class="scenario-selector-wrap">
+        <label class="scenario-label">📂 Kịch bản Tour:</label>
+        <select id="scenarioSelectorDropdown" class="scenario-select" onchange="onScenarioDropdownChanged(this.value)">
+          <!-- Loaded dynamically -->
+        </select>
+        <span id="scenarioDefaultBadge" class="badge-default-tour">⭐ Tour chính (Khách xem)</span>
       </div>
-      <div class="studio-header-actions">
+
+      <div class="scenario-management-actions">
+        <button class="btn-studio btn-studio-outline" onclick="openNewScenarioModal()" title="Tạo một kịch bản tour mới">
+          ➕ Tạo mới
+        </button>
+        <button class="btn-studio btn-studio-outline" onclick="duplicateCurrentScenario()" title="Nhân bản kịch bản hiện tại">
+          📋 Nhân bản
+        </button>
+        <button class="btn-studio btn-studio-outline" id="btnSetDefaultScenario" onclick="setDefaultScenario()" title="Đặt kịch bản này làm tour chính phát cho người dùng xem">
+          ⭐ Đặt làm Tour chính
+        </button>
+        <button class="btn-studio btn-studio-danger" onclick="deleteCurrentScenario()" id="btnDeleteScenario" title="Xóa kịch bản này">
+          🗑️ Xóa
+        </button>
+        <div style="width: 1px; height: 26px; background: #e2e8f0; margin: 0 4px;"></div>
         <button class="btn-studio btn-studio-accent" onclick="openQuickRouteModal()">
-          ⚡ Chọn nhanh chuỗi phòng (1-Click)
+          ⚡ Chuỗi phòng (1-Click)
         </button>
         <button class="btn-studio btn-studio-outline" onclick="playInStudioPreview()" id="previewTourBtn">
-          ▶ Chạy thử Tour
+          ▶ Chạy thử
         </button>
         <button class="btn-studio btn-studio-success" onclick="saveTourScenario()">
           💾 Lưu kịch bản
-        </button>
-        <button class="btn-studio btn-studio-outline" onclick="resetTourScenario()" title="Làm mới">
-          🧹 Xóa hết
         </button>
       </div>
     </div>
@@ -1361,6 +1459,34 @@
     </div>
   </div>
 
+  <!-- Modal Tạo Kịch Bản Mới -->
+  <div class="studio-modal-backdrop" id="newScenarioModal" style="display: none;">
+    <div class="studio-modal-card" style="max-width: 480px;">
+      <div class="studio-modal-header">
+        <h3 style="font-size: 15px; font-weight: 700; margin: 0;">➕ Tạo Kịch Bản Tour Mới</h3>
+        <button class="studio-modal-close" onclick="closeNewScenarioModal()">&times;</button>
+      </div>
+      <div class="studio-modal-body" style="padding: 16px;">
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 12px; font-weight: 600; color: #334155; display: block; margin-bottom: 6px;">Tên kịch bản (*):</label>
+          <input type="text" id="newScenarioNameInput" placeholder="Ví dụ: Tour gian hàng ẩm thực..." style="width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
+        </div>
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 12px; font-weight: 600; color: #334155; display: block; margin-bottom: 6px;">Mô tả kịch bản (tùy chọn):</label>
+          <input type="text" id="newScenarioDescInput" placeholder="Mô tả tóm tắt lộ trình..." style="width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 13px;">
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <input type="checkbox" id="newScenarioCopyStopsCheck" style="width: 16px; height: 16px; cursor: pointer;">
+          <label for="newScenarioCopyStopsCheck" style="font-size: 12.5px; color: #475569; cursor: pointer; user-select: none; margin: 0;">Sao chép các điểm dừng từ kịch bản đang mở</label>
+        </div>
+      </div>
+      <div class="studio-modal-footer" style="padding: 12px 16px; display: flex; justify-content: flex-end; gap: 8px; background: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 12px 12px;">
+        <button class="btn-studio btn-studio-outline" onclick="closeNewScenarioModal()">Hủy</button>
+        <button class="btn-studio btn-studio-primary" onclick="confirmCreateNewScenario()">Tạo kịch bản</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     /* ===== STATE ===== */
     let rooms = [];
@@ -1377,10 +1503,13 @@
     let isPlayingPreview = false;
     let previewTimer = null;
 
+    let tourScenarios = [];
+    let currentScenarioId = null;
     let tourScenario = {
       name: 'Tour mặc định',
       cameraPanDuration: 8000,
-      stops: []
+      stops: [],
+      isDefault: true
     };
 
     let quickSelectedRoomIds = []; // Array of room IDs in selected sequence
@@ -1391,7 +1520,7 @@
       await loadBuildings();
       await loadSensors();
       await loadMinimap();
-      await loadTourScenario();
+      await loadTourScenarios();
       initKeyboardShortcuts();
       initSortable();
       initStudioMinimapEvents();
@@ -1450,21 +1579,260 @@
       populateStudioMinimapFloorSelect();
     }
 
-    async function loadTourScenario() {
+    /* ===== MULTI-SCENARIO MANAGEMENT ===== */
+    async function loadTourScenarios() {
       try {
-        const res = await fetch('/api/admin/tour-scenario');
+        const res = await fetch('/api/admin/tour-scenarios');
         const data = await res.json();
-        if (data.success && data.scenario) {
-          tourScenario = {
-            name: data.scenario.name || 'Tour mặc định',
-            cameraPanDuration: Number(data.scenario.cameraPanDuration) || 8000,
-            stops: Array.isArray(data.scenario.stops) ? data.scenario.stops : []
-          };
-          document.getElementById('scenarioNameInput').value = tourScenario.name;
-          document.getElementById('scenarioPanDurationInput').value = tourScenario.cameraPanDuration;
+        if (data.success && Array.isArray(data.scenarios) && data.scenarios.length > 0) {
+          tourScenarios = data.scenarios;
+        } else {
+          tourScenarios = [{
+            id: Date.now(),
+            name: 'Kịch bản mặc định',
+            description: 'Kịch bản tour tự động',
+            isDefault: true,
+            cameraPanDuration: 8000,
+            stops: []
+          }];
         }
       } catch (err) {
-        console.log('No scenario found, using default');
+        console.warn('Could not load tour scenarios, fallback to default', err);
+        tourScenarios = [{
+          id: Date.now(),
+          name: 'Kịch bản mặc định',
+          isDefault: true,
+          cameraPanDuration: 8000,
+          stops: []
+        }];
+      }
+
+      populateScenarioSelector();
+
+      // Find default scenario or use first
+      const defaultScn = tourScenarios.find(s => s.isDefault) || tourScenarios[0];
+      selectScenario(defaultScn.id, false);
+    }
+
+    function populateScenarioSelector() {
+      const select = document.getElementById('scenarioSelectorDropdown');
+      if (!select) return;
+      select.innerHTML = tourScenarios.map(s => `
+        <option value="${s.id}" ${String(s.id) === String(currentScenarioId) ? 'selected' : ''}>
+          ${escapeHtml(s.name || 'Kịch bản không tên')}${s.isDefault ? ' ⭐ (Tour chính)' : ''}
+        </option>
+      `).join('');
+    }
+
+    function onScenarioDropdownChanged(scenarioId) {
+      syncCurrentInputsToScenario();
+      selectScenario(scenarioId, true);
+    }
+
+    function selectScenario(scenarioId, switchViewerToFirstStop = false) {
+      const scn = tourScenarios.find(s => String(s.id) === String(scenarioId));
+      if (!scn) return;
+
+      currentScenarioId = scn.id;
+      tourScenario = {
+        id: scn.id,
+        name: scn.name || 'Kịch bản mặc định',
+        description: scn.description || '',
+        cameraPanDuration: Number(scn.cameraPanDuration) || 8000,
+        isDefault: !!scn.isDefault,
+        stops: Array.isArray(scn.stops) ? scn.stops : []
+      };
+
+      // Update UI fields
+      document.getElementById('scenarioNameInput').value = tourScenario.name;
+      document.getElementById('scenarioPanDurationInput').value = tourScenario.cameraPanDuration;
+      
+      const badge = document.getElementById('scenarioDefaultBadge');
+      const btnSetDefault = document.getElementById('btnSetDefaultScenario');
+      const btnDelete = document.getElementById('btnDeleteScenario');
+
+      if (tourScenario.isDefault) {
+        badge.className = 'badge-default-tour';
+        badge.textContent = '⭐ Tour chính (Khách xem)';
+        if (btnSetDefault) btnSetDefault.style.display = 'none';
+      } else {
+        badge.className = 'badge-secondary-tour';
+        badge.textContent = '📁 Kịch bản phụ';
+        if (btnSetDefault) btnSetDefault.style.display = 'inline-flex';
+      }
+
+      if (btnDelete) {
+        btnDelete.style.display = tourScenarios.length > 1 ? 'inline-flex' : 'none';
+      }
+
+      const select = document.getElementById('scenarioSelectorDropdown');
+      if (select) select.value = currentScenarioId;
+
+      renderStops();
+
+      if (switchViewerToFirstStop && tourScenario.stops.length > 0) {
+        const firstStop = tourScenario.stops[0];
+        if (firstStop && firstStop.roomId) {
+          loadRoomInViewer(firstStop.roomId, firstStop.yaw, firstStop.pitch, firstStop.fov);
+        }
+      }
+    }
+
+    function syncCurrentInputsToScenario() {
+      if (!tourScenario) return;
+      tourScenario.name = document.getElementById('scenarioNameInput').value || tourScenario.name;
+      const panDur = parseInt(document.getElementById('scenarioPanDurationInput').value);
+      tourScenario.cameraPanDuration = Math.max(1000, Number.isFinite(panDur) ? panDur : 8000);
+
+      // Update in tourScenarios array
+      const idx = tourScenarios.findIndex(s => String(s.id) === String(currentScenarioId));
+      if (idx >= 0) {
+        tourScenarios[idx] = { ...tourScenarios[idx], ...tourScenario };
+      }
+    }
+
+    function openNewScenarioModal() {
+      document.getElementById('newScenarioNameInput').value = '';
+      document.getElementById('newScenarioDescInput').value = '';
+      document.getElementById('newScenarioCopyStopsCheck').checked = false;
+      document.getElementById('newScenarioModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('newScenarioNameInput').focus(), 50);
+    }
+
+    function closeNewScenarioModal() {
+      document.getElementById('newScenarioModal').style.display = 'none';
+    }
+
+    async function confirmCreateNewScenario() {
+      const name = document.getElementById('newScenarioNameInput').value.trim();
+      if (!name) {
+        alert('Vui lòng nhập tên kịch bản mới');
+        return;
+      }
+      const desc = document.getElementById('newScenarioDescInput').value.trim();
+      const copyStops = document.getElementById('newScenarioCopyStopsCheck').checked;
+
+      const newId = Date.now();
+      const newScenario = {
+        id: newId,
+        name: name,
+        description: desc,
+        isDefault: false,
+        cameraPanDuration: tourScenario.cameraPanDuration || 8000,
+        stops: copyStops ? JSON.parse(JSON.stringify(tourScenario.stops || [])) : []
+      };
+
+      tourScenarios.push(newScenario);
+      closeNewScenarioModal();
+
+      // Save to server
+      try {
+        const res = await fetch('/api/admin/tour-scenarios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newScenario)
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.scenarios)) {
+          tourScenarios = data.scenarios;
+        }
+      } catch (e) {
+        console.warn('Could not auto-save new scenario', e);
+      }
+
+      populateScenarioSelector();
+      selectScenario(newId, true);
+      showToast(`✨ Đã tạo kịch bản mới "${name}" thành công!`);
+    }
+
+    async function duplicateCurrentScenario() {
+      syncCurrentInputsToScenario();
+      const cloneName = `${tourScenario.name || 'Kịch bản'} (Bản sao)`;
+      const newId = Date.now();
+      const clonedScenario = {
+        ...JSON.parse(JSON.stringify(tourScenario)),
+        id: newId,
+        name: cloneName,
+        isDefault: false
+      };
+
+      tourScenarios.push(clonedScenario);
+
+      try {
+        const res = await fetch('/api/admin/tour-scenarios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(clonedScenario)
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.scenarios)) {
+          tourScenarios = data.scenarios;
+        }
+      } catch (e) {
+        console.warn('Could not auto-save cloned scenario', e);
+      }
+
+      populateScenarioSelector();
+      selectScenario(newId, true);
+      showToast(`📋 Đã nhân bản kịch bản thành "${cloneName}"!`);
+    }
+
+    async function setDefaultScenario() {
+      if (!currentScenarioId) return;
+      syncCurrentInputsToScenario();
+
+      try {
+        const res = await fetch(`/api/admin/tour-scenarios/${currentScenarioId}/set-default`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (Array.isArray(data.scenarios)) {
+            tourScenarios = data.scenarios;
+          } else {
+            tourScenarios.forEach(s => s.isDefault = (String(s.id) === String(currentScenarioId)));
+          }
+          populateScenarioSelector();
+          selectScenario(currentScenarioId, false);
+          showToast('⭐ Đã đặt làm Kịch bản Tour chính (Khách xem)!');
+        } else {
+          alert('Lỗi: ' + data.error);
+        }
+      } catch (e) {
+        alert('Không thể đặt làm mặc định: ' + e.message);
+      }
+    }
+
+    async function deleteCurrentScenario() {
+      if (tourScenarios.length <= 1) {
+        alert('Không thể xóa kịch bản duy nhất còn lại!');
+        return;
+      }
+      const scnName = tourScenario.name || 'kịch bản này';
+      if (!confirm(`Bạn có chắc chắn muốn xóa kịch bản "${scnName}" không?`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/tour-scenarios/${currentScenarioId}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (Array.isArray(data.scenarios)) {
+            tourScenarios = data.scenarios;
+          } else {
+            tourScenarios = tourScenarios.filter(s => String(s.id) !== String(currentScenarioId));
+          }
+          populateScenarioSelector();
+          const nextScn = tourScenarios.find(s => s.isDefault) || tourScenarios[0];
+          selectScenario(nextScn.id, true);
+          showToast(`🗑️ Đã xóa kịch bản "${scnName}"!`);
+        } else {
+          alert('Lỗi: ' + data.error);
+        }
+      } catch (e) {
+        alert('Không thể xóa kịch bản: ' + e.message);
       }
     }
 
@@ -2851,12 +3219,10 @@
 
     /* ===== SAVE SCENARIO ===== */
     async function saveTourScenario() {
-      tourScenario.name = document.getElementById('scenarioNameInput').value || 'Tour mặc định';
-      const panDur = parseInt(document.getElementById('scenarioPanDurationInput').value);
-      tourScenario.cameraPanDuration = Math.max(1000, Number.isFinite(panDur) ? panDur : 8000);
+      syncCurrentInputsToScenario();
 
       try {
-        const res = await fetch('/api/admin/tour-scenario', {
+        const res = await fetch('/api/admin/tour-scenarios', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(tourScenario)
@@ -2864,7 +3230,11 @@
 
         const data = await res.json();
         if (data.success) {
-          showToast('💾 Đã lưu kịch bản Tour thành công!');
+          if (Array.isArray(data.scenarios)) {
+            tourScenarios = data.scenarios;
+            populateScenarioSelector();
+          }
+          showToast(`💾 Đã lưu kịch bản "${tourScenario.name}" thành công!`);
         } else {
           alert('Lỗi: ' + data.error);
         }

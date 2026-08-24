@@ -901,12 +901,31 @@ app.get("/api/minimap", async (req, res) => {
 /* ===== TOUR SCENARIO PUBLIC API ===== */
 app.get("/api/tour-scenario", async (req, res) => {
   try {
-    const scenario = await db.getAppConfig('tour_scenario');
+    let scenario = await db.getAppConfig('tour_scenario');
+    if (!scenario || (!scenario.stops && !scenario.name)) {
+      const scenarios = await db.getAppConfig('tour_scenarios');
+      if (Array.isArray(scenarios) && scenarios.length > 0) {
+        scenario = scenarios.find(s => s.isDefault) || scenarios[0];
+      }
+    }
     if (scenario) {
       res.json({ success: true, scenario });
     } else {
       res.json({ success: false, message: "No scenario found" });
     }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get("/api/tour-scenarios", async (req, res) => {
+  try {
+    let scenarios = await db.getAppConfig('tour_scenarios');
+    if (!Array.isArray(scenarios) || scenarios.length === 0) {
+      const single = await db.getAppConfig('tour_scenario');
+      if (single) scenarios = [single];
+    }
+    res.json({ success: true, scenarios: Array.isArray(scenarios) ? scenarios : [] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
