@@ -1580,12 +1580,41 @@
     }
 
     /* ===== MULTI-SCENARIO MANAGEMENT ===== */
-    async function loadTourScenarios() {
+    async function safeFetchJson(url, options = {}) {
       try {
-        const res = await fetch('/api/admin/tour-scenarios');
-        const data = await res.json();
-        if (data.success && Array.isArray(data.scenarios) && data.scenarios.length > 0) {
-          tourScenarios = data.scenarios;
+        const res = await fetch(url, options);
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch (e) {
+          if (!res.ok) {
+            return { success: false, error: `Máy chủ phản hồi HTTP ${res.status} (${res.statusText || 'Lỗi'})` };
+          }
+          return { success: false, error: 'Phản hồi không phải định dạng JSON hợp lệ' };
+        }
+      } catch (err) {
+        return { success: false, error: err.message || 'Lỗi kết nối mạng' };
+      }
+    }
+
+    async function loadTourScenarios() {
+      const apiBase = window.getAdminApiBase ? window.getAdminApiBase() : '/api/admin';
+      const data = await safeFetchJson(`${apiBase}/tour-scenarios`);
+
+      if (data.success && Array.isArray(data.scenarios) && data.scenarios.length > 0) {
+        tourScenarios = data.scenarios;
+      } else {
+        // Fallback: try legacy single scenario endpoint if multi-endpoint not responding
+        const legacyData = await safeFetchJson(`${apiBase}/tour-scenario`);
+        if (legacyData.success && legacyData.scenario) {
+          tourScenarios = [{
+            id: legacyData.scenario.id || 1787538000000,
+            name: legacyData.scenario.name || 'Demo Chợ Tân Định',
+            description: legacyData.scenario.description || 'Lộ trình tham quan',
+            isDefault: true,
+            cameraPanDuration: Number(legacyData.scenario.cameraPanDuration) || 8000,
+            stops: Array.isArray(legacyData.scenario.stops) ? legacyData.scenario.stops : []
+          }];
         } else {
           tourScenarios = [{
             id: Date.now(),
@@ -1596,15 +1625,6 @@
             stops: []
           }];
         }
-      } catch (err) {
-        console.warn('Could not load tour scenarios, fallback to default', err);
-        tourScenarios = [{
-          id: Date.now(),
-          name: 'Kịch bản mặc định',
-          isDefault: true,
-          cameraPanDuration: 8000,
-          stops: []
-        }];
       }
 
       populateScenarioSelector();
@@ -1726,18 +1746,14 @@
       closeNewScenarioModal();
 
       // Save to server
-      try {
-        const res = await fetch('/api/admin/tour-scenarios', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newScenario)
-        });
-        const data = await res.json();
-        if (data.success && Array.isArray(data.scenarios)) {
-          tourScenarios = data.scenarios;
-        }
-      } catch (e) {
-        console.warn('Could not auto-save new scenario', e);
+      const apiBase = window.getAdminApiBase ? window.getAdminApiBase() : '/api/admin';
+      const data = await safeFetchJson(`${apiBase}/tour-scenarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newScenario)
+      });
+      if (data.success && Array.isArray(data.scenarios)) {
+        tourScenarios = data.scenarios;
       }
 
       populateScenarioSelector();
@@ -1758,18 +1774,14 @@
 
       tourScenarios.push(clonedScenario);
 
-      try {
-        const res = await fetch('/api/admin/tour-scenarios', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(clonedScenario)
-        });
-        const data = await res.json();
-        if (data.success && Array.isArray(data.scenarios)) {
-          tourScenarios = data.scenarios;
-        }
-      } catch (e) {
-        console.warn('Could not auto-save cloned scenario', e);
+      const apiBase = window.getAdminApiBase ? window.getAdminApiBase() : '/api/admin';
+      const data = await safeFetchJson(`${apiBase}/tour-scenarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(clonedScenario)
+      });
+      if (data.success && Array.isArray(data.scenarios)) {
+        tourScenarios = data.scenarios;
       }
 
       populateScenarioSelector();
@@ -1781,25 +1793,28 @@
       if (!currentScenarioId) return;
       syncCurrentInputsToScenario();
 
-      try {
-        const res = await fetch(`/api/admin/tour-scenarios/${currentScenarioId}/set-default`, {
-          method: 'POST'
-        });
-        const data = await res.json();
-        if (data.success) {
-          if (Array.isArray(data.scenarios)) {
-            tourScenarios = data.scenarios;
-          } else {
-            tourScenarios.forEach(s => s.isDefault = (String(s.id) === String(currentScenarioId)));
-          }
-          populateScenarioSelector();
-          selectScenario(currentScenarioId, false);
-          showToast('⭐ Đã đặt làm Kịch bản Tour chính (Khách xem)!');
+      const apiBase = window.getAdminApiBase ? window.getAdminApiBase() : '/api/admin';
+      const data = await safeFetchJson(`${apiBase}/tour-scenarios/${currentScenarioId}/set-default`, {
+        method: 'POST'
+      });
+
+      if (data.success) {
+        if (Array.isArray(data.scenarios)) {
+          tourScenarios = data.scenarios;
         } else {
-          alert('Lỗi: ' + data.error);
+          tourScenarios.forEach(s => s.isDefault = (String(s.id) === String(currentScenarioId)));
         }
-      } catch (e) {
-        alert('Không thể đặt làm mặc định: ' + e.message);
+        populateScenarioSelector();
+        selectScenario(currentScenarioId, false);
+        showToast('⭐ Đã đặt làm Kịch bản Tour chính (Khách xem)!');
+      } else {
+        // Fallback: save through main save endpoint if set-default route is missing on older server instance
+        tourScenario.isDefault = true;
+        await saveTourScenario();
+        tourScenarios.forEach(s => s.isDefault = (String(s.id) === String(currentScenarioId)));
+        populateScenarioSelector();
+        selectScenario(currentScenarioId, false);
+        showToast('⭐ Đã đặt làm Kịch bản Tour chính (Khách xem)!');
       }
     }
 
@@ -1813,26 +1828,36 @@
         return;
       }
 
-      try {
-        const res = await fetch(`/api/admin/tour-scenarios/${currentScenarioId}`, {
-          method: 'DELETE'
-        });
-        const data = await res.json();
-        if (data.success) {
-          if (Array.isArray(data.scenarios)) {
-            tourScenarios = data.scenarios;
-          } else {
-            tourScenarios = tourScenarios.filter(s => String(s.id) !== String(currentScenarioId));
-          }
-          populateScenarioSelector();
-          const nextScn = tourScenarios.find(s => s.isDefault) || tourScenarios[0];
-          selectScenario(nextScn.id, true);
-          showToast(`🗑️ Đã xóa kịch bản "${scnName}"!`);
+      const apiBase = window.getAdminApiBase ? window.getAdminApiBase() : '/api/admin';
+      const data = await safeFetchJson(`${apiBase}/tour-scenarios/${currentScenarioId}`, {
+        method: 'DELETE'
+      });
+
+      if (data.success) {
+        if (Array.isArray(data.scenarios)) {
+          tourScenarios = data.scenarios;
         } else {
-          alert('Lỗi: ' + data.error);
+          tourScenarios = tourScenarios.filter(s => String(s.id) !== String(currentScenarioId));
         }
-      } catch (e) {
-        alert('Không thể xóa kịch bản: ' + e.message);
+        populateScenarioSelector();
+        const nextScn = tourScenarios.find(s => s.isDefault) || tourScenarios[0];
+        selectScenario(nextScn.id, true);
+        showToast(`🗑️ Đã xóa kịch bản "${scnName}"!`);
+      } else {
+        // Fallback: remove locally and sync remaining list via POST
+        tourScenarios = tourScenarios.filter(s => String(s.id) !== String(currentScenarioId));
+        if (!tourScenarios.some(s => s.isDefault) && tourScenarios.length > 0) {
+          tourScenarios[0].isDefault = true;
+        }
+        await safeFetchJson(`${apiBase}/tour-scenarios`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scenarios: tourScenarios })
+        });
+        populateScenarioSelector();
+        const nextScn = tourScenarios.find(s => s.isDefault) || tourScenarios[0];
+        selectScenario(nextScn.id, true);
+        showToast(`🗑️ Đã xóa kịch bản "${scnName}"!`);
       }
     }
 
@@ -3221,25 +3246,31 @@
     async function saveTourScenario() {
       syncCurrentInputsToScenario();
 
-      try {
-        const res = await fetch('/api/admin/tour-scenarios', {
+      const apiBase = window.getAdminApiBase ? window.getAdminApiBase() : '/api/admin';
+      const data = await safeFetchJson(`${apiBase}/tour-scenarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tourScenario)
+      });
+
+      if (data.success) {
+        if (Array.isArray(data.scenarios)) {
+          tourScenarios = data.scenarios;
+          populateScenarioSelector();
+        }
+        showToast(`💾 Đã lưu kịch bản "${tourScenario.name}" thành công!`);
+      } else {
+        // Fallback: save to single scenario endpoint
+        const fallback = await safeFetchJson(`${apiBase}/tour-scenario`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(tourScenario)
         });
-
-        const data = await res.json();
-        if (data.success) {
-          if (Array.isArray(data.scenarios)) {
-            tourScenarios = data.scenarios;
-            populateScenarioSelector();
-          }
+        if (fallback.success) {
           showToast(`💾 Đã lưu kịch bản "${tourScenario.name}" thành công!`);
         } else {
-          alert('Lỗi: ' + data.error);
+          alert('Không thể lưu kịch bản: ' + (data.error || fallback.error || 'Lỗi không xác định'));
         }
-      } catch (err) {
-        alert('Không thể lưu kịch bản: ' + err.message);
       }
     }
 
