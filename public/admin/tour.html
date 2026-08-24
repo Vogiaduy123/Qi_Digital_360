@@ -318,6 +318,401 @@
       width: 2px;
     }
 
+    /* ===== USER-VIEW MATCHING HOTSPOT STYLES ===== */
+    .pnlm-hotspot.custom-view-hotspot {
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      width: auto !important;
+      height: auto !important;
+      cursor: pointer !important;
+      overflow: visible !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .pnlm-hotspot.custom-view-hotspot:hover {
+      transform: scale(1.15) !important;
+      z-index: 100 !important;
+    }
+    .pnlm-hotspot.custom-view-hotspot .pnlm-tooltip {
+      display: none !important;
+    }
+
+    /* Navigation Hotspot (Double Chevron / Custom Arrow matching client view) */
+    .hotspot-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
+      transition: transform 0.25s ease, filter 0.25s ease;
+    }
+    .hotspot-arrow:hover {
+      transform: scale(1.25);
+      filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
+    }
+    .hotspot-arrow-img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+    }
+
+    /* Sensor Hotspot (Exact match with user view) */
+    .sensor-hotspot {
+      width: 44px;
+      height: 44px;
+      background: #4CAF50;
+      border-radius: 50%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      z-index: 15;
+    }
+    .sensor-hotspot:hover {
+      transform: scale(1.18);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+      border-color: rgba(255, 255, 255, 0.9);
+      z-index: 99999 !important;
+    }
+    .sensor-hotspot.temperature {
+      background: #FF6B6B;
+    }
+    .sensor-hotspot.camera {
+      background: #F1A623;
+    }
+    .sensor-hotspot.camera.camera-offline {
+      background: #616161;
+    }
+    .sensor-hotspot-icon {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      line-height: 1;
+      pointer-events: none;
+      overflow: hidden;
+      border-radius: 50%;
+    }
+    .sensor-hotspot-icon img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      border-radius: 50% !important;
+    }
+    .sensor-hotspot-badge {
+      position: absolute;
+      right: -2px;
+      bottom: -2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid rgba(0, 0, 0, 0.45);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+      pointer-events: none;
+    }
+    .sensor-hotspot-badge.online {
+      background: #2ecc71;
+    }
+    .sensor-hotspot-badge.maintenance {
+      background: #f1c40f;
+    }
+    .sensor-hotspot-badge.offline {
+      background: #e74c3c;
+    }
+    .sensor-hotspot-tooltip {
+      position: absolute;
+      bottom: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.95);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      font-size: 11.5px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+      z-index: 1000;
+    }
+    .sensor-hotspot:hover .sensor-hotspot-tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Document & Media Pill Tag Hotspots */
+    .media-doc-hotspot,
+    .info-hotspot,
+    .note-hotspot {
+      position: relative;
+      line-height: 1.2em;
+      opacity: 0.95;
+      transition: opacity 0.2s ease;
+      cursor: pointer;
+    }
+    .media-doc-hotspot:hover,
+    .info-hotspot:hover,
+    .note-hotspot:hover {
+      opacity: 1;
+    }
+
+    .media-doc-hotspot .info-hotspot-header,
+    .info-hotspot .info-hotspot-header {
+      min-width: 44px;
+      height: 44px;
+      border-radius: 22px !important;
+      background: rgba(15, 23, 42, 0.85) !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      cursor: pointer;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease, border-color 0.3s ease;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 0 !important;
+      box-sizing: border-box;
+      overflow: hidden;
+      width: 44px;
+    }
+
+    .media-doc-hotspot:hover .info-hotspot-header,
+    .info-hotspot:hover .info-hotspot-header {
+      width: 230px !important;
+      background: rgba(15, 23, 42, 0.95) !important;
+      border-color: rgba(56, 189, 248, 0.7) !important;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .info-hotspot-icon-wrapper {
+      width: 42px;
+      height: 42px;
+      border-radius: 50% !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .info-hotspot-icon {
+      width: 22px !important;
+      height: 22px !important;
+      object-fit: contain;
+      display: block;
+    }
+
+    .info-hotspot-icon-wrapper img.info-hotspot-icon {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+    }
+
+    .info-hotspot-title-wrapper {
+      position: absolute;
+      left: 44px;
+      top: 0;
+      width: 0;
+      height: 44px;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .media-doc-hotspot:hover .info-hotspot-title-wrapper,
+    .info-hotspot:hover .info-hotspot-title-wrapper {
+      width: 175px !important;
+      padding: 0 10px 0 2px !important;
+    }
+
+    .info-hotspot-title {
+      color: #ffffff;
+      font-size: 12.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      max-width: 100%;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    }
+
+    /* Studio Minimap Overlay in Live 360 Viewer Corner */
+    .studio-minimap-overlay {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 230px;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      z-index: 20;
+      color: #f8fafc;
+      overflow: hidden;
+      transition: width 0.2s ease, transform 0.2s ease;
+      user-select: none;
+    }
+
+    .studio-minimap-overlay.collapsed {
+      width: auto;
+    }
+
+    .studio-minimap-overlay.collapsed .studio-minimap-body {
+      display: none;
+    }
+
+    .studio-minimap-overlay.collapsed .studio-minimap-title select {
+      display: none;
+    }
+
+    .studio-minimap-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 11px;
+      font-weight: 600;
+      gap: 6px;
+    }
+
+    .studio-minimap-title {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .studio-minimap-title select {
+      background: rgba(30, 41, 59, 0.95);
+      color: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 4px;
+      padding: 2px 4px;
+      font-size: 11px;
+      font-weight: 500;
+      width: 100%;
+      max-width: 145px;
+      outline: none;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .studio-minimap-title select:focus {
+      border-color: #38bdf8;
+    }
+
+    .studio-minimap-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .studio-minimap-btn-icon {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #cbd5e1;
+      cursor: pointer;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .studio-minimap-btn-icon:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .studio-minimap-body {
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .studio-minimap-stage {
+      position: relative;
+      width: 100%;
+      height: 140px;
+      background: #090d16;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #studioMinimapImg {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      display: block;
+      user-select: none;
+    }
+
+    #studioMinimapCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: default;
+    }
+
+    .studio-minimap-empty {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 11px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .studio-minimap-hint {
+      font-size: 10px;
+      color: #94a3b8;
+      text-align: center;
+      padding: 1px 0;
+    }
+
     /* Bottom Control Bar of Viewer */
     .viewer-toolbar-bottom {
       padding: 8px 12px;
@@ -781,6 +1176,31 @@
         <div class="panorama-viewer-box">
           <div id="pannellumContainer"></div>
           <div class="viewer-overlay-crosshair"></div>
+
+          <!-- Studio Minimap Overlay -->
+          <div id="studioMinimapOverlay" class="studio-minimap-overlay">
+            <div class="studio-minimap-header">
+              <div class="studio-minimap-title">
+                <span>🗺️</span>
+                <select id="studioMinimapFloorSelect" onchange="onStudioMinimapFloorChanged(this.value)" title="Chọn phân khu / sơ đồ">
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
+              <div class="studio-minimap-header-actions">
+                <button type="button" class="studio-minimap-btn-icon" id="studioMinimapToggleBtn" onclick="toggleStudioMinimap()" title="Thu nhỏ / Mở rộng sơ đồ">−</button>
+              </div>
+            </div>
+            <div class="studio-minimap-body" id="studioMinimapBody">
+              <div class="studio-minimap-stage" id="studioMinimapStage">
+                <img id="studioMinimapImg" alt="Minimap" draggable="false">
+                <canvas id="studioMinimapCanvas"></canvas>
+                <div id="studioMinimapEmpty" class="studio-minimap-empty" style="display: none;">
+                  Chưa có ảnh sơ đồ cho phân khu này
+                </div>
+              </div>
+              <div class="studio-minimap-hint">💡 Nhấp vào điểm để chuyển phòng</div>
+            </div>
+          </div>
         </div>
 
         <div class="viewer-toolbar-bottom">
@@ -946,6 +1366,9 @@
     let rooms = [];
     let buildings = [];
     let sensors = [];
+    let minimapData = { floors: [] };
+    let currentStudioFloorId = null;
+    let isStudioMinimapCollapsed = false;
     let currentViewerRoomId = null;
     let pannellumInstance = null;
     let viewerPositionTimer = null;
@@ -967,9 +1390,11 @@
       await loadRooms();
       await loadBuildings();
       await loadSensors();
+      await loadMinimap();
       await loadTourScenario();
       initKeyboardShortcuts();
       initSortable();
+      initStudioMinimapEvents();
 
       if (rooms.length > 0) {
         populateRoomSelect();
@@ -1006,10 +1431,23 @@
       try {
         const res = await fetch('/api/sensors');
         const data = await res.json();
-        sensors = Array.isArray(data) ? data : [];
+        sensors = Array.isArray(data) ? data : (Array.isArray(data.sensors) ? data.sensors : []);
       } catch (e) {
         console.warn('Could not load sensors', e);
       }
+    }
+
+    async function loadMinimap() {
+      try {
+        const res = await fetch('/api/admin/minimap');
+        const data = await res.json();
+        if (data.success && data.minimap) {
+          minimapData = data.minimap;
+        }
+      } catch (err) {
+        console.warn('Lỗi load minimap trong studio:', err);
+      }
+      populateStudioMinimapFloorSelect();
     }
 
     async function loadTourScenario() {
@@ -1041,6 +1479,420 @@
       return Number.isFinite(num) ? num : fallback;
     }
 
+    /* ===== STUDIO MINIMAP LOGIC ===== */
+    function populateStudioMinimapFloorSelect() {
+      const select = document.getElementById('studioMinimapFloorSelect');
+      if (!select) return;
+      const floors = minimapData.floors || [];
+      if (floors.length === 0) {
+        select.innerHTML = '<option value="">(Không có sơ đồ)</option>';
+        return;
+      }
+      select.innerHTML = floors.map((f, idx) => {
+        const name = f.name || (f.buildingName ? f.buildingName : `Tầng ${idx + 1}`);
+        return `<option value="${f.id || f.buildingId}">${name}</option>`;
+      }).join('');
+    }
+
+    function getFloorForRoom(roomId) {
+      if (!minimapData || !minimapData.floors || minimapData.floors.length === 0) return null;
+      const room = rooms.find(r => r.id === Number(roomId));
+      if (!room) return minimapData.floors[0] || null;
+
+      // Match by buildingId
+      if (room.buildingId) {
+        const found = minimapData.floors.find(f => f.buildingId === room.buildingId || f.id === room.buildingId);
+        if (found) return found;
+      }
+
+      // Match by marker containing this roomId
+      const markerFloor = minimapData.floors.find(f => Array.isArray(f.markers) && f.markers.some(m => Number(m.roomId) === Number(room.id)));
+      if (markerFloor) return markerFloor;
+
+      return minimapData.floors[0] || null;
+    }
+
+    function getCurrentStudioFloor() {
+      if (!minimapData || !minimapData.floors || minimapData.floors.length === 0) return null;
+      if (currentStudioFloorId) {
+        const found = minimapData.floors.find(f => f.id === currentStudioFloorId || f.buildingId === currentStudioFloorId);
+        if (found) return found;
+      }
+      return getFloorForRoom(currentViewerRoomId) || minimapData.floors[0] || null;
+    }
+
+    function onStudioMinimapFloorChanged(floorId) {
+      currentStudioFloorId = floorId;
+      syncStudioMinimapView();
+    }
+
+    function toggleStudioMinimap() {
+      const overlay = document.getElementById('studioMinimapOverlay');
+      const btn = document.getElementById('studioMinimapToggleBtn');
+      if (!overlay) return;
+      isStudioMinimapCollapsed = !isStudioMinimapCollapsed;
+      if (isStudioMinimapCollapsed) {
+        overlay.classList.add('collapsed');
+        if (btn) btn.textContent = '+';
+      } else {
+        overlay.classList.remove('collapsed');
+        if (btn) btn.textContent = '−';
+        setTimeout(() => syncStudioMinimapView(), 50);
+      }
+    }
+
+    function syncStudioMinimapForRoom(roomId) {
+      const floor = getFloorForRoom(roomId);
+      if (floor) {
+        currentStudioFloorId = floor.id || floor.buildingId;
+        const select = document.getElementById('studioMinimapFloorSelect');
+        if (select) select.value = currentStudioFloorId;
+      }
+      syncStudioMinimapView();
+    }
+
+    function syncStudioMinimapView() {
+      const floor = getCurrentStudioFloor();
+      const img = document.getElementById('studioMinimapImg');
+      const canvas = document.getElementById('studioMinimapCanvas');
+      const emptyEl = document.getElementById('studioMinimapEmpty');
+      const select = document.getElementById('studioMinimapFloorSelect');
+
+      if (floor && select) {
+        select.value = floor.id || floor.buildingId;
+      }
+
+      if (!floor || !floor.image) {
+        if (img) img.style.display = 'none';
+        if (canvas) canvas.style.display = 'none';
+        if (emptyEl) emptyEl.style.display = 'flex';
+        return;
+      }
+
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (img) {
+        img.style.display = 'block';
+        const expectedSrc = floor.image.startsWith('http') ? floor.image : (window.location.origin + (floor.image.startsWith('/') ? '' : '/') + floor.image);
+        if (img.src !== expectedSrc && img.getAttribute('src') !== floor.image) {
+          img.src = floor.image;
+        }
+        img.onload = () => {
+          drawStudioMinimap();
+        };
+      }
+      if (canvas) {
+        canvas.style.display = 'block';
+      }
+      drawStudioMinimap();
+    }
+
+    function initStudioMinimapEvents() {
+      const canvas = document.getElementById('studioMinimapCanvas');
+      if (!canvas) return;
+
+      canvas.addEventListener('click', (e) => {
+        const floor = getCurrentStudioFloor();
+        if (!floor || !floor.markers || floor.markers.length === 0) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const clickX = (e.clientX - rect.left) / rect.width;
+        const clickY = (e.clientY - rect.top) / rect.height;
+
+        const tolerance = 20 / (rect.width || 230);
+        let clickedMarker = null;
+
+        for (let i = floor.markers.length - 1; i >= 0; i--) {
+          const m = floor.markers[i];
+          const dx = m.x - clickX;
+          const dy = m.y - clickY;
+          if (Math.sqrt(dx * dx + dy * dy) < tolerance) {
+            clickedMarker = m;
+            break;
+          }
+        }
+
+        if (clickedMarker && clickedMarker.roomId) {
+          onStudioRoomChanged(clickedMarker.roomId);
+        }
+      });
+
+      canvas.addEventListener('mousemove', (e) => {
+        const floor = getCurrentStudioFloor();
+        if (!floor || !floor.markers || floor.markers.length === 0) {
+          canvas.style.cursor = 'default';
+          canvas.title = '';
+          return;
+        }
+
+        const rect = canvas.getBoundingClientRect();
+        const hoverX = (e.clientX - rect.left) / rect.width;
+        const hoverY = (e.clientY - rect.top) / rect.height;
+
+        const tolerance = 20 / (rect.width || 230);
+        let hoveredMarker = null;
+
+        for (let i = floor.markers.length - 1; i >= 0; i--) {
+          const m = floor.markers[i];
+          const dx = m.x - hoverX;
+          const dy = m.y - hoverY;
+          if (Math.sqrt(dx * dx + dy * dy) < tolerance) {
+            hoveredMarker = m;
+            break;
+          }
+        }
+
+        if (hoveredMarker) {
+          canvas.style.cursor = 'pointer';
+          const targetRoom = rooms.find(r => r.id === Number(hoveredMarker.roomId));
+          canvas.title = targetRoom ? `🚪 ${targetRoom.name} (Nhấp để chuyển)` : 'Chuyển phòng';
+        } else {
+          canvas.style.cursor = 'default';
+          canvas.title = '';
+        }
+      });
+    }
+
+    function drawStudioMinimap() {
+      const canvas = document.getElementById('studioMinimapCanvas');
+      const stage = document.getElementById('studioMinimapStage');
+      if (!canvas || !stage || isStudioMinimapCollapsed) return;
+
+      const width = stage.clientWidth || 220;
+      const height = stage.clientHeight || 140;
+      if (width === 0 || height === 0) return;
+
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const floor = getCurrentStudioFloor();
+      if (!floor || !floor.markers || floor.markers.length === 0) return;
+
+      const currentYawDeg = pannellumInstance ? pannellumInstance.getYaw() : 0;
+      const currentFovDeg = pannellumInstance ? pannellumInstance.getHfov() : 90;
+
+      floor.markers.forEach((marker) => {
+        const x = marker.x * canvas.width;
+        const y = marker.y * canvas.height;
+        const isCurrent = Number(marker.roomId) === Number(currentViewerRoomId);
+
+        if (isCurrent) {
+          // Draw radar cone
+          const markerRotRad = ((marker.rotation || 0) * Math.PI) / 180;
+          const currentYawRad = (currentYawDeg * Math.PI) / 180;
+          const radarOffset = -Math.PI / 2 + markerRotRad;
+          const fovRad = (currentFovDeg * Math.PI) / 180;
+          const startRad = currentYawRad - (fovRad / 2) + radarOffset;
+          const endRad = currentYawRad + (fovRad / 2) + radarOffset;
+          const radius = 45;
+
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.arc(x, y, radius, startRad, endRad);
+          ctx.lineTo(x, y);
+
+          const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+          gradient.addColorStop(0, 'rgba(56, 189, 248, 0.7)');
+          gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+          ctx.fillStyle = gradient;
+          ctx.fill();
+          ctx.closePath();
+
+          // Radar center pointer line
+          const centerRad = currentYawRad + radarOffset;
+          const px = x + Math.cos(centerRad) * 18;
+          const py = y + Math.sin(centerRad) * 18;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(px, py);
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Pulsing halo
+          ctx.beginPath();
+          ctx.arc(x, y, 10, 0, 2 * Math.PI);
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+          ctx.fill();
+
+          // Active marker dot
+          ctx.beginPath();
+          ctx.arc(x, y, 5, 0, 2 * Math.PI);
+          ctx.fillStyle = '#0284c7';
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        } else {
+          // Regular marker dot
+          ctx.beginPath();
+          ctx.arc(x, y, 4.5, 0, 2 * Math.PI);
+          ctx.fillStyle = '#f59e0b';
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+      });
+    }
+
+    /* ===== VIEW-MATCHING HOTSPOT HELPERS & RENDERER ===== */
+    function getMediaIconSVG(type) {
+      switch (type) {
+        case "stall":
+          return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`;
+        case "pdf":
+          return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;
+        case "image":
+        case "gallery":
+          return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+        case "video":
+          return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="15" height="16" rx="2"/><polygon points="17 9 22 6 22 18 17 15" fill="#f59e0b"/></svg>`;
+        case "3d":
+          return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`;
+        case "web":
+          return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+        case "facebook":
+          return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="#1877f2"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`;
+        case "note":
+          return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>`;
+        case "all":
+        case "doc":
+        default:
+          return `<svg viewBox="0 0 24 24" class="info-hotspot-icon" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
+      }
+    }
+
+    function getMediaDefaultTitle(type) {
+      const titles = {
+        note: "Ghi chú",
+        stall: "Sạp hàng hóa",
+        pdf: "Tài liệu PDF",
+        image: "Hình ảnh",
+        gallery: "Bộ sưu tập",
+        video: "Video",
+        "3d": "Mô hình 3D",
+        web: "Liên kết web",
+        facebook: "Trang Facebook",
+        youtube: "Video YouTube"
+      };
+      return titles[type] || "Tư liệu";
+    }
+
+    function createCustomHotspotDOM(hotSpotDiv, args) {
+      hotSpotDiv.innerHTML = '';
+      if (args.type === 'nav') {
+        const hs = args.hotspot || {};
+        const arrowEl = document.createElement('div');
+        arrowEl.className = 'hotspot-arrow';
+        arrowEl.title = `🚪 ${args.targetName}`;
+        arrowEl.style.transform = `rotate(${safeNumber(hs.rotation, 0)}deg)`;
+        
+        if (hs.iconUrl) {
+          arrowEl.innerHTML = `<img src="${hs.iconUrl}" class="hotspot-arrow-img" alt="nav">`;
+        } else {
+          arrowEl.innerHTML = `
+            <svg viewBox="0 0 44 36" width="44" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));">
+              <polyline points="8,20 22,6 36,20" fill="none" stroke="rgba(255,255,255,0.95)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="8,32 22,18 36,32" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          `;
+        }
+        hotSpotDiv.appendChild(arrowEl);
+      } else if (args.type === 'media') {
+        const m = args.media;
+        const isNote = m.mediaType === 'note';
+        const docEl = document.createElement('div');
+        docEl.className = `media-doc-hotspot info-hotspot ${isNote ? 'note-hotspot' : ''}`;
+        
+        const header = document.createElement('div');
+        header.className = 'info-hotspot-header';
+        
+        const iconWrap = document.createElement('div');
+        iconWrap.className = 'info-hotspot-icon-wrapper';
+        if (m.iconUrl) {
+          iconWrap.innerHTML = `<img class="info-hotspot-icon" src="${m.iconUrl}" alt="icon">`;
+        } else {
+          iconWrap.innerHTML = getMediaIconSVG(m.mediaType || 'doc');
+        }
+        
+        const titleWrap = document.createElement('div');
+        titleWrap.className = 'info-hotspot-title-wrapper';
+        const title = document.createElement('div');
+        title.className = 'info-hotspot-title';
+        title.textContent = m.title || getMediaDefaultTitle(m.mediaType);
+        titleWrap.appendChild(title);
+        
+        header.appendChild(iconWrap);
+        header.appendChild(titleWrap);
+        docEl.appendChild(header);
+        hotSpotDiv.appendChild(docEl);
+      } else if (args.type === 'sensor') {
+        const s = args.sensor;
+        const isCam = s.type === 'camera';
+        const isOffline = s.camera?.status === 'offline';
+        const sensorEl = document.createElement('div');
+        sensorEl.className = `sensor-hotspot ${isCam ? 'camera' : 'temperature'} ${isOffline ? 'camera-offline' : ''}`;
+        
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'sensor-hotspot-icon';
+        const sensorSpecificIcon = s.iconUrl || s.sensors?.iconUrl;
+        if (sensorSpecificIcon) {
+          iconSpan.innerHTML = `<img src="${sensorSpecificIcon}" alt="sensor">`;
+        } else {
+          iconSpan.textContent = isCam ? '📹' : '🌡️';
+        }
+        sensorEl.appendChild(iconSpan);
+        
+        const badge = document.createElement('span');
+        badge.className = `sensor-hotspot-badge ${isOffline ? 'offline' : 'online'}`;
+        sensorEl.appendChild(badge);
+        
+        const tooltip = document.createElement('div');
+        tooltip.className = 'sensor-hotspot-tooltip';
+        let tempHum = '';
+        if (!isCam && s.temperature?.value !== undefined) {
+          tempHum = `<div>🌡️ ${s.temperature.value}°C &nbsp;|&nbsp; 💧 ${s.humidity?.value ?? '--'}%</div>`;
+        }
+        tooltip.innerHTML = `
+          <div style="font-weight:700;margin-bottom:2px;">${isCam ? '📹 ' : '🌡️ '}${escapeHtml(s.name || (isCam ? 'Camera' : 'Cảm biến'))}</div>
+          ${tempHum}
+          <div style="color:#94a3b8;font-size:10px;">${isCam ? 'Camera giám sát' : 'Cảm biến môi trường IoT'}</div>
+        `;
+        sensorEl.appendChild(tooltip);
+        hotSpotDiv.appendChild(sensorEl);
+      } else if (args.type === 'mail') {
+        const mail = args.mail;
+        const mailEl = document.createElement('div');
+        mailEl.className = 'sensor-hotspot';
+        mailEl.style.borderColor = '#f43f5e';
+        
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'sensor-hotspot-icon';
+        iconSpan.textContent = '✉️';
+        mailEl.appendChild(iconSpan);
+        
+        const badge = document.createElement('span');
+        badge.className = 'sensor-hotspot-badge';
+        badge.style.background = '#f43f5e';
+        badge.style.boxShadow = '0 0 6px #f43f5e';
+        mailEl.appendChild(badge);
+        
+        const tooltip = document.createElement('div');
+        tooltip.className = 'sensor-hotspot-tooltip';
+        tooltip.innerHTML = `
+          <div style="font-weight:700;margin-bottom:2px;">✉️ ${escapeHtml(mail.title || 'Hộp thư')}</div>
+          <div style="color:#94a3b8;font-size:10px;">Gửi thư liên hệ</div>
+        `;
+        mailEl.appendChild(tooltip);
+        hotSpotDiv.appendChild(mailEl);
+      }
+    }
+
     /* ===== 360 VIEWER (PANNELLUM) ===== */
     function loadRoomInViewer(roomId, targetYaw = null, targetPitch = null, targetFov = 90) {
       const room = rooms.find(r => r.id === Number(roomId));
@@ -1049,6 +1901,9 @@
       currentViewerRoomId = Number(roomId);
       const select = document.getElementById('studioRoomSelect');
       if (select) select.value = currentViewerRoomId;
+
+      // Update minimap for current room
+      syncStudioMinimapForRoom(currentViewerRoomId);
 
       if (viewerPositionTimer) {
         clearInterval(viewerPositionTimer);
@@ -1071,18 +1926,79 @@
 
       const imageUrl = room.image.startsWith('http') ? room.image : (window.location.origin + (room.image.startsWith('/') ? '' : '/') + room.image);
 
-      // Hotspots for Pannellum
+      // Hotspots for Pannellum (matching user-view exact styling)
       const hotspots = [];
+
+      // 1. Navigation Hotspots (Doorways - matching user view arrow)
       if (room.hotspots && Array.isArray(room.hotspots)) {
         room.hotspots.forEach((hs, idx) => {
           const targetRoom = rooms.find(r => r.id === hs.target);
           hotspots.push({
             pitch: safeNumber(hs.pitch, 0),
             yaw: safeNumber(hs.yaw, 0),
-            type: 'info',
-            text: targetRoom ? `🚪 Bước sang: ${targetRoom.name}` : 'Chuyển phòng',
+            cssClass: 'custom-view-hotspot',
+            createTooltipFunc: createCustomHotspotDOM,
+            createTooltipArgs: { type: 'nav', targetName: targetRoom ? targetRoom.name : 'Chuyển phòng', hotspot: hs },
             clickHandlerFunc: () => {
               handleHotspotClick(hs, idx);
+            }
+          });
+        });
+      }
+
+      // 2. Media / Document Hotspots (Pill tags matching client view)
+      if (room.mediaHotspots && Array.isArray(room.mediaHotspots)) {
+        room.mediaHotspots.forEach((m) => {
+          hotspots.push({
+            pitch: safeNumber(m.pitch, 0),
+            yaw: safeNumber(m.yaw, 0),
+            cssClass: 'custom-view-hotspot',
+            createTooltipFunc: createCustomHotspotDOM,
+            createTooltipArgs: { type: 'media', media: m },
+            clickHandlerFunc: () => {
+              handleTagClick('media', m);
+            }
+          });
+        });
+      }
+
+      // 3. IoT Sensor & Camera Hotspots (Pulsing badge + tooltip matching client view)
+      const globalRoomSensors = sensors.filter(s => Number(s.roomId) === Number(room.id));
+      const roomEmbeddedSensors = (room.sensors && Array.isArray(room.sensors)) ? room.sensors : [];
+      const allRoomSensors = [...roomEmbeddedSensors];
+      globalRoomSensors.forEach(gs => {
+        if (!allRoomSensors.some(s => String(s.id) === String(gs.id))) {
+          allRoomSensors.push(gs);
+        }
+      });
+
+      if (allRoomSensors.length > 0) {
+        allRoomSensors.forEach((s) => {
+          const pos = s.position || { yaw: 0, pitch: 0 };
+          hotspots.push({
+            pitch: safeNumber(pos.pitch, 0),
+            yaw: safeNumber(pos.yaw, 0),
+            cssClass: 'custom-view-hotspot',
+            createTooltipFunc: createCustomHotspotDOM,
+            createTooltipArgs: { type: 'sensor', sensor: s },
+            clickHandlerFunc: () => {
+              handleTagClick('sensor', s);
+            }
+          });
+        });
+      }
+
+      // 4. Mail Hotspots
+      if (room.mailHotspots && Array.isArray(room.mailHotspots)) {
+        room.mailHotspots.forEach((mail) => {
+          hotspots.push({
+            pitch: safeNumber(mail.pitch, 0),
+            yaw: safeNumber(mail.yaw, 0),
+            cssClass: 'custom-view-hotspot',
+            createTooltipFunc: createCustomHotspotDOM,
+            createTooltipArgs: { type: 'mail', mail: mail },
+            clickHandlerFunc: () => {
+              handleTagClick('mail', mail);
             }
           });
         });
@@ -1101,7 +2017,7 @@
         hotSpots: hotspots
       });
 
-      // Poll current viewing coordinates
+      // Poll current viewing coordinates & update minimap radar
       viewerPositionTimer = setInterval(() => {
         if (!pannellumInstance) return;
         try {
@@ -1111,8 +2027,115 @@
           if (Number.isFinite(yaw)) document.getElementById('yawBadge').textContent = `Yaw: ${yaw.toFixed(1)}°`;
           if (Number.isFinite(pitch)) document.getElementById('pitchBadge').textContent = `Pitch: ${pitch.toFixed(1)}°`;
           if (Number.isFinite(hfov)) document.getElementById('fovBadge').textContent = `Zoom: ${Math.round(hfov)}°`;
+          drawStudioMinimap();
         } catch (e) {}
       }, 100);
+    }
+
+    /* ===== TAG CLICK HANDLER (360 VIEWER INTERACTION) ===== */
+    function handleTagClick(tagGroup, tagData) {
+      const isSensor = tagGroup === 'sensor' || tagData.type === 'camera';
+      const isMail = tagGroup === 'mail';
+      const tagType = isSensor ? (tagData.type === 'camera' ? 'camera' : 'sensor') : (isMail ? 'mail' : (tagData.mediaType || 'media'));
+      const yaw = isSensor ? (tagData.position?.yaw || 0) : (tagData.yaw || 0);
+      const pitch = isSensor ? (tagData.position?.pitch || 0) : (tagData.pitch || 0);
+      const title = tagData.title || tagData.name || (isSensor ? 'Cảm biến' : (isMail ? 'Hộp thư' : 'Tài liệu'));
+
+      // If recording mode is ON: automatically record tag stop
+      if (isRecording) {
+        const newStop = {
+          id: Date.now(),
+          type: 'tag',
+          tagType: tagType,
+          tagId: tagData.id,
+          roomId: currentViewerRoomId,
+          title: title,
+          description: tagData.description || '',
+          yaw: safeNumber(yaw, 0),
+          pitch: safeNumber(pitch, 0),
+          fov: 75,
+          duration: 6000,
+          cameraEffect: 'lookAt',
+          autoOpen: true
+        };
+        tourScenario.stops.push(newStop);
+        renderStops();
+        scrollToLatestStop();
+        showToast(`📌 [GHI TOUR] Đã thêm điểm dừng Tag "${title}" vào kịch bản!`);
+        return;
+      }
+
+      // Smoothly orient camera to focus on this tag
+      if (pannellumInstance) {
+        try {
+          pannellumInstance.lookAt(safeNumber(pitch, 0), safeNumber(yaw, 0), 75, 800);
+        } catch (e) {}
+      }
+
+      // Show interactive action toast with 1-click button to add tag to tour
+      showTagActionToast(tagType, tagData, title, yaw, pitch);
+    }
+
+    function showTagActionToast(tagType, tagData, title, yaw, pitch) {
+      const existing = document.getElementById('tagActionToast');
+      if (existing) existing.remove();
+
+      const typeIcons = { image: "🖼️", video: "🎥", "3d": "🧊", pdf: "📄", note: "📝", stall: "🏪", gallery: "📸", youtube: "▶️", web: "🌐", sensor: "🌡️", camera: "📹", mail: "✉️" };
+      const icon = typeIcons[tagType] || "📌";
+
+      const toast = document.createElement('div');
+      toast.id = 'tagActionToast';
+      toast.className = 'toast-notice';
+      toast.style.background = '#1e1b4b';
+      toast.style.border = '1px solid #6366f1';
+      toast.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+      toast.style.bottom = '70px';
+      toast.style.right = '20px';
+      toast.style.display = 'flex';
+      toast.style.alignItems = 'center';
+      toast.style.gap = '10px';
+
+      toast.innerHTML = `
+        <span style="font-size: 18px;">${icon}</span>
+        <div>
+          <div style="font-weight: 700; font-size: 13px; color: #fff;">${escapeHtml(title)}</div>
+          <div style="font-size: 11px; color: #cbd5e1;">🧭 Yaw: ${safeNumber(yaw, 0).toFixed(1)}° | Pitch: ${safeNumber(pitch, 0).toFixed(1)}°</div>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary" style="font-size: 12px; padding: 4px 10px; border-radius: 6px; font-weight: 600; white-space: nowrap; margin-left: 6px;" id="btnToastAddTag">
+          ➕ Thêm vào Tour
+        </button>
+        <button type="button" style="background:transparent;border:none;color:#94a3b8;font-size:16px;cursor:pointer;padding:0 4px;" onclick="this.parentElement.remove()">✕</button>
+      `;
+
+      document.body.appendChild(toast);
+
+      document.getElementById('btnToastAddTag')?.addEventListener('click', () => {
+        const newStop = {
+          id: Date.now(),
+          type: 'tag',
+          tagType: tagType,
+          tagId: tagData.id,
+          roomId: currentViewerRoomId,
+          title: title,
+          description: tagData.description || '',
+          yaw: safeNumber(yaw, 0),
+          pitch: safeNumber(pitch, 0),
+          fov: 75,
+          duration: 6000,
+          cameraEffect: 'lookAt',
+          autoOpen: true
+        };
+        tourScenario.stops.push(newStop);
+        renderStops();
+        scrollToLatestStop();
+        selectStopCard(tourScenario.stops.length - 1);
+        showToast(`📌 Đã thêm Tag "${title}" vào kịch bản tour!`);
+        toast.remove();
+      });
+
+      setTimeout(() => {
+        if (toast.parentElement) toast.remove();
+      }, 7000);
     }
 
     function onStudioRoomChanged(roomId) {
