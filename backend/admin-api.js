@@ -65,6 +65,55 @@ if (!canUseDirectory(MEDIA_UPLOADS_DIR)) {
   throw new Error(`Cannot create/write media uploads directory: ${MEDIA_UPLOADS_DIR}`);
 }
 
+function extractMediaCloudPaths(rawMediaUrl, mediaItems, iconUrl) {
+  const paths = [];
+  const urls = [];
+
+  function addUrl(u) {
+    if (typeof u === 'string' && u.trim()) {
+      urls.push(u.trim());
+    }
+  }
+
+  if (iconUrl) addUrl(iconUrl);
+
+  if (rawMediaUrl) {
+    if (typeof rawMediaUrl === 'string' && (rawMediaUrl.startsWith('{') || rawMediaUrl.startsWith('{"'))) {
+      try {
+        const parsed = JSON.parse(rawMediaUrl);
+        if (parsed.iconUrl) addUrl(parsed.iconUrl);
+        if (parsed.pdfUrl) addUrl(parsed.pdfUrl);
+        if (parsed.videoUrl) addUrl(parsed.videoUrl);
+        if (parsed.model3dUrl) addUrl(parsed.model3dUrl);
+        if (parsed.stallCard?.avatar) addUrl(parsed.stallCard.avatar);
+        if (Array.isArray(parsed.images)) parsed.images.forEach(addUrl);
+        if (parsed.mediaUrl) addUrl(parsed.mediaUrl);
+      } catch {}
+    } else {
+      addUrl(rawMediaUrl);
+    }
+  }
+
+  if (mediaItems && typeof mediaItems === 'object') {
+    if (mediaItems.iconUrl) addUrl(mediaItems.iconUrl);
+    if (mediaItems.pdfUrl) addUrl(mediaItems.pdfUrl);
+    if (mediaItems.videoUrl) addUrl(mediaItems.videoUrl);
+    if (mediaItems.model3dUrl) addUrl(mediaItems.model3dUrl);
+    if (mediaItems.stallCard?.avatar) addUrl(mediaItems.stallCard.avatar);
+    if (Array.isArray(mediaItems.images)) mediaItems.images.forEach(addUrl);
+    if (mediaItems.mediaUrl) addUrl(mediaItems.mediaUrl);
+  }
+
+  for (const u of urls) {
+    if (u.includes(`/storage/v1/object/public/${BUCKET_NAME}/`)) {
+      const rel = u.split(`/storage/v1/object/public/${BUCKET_NAME}/`)[1];
+      if (rel) paths.push(rel);
+    }
+  }
+
+  return [...new Set(paths)];
+}
+
 /* ===== DATA HELPER (SUPABASE) ===== */
 async function getRooms() {
   return await db.getRooms();
@@ -574,14 +623,16 @@ router.delete("/rooms/:roomId", async (req, res) => {
       }
     }
 
-    // Dọn dẹp các media files của room
+    // Dọn dẹp tất cả các media files của room
     if (room.mediaHotspots && room.mediaHotspots.length > 0) {
-      const mediaPathsToRemove = room.mediaHotspots
-        .map(m => m.mediaUrl ? m.mediaUrl.split(`/storage/v1/object/public/${BUCKET_NAME}/`)[1] : null)
-        .filter(Boolean);
-        
+      let mediaPathsToRemove = [];
+      for (const m of room.mediaHotspots) {
+        const paths = extractMediaCloudPaths(m.mediaUrl, m.mediaItems, m.iconUrl);
+        mediaPathsToRemove.push(...paths);
+      }
+      mediaPathsToRemove = [...new Set(mediaPathsToRemove)];
       if (mediaPathsToRemove.length > 0) {
-        await db.supabase.storage.from(BUCKET_NAME).remove(mediaPathsToRemove);
+        await db.supabase.storage.from(BUCKET_NAME).remove(mediaPathsToRemove).catch(() => {});
       }
     }
 
@@ -824,11 +875,11 @@ router.delete("/rooms/:roomId/media-hotspots/:index", async (req, res) => {
     const mediaId = dbMedias[index].id;
     const oldMediaUrl = dbMedias[index].media_url;
 
-    // Delete file from Cloud Storage
+    // Delete all attached files from Cloud Storage
     if (oldMediaUrl) {
-      const relativeCloudPath = oldMediaUrl.split(`/storage/v1/object/public/${BUCKET_NAME}/`)[1];
-      if (relativeCloudPath) {
-        await db.supabase.storage.from(BUCKET_NAME).remove([relativeCloudPath]).catch(() => {});
+      const pathsToRemove = extractMediaCloudPaths(oldMediaUrl);
+      if (pathsToRemove.length > 0) {
+        await db.supabase.storage.from(BUCKET_NAME).remove(pathsToRemove).catch(() => {});
       }
     }
 
