@@ -566,6 +566,10 @@ export function renderCameraPanel() {
   });
 }
 
+export function getSensorsData() {
+  return sensorsData;
+}
+
 // Load sensors
 export async function loadSensors() {
   try {
@@ -581,6 +585,8 @@ export async function loadSensors() {
       // Update widget and camera panel with current room sensors
       updateSensorWidget();
       renderCameraPanel();
+      // Notify other modules of sensor data update
+      window.dispatchEvent(new CustomEvent('sensors:updated', { detail: { sensors: sensorsData } }));
       // Start real-time updates
       startSensorRealTimeUpdates();
     }
@@ -610,6 +616,7 @@ async function refreshSensorsFromDb() {
       sensorsData = data.sensors;
       addSensorHotspots(currentRoomId);
       updateSensorWidget();
+      window.dispatchEvent(new CustomEvent('sensors:updated', { detail: { sensors: sensorsData } }));
     }
   } catch (err) {
     console.error("❌ Lỗi cập nhật dữ liệu cảm biến từ DB:", err.message);

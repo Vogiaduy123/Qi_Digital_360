@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('/css/admin-theme.css');
 
 * {
   margin: 0;
@@ -7,15 +8,15 @@
 }
 
 :root {
-  --accent: #2563EB;
-  --accent-light: #3B82F6;
+  --accent: #0284c7;
+  --accent-light: #38bdf8;
   --sidebar-w: 56px;
   --panel-w: 340px;
   --dark: #ffffff;
   --dark2: rgba(255, 255, 255, 0.95);
-  --dark3: rgba(245, 247, 250, 0.9);
-  --border: rgba(0, 0, 0, 0.08);
-  --text: #1a202c;
+  --dark3: rgba(248, 250, 252, 0.9);
+  --border: rgba(226, 232, 240, 0.85);
+  --text: #0f172a;
   --text-muted: #64748b;
 }
 

@@ -26,28 +26,31 @@
 
     <main class="dash-main">
       <div class="dash-hero">
-        <h2>Dashboard</h2>
-        <p>Quản lý toàn bộ virtual tour — tòa nhà, phòng 360°, hotspot, minimap và kịch bản tự động.</p>
+        <div class="dash-hero__badge">
+          <span class="pulse-dot"></span> Hệ thống Quản trị Virtual Tour 360
+        </div>
+        <h2>Trung tâm Điều hành Không gian 360°</h2>
+        <p>Quản lý toàn bộ cấu trúc tòa nhà, ảnh toàn cảnh 360°, điểm tương tác hotspot, minimap và kịch bản tự động.</p>
       </div>
 
       <div class="dash-stats" id="dashStats">
         <div class="dash-stat">
           <div class="dash-stat__icon dash-stat__icon--blue">🏢</div>
-          <div>
+          <div class="dash-stat__content">
             <div class="dash-stat__value" id="statBuildings">—</div>
             <div class="dash-stat__label">Tòa nhà</div>
           </div>
         </div>
         <div class="dash-stat">
           <div class="dash-stat__icon dash-stat__icon--green">🏠</div>
-          <div>
+          <div class="dash-stat__content">
             <div class="dash-stat__value" id="statRooms">—</div>
             <div class="dash-stat__label">Phòng 360°</div>
           </div>
         </div>
         <div class="dash-stat">
           <div class="dash-stat__icon dash-stat__icon--purple">📤</div>
-          <div>
+          <div class="dash-stat__content">
             <div class="dash-stat__value" id="statHotspots">—</div>
             <div class="dash-stat__label">Hotspot</div>
           </div>
@@ -101,7 +104,7 @@
           <span class="dash-card__arrow">→</span>
         </a>
 
-        <a href="/admin/stall-templates.html" class="dash-card dash-card--tour" style="border-left-color: #10b981;">
+        <a href="/admin/stall-templates.html" class="dash-card dash-card--stalls">
           <div class="dash-card__icon">🎨</div>
           <div class="dash-card__body">
             <div class="dash-card__title">Mẫu Sạp Hàng</div>

@@ -60,37 +60,32 @@ window.initializeAdminNav = function () {
         <img src="/images/logo-qi.png" alt="Qi">
         <span>Qi Dashboard</span>
       </a>
-      ${!isDashboard ? `
       <nav class="header-nav" aria-label="Menu quản lý">${navLinks}</nav>
       <a href="/" class="nav-link nav-link--tour">👁️ Xem Tour</a>
-      ` : `
-      <div style="flex: 1;"></div>
-      `}
-      
-      ${isDashboard && isUserAdmin ? `
-      <button id="adminSettingsBtn" class="admin-settings-nav-btn" title="Cấu hình Icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"></circle>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-      </button>
-      ` : ''}
 
-      <div class="user-profile-nav" style="display:flex;align-items:center;gap:16px;margin-left:12px;padding-left:12px;border-left:1px solid rgba(0,0,0,0.08)">
-        
+      <div class="user-profile-nav" style="display:flex;align-items:center;gap:12px;margin-left:12px;padding-left:12px;border-left:1px solid rgba(226,232,240,0.85)">
+        ${isDashboard && isUserAdmin ? `
+        <button id="adminSettingsBtn" class="admin-settings-nav-btn" title="Cấu hình Icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+        ` : ''}
+
         <!-- Notification Bell Container -->
-        <div id="adminNotificationBell" class="position-relative" style="cursor:pointer;padding:4px;display:flex;align-items:center;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a5568" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <div id="adminNotificationBell" class="position-relative" style="cursor:pointer;padding:6px;display:flex;align-items:center;border-radius:50%;background:rgba(0,0,0,0.04);transition:background 0.2s;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s;">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
           <span id="adminNotificationBadge" class="position-absolute bg-danger border border-light rounded-circle" style="top: 2px; right: 2px; width: 8px; height: 8px; display: none;"></span>
           
           <!-- Dropdown Card -->
-          <div id="adminNotificationDropdown" style="display:none; position:absolute; right:-80px; top:36px; width:320px; background:#ffffff; border:1px solid rgba(0,0,0,0.08); border-radius:12px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); z-index:2200; color:#1e293b; font-family:system-ui,-apple-system,sans-serif;">
-            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid rgba(0,0,0,0.06); font-weight:600; font-size:13px;">
+          <div id="adminNotificationDropdown" style="display:none; position:absolute; right:-80px; top:36px; width:320px; background:#ffffff; border:1px solid rgba(226,232,240,0.9); border-radius:14px; box-shadow:0 16px 36px -6px rgba(0,0,0,0.12); z-index:2200; color:#0f172a; font-family:var(--font-sans, system-ui);">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid rgba(226,232,240,0.8); font-weight:600; font-size:13px;">
               <span>🔔 Thông báo thay đổi</span>
-              <button id="adminMarkAllReadBtn" style="background:none; border:none; color:#2563eb; font-size:11px; padding:0; cursor:pointer;">Đánh dấu đã đọc</button>
+              <button id="adminMarkAllReadBtn" style="background:none; border:none; color:#0284c7; font-size:11px; font-weight:600; padding:0; cursor:pointer;">Đánh dấu đã đọc</button>
             </div>
             <div id="adminNotificationList" style="max-height:280px; overflow-y:auto; font-size:12px; line-height:1.4;">
               <div style="padding:20px; text-align:center; color:#64748b;">Đang tải thông báo...</div>
@@ -98,11 +93,10 @@ window.initializeAdminNav = function () {
           </div>
         </div>
 
-        <span id="userProfileBtn" style="font-size:13px;color:#4a5568;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;" title="Chỉnh sửa thông tin tài khoản">👤 <span style="text-decoration:underline;text-underline-offset:3px;">${userDisplayName}</span></span>
-        <button onclick="handleLogout()" class="btn btn-outline-danger btn-sm" style="padding:4px 10px;font-size:12px;border-radius:6px;border-color:rgba(220,53,69,0.5);color:#ff6b76;">Đăng xuất</button>
+        <span id="userProfileBtn" style="font-size:13px;color:#334155;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(0,0,0,0.04);border-radius:9999px;border:1px solid rgba(0,0,0,0.06);" title="Chỉnh sửa thông tin tài khoản">👤 <span>${userDisplayName}</span></span>
+        <button onclick="handleLogout()" class="btn btn-sm" style="padding:5px 12px;font-size:12px;border-radius:9999px;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.3);color:#e11d48;font-weight:600;">Đăng xuất</button>
       </div>
 
-      ${!isDashboard ? `
       <div class="admin-menu-mobile">
         <button class="menu-button" type="button" aria-expanded="false" aria-label="Menu">
           ☰ Menu <span class="menu-caret">▼</span>
@@ -112,7 +106,6 @@ window.initializeAdminNav = function () {
           <a href="/" class="menu-item menu-item--tour">👁️ Xem Tour</a>
         </div>
       </div>
-      ` : ''}
     </div>
   `;
 

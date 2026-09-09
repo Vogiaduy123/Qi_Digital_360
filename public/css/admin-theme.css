@@ -1,0 +1,344 @@
+/* ==========================================================================
+   ADMIN THEME — Beamo Virtual Tour 360 Studio Cockpit
+   Shared Design Tokens & High-Density UI Components
+   Tuân thủ nghiêm ngặt: Giữ nguyên 100% icons, emoji và class chức năng
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Surfaces & Backgrounds */
+  --bg-page: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #ffffff;
+  --bg-surface-subtle: #f1f5f9;
+  --bg-surface-hover: #f8fafc;
+  --bg-dark-glass: rgba(10, 16, 30, 0.88);
+  --bg-light-glass: rgba(255, 255, 255, 0.85);
+
+  /* Borders & Rules */
+  --border-subtle: rgba(226, 232, 240, 0.85);
+  --border-default: #e2e8f0;
+  --border-focus: #38bdf8;
+  --border-dark-hud: rgba(56, 189, 248, 0.25);
+
+  /* Brand Colors & Accents */
+  --brand-primary: #0284c7;
+  --brand-primary-hover: #0369a1;
+  --brand-accent: #38bdf8;
+  --brand-accent-glow: rgba(56, 189, 248, 0.25);
+  --brand-indigo: #4f46e5;
+  --brand-indigo-hover: #4338ca;
+
+  /* Status Colors */
+  --status-success: #10b981;
+  --status-success-bg: rgba(16, 185, 129, 0.1);
+  --status-warning: #f59e0b;
+  --status-warning-bg: rgba(245, 158, 11, 0.1);
+  --status-danger: #f43f5e;
+  --status-danger-bg: rgba(244, 63, 94, 0.1);
+  --status-info: #0ea5e9;
+  --status-info-bg: rgba(14, 165, 233, 0.1);
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Text Colors */
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #f8fafc;
+  --text-light-muted: #94a3b8;
+
+  /* Spacing Scale */
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Border Radii */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Elevation Shadows */
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -2px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 12px 32px -4px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+  --shadow-hud: 0 8px 32px 0 rgba(0, 0, 0, 0.45), 0 0 16px 0 rgba(56, 189, 248, 0.15);
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 0.18s;
+  --dur-normal: 0.25s;
+}
+
+/* Base resets & typography */
+html {
+  font-family: var(--font-sans);
+  color: var(--text-main);
+  background-color: var(--bg-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans) !important;
+  color: var(--text-main);
+  background-color: var(--bg-page);
+  line-height: 1.5;
+}
+
+/* Modern Card / Panel Standard */
+.panel,
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--dur-normal) var(--ease-out), border-color var(--dur-normal) var(--ease-out);
+}
+
+.panel:hover,
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: rgba(203, 213, 225, 0.9);
+}
+
+/* Modern Form Controls */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="url"],
+select,
+textarea,
+.form-control,
+.form-select {
+  font-family: var(--font-sans) !important;
+  font-size: 14px;
+  color: var(--text-main);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+  outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--brand-accent) !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+  outline: none !important;
+}
+
+/* Modern Precision Buttons */
+.btn {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+  border: 1px solid transparent;
+  user-select: none;
+  text-decoration: none;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--brand-primary);
+  color: #ffffff !important;
+  border-color: var(--brand-primary);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+}
+
+.btn-primary:hover {
+  background: var(--brand-primary-hover);
+  border-color: var(--brand-primary-hover);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-secondary,
+.btn-outline-secondary {
+  background: var(--bg-surface);
+  color: var(--text-main) !important;
+  border-color: var(--border-default);
+}
+
+.btn-secondary:hover,
+.btn-outline-secondary:hover {
+  background: var(--bg-surface-subtle);
+  border-color: #cbd5e1;
+  color: var(--text-main) !important;
+}
+
+.btn-success {
+  background: var(--status-success);
+  color: #ffffff !important;
+  border-color: var(--status-success);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.btn-success:hover {
+  background: #059669;
+  border-color: #059669;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: var(--status-danger);
+  color: #ffffff !important;
+  border-color: var(--status-danger);
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.25);
+}
+
+.btn-danger:hover {
+  background: #e11d48;
+  border-color: #e11d48;
+  transform: translateY(-1px);
+}
+
+/* Modern Data Table */
+.table,
+table {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  color: var(--text-main);
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.table thead th,
+table thead th {
+  background: var(--bg-surface-subtle);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.table tbody td,
+table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+  background-color: var(--bg-surface);
+}
+
+.table tbody tr:hover td,
+table tbody tr:hover td {
+  background-color: var(--bg-surface-subtle);
+}
+
+/* Modern Badges & Chips */
+.badge {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1;
+}
+
+.badge-primary {
+  background: rgba(2, 132, 199, 0.12);
+  color: var(--brand-primary);
+  border: 1px solid rgba(2, 132, 199, 0.25);
+}
+
+.badge-success {
+  background: var(--status-success-bg);
+  color: var(--status-success);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.badge-warning {
+  background: var(--status-warning-bg);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.badge-danger {
+  background: var(--status-danger-bg);
+  color: var(--status-danger);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+}
+
+/* Modern Modal Dialog */
+.modal-content {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.2);
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 18px 24px;
+  background: var(--bg-surface-subtle);
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 16px 24px;
+  background: var(--bg-surface-subtle);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+}

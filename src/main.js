@@ -89,7 +89,8 @@ import { fetchRooms, fetchBuildings } from './core/api.js';
 import { initViewer, initZoomControl, getViewer } from './core/viewer.js';
 import { initScenesFeature, initRooms, getScenes, getRoomsData, preloadConnectedRooms } from './core/scenes.js';
 import { initMinimap, loadMinimap, updateMinimapHighlight, drawUserMinimap } from './features/minimap.js';
-import { initSensors, loadSensors, updateSensorWidget, renderCameraPanel, addSensorHotspots, startSensorRealTimeUpdates, closeCameraModal } from './features/sensors.js';
+import { initSensors, loadSensors, updateSensorWidget, renderCameraPanel, addSensorHotspots, startSensorRealTimeUpdates, closeCameraModal, getSensorsData, showCameraPreview, showSensorGrafana } from './features/sensors.js';
+import { initIotQuickList, renderIotQuickList } from './features/iot-quicklist.js';
 import { initMailFeature, resolveMailPointToPanorama, createPanoramaMailHotspot, clearFixedMailHotspots, closeMailComposer } from './features/mail.js';
 import { initAutoTour } from './features/autotour.js';
 import { initCompass } from './features/compass.js';
@@ -545,6 +546,16 @@ async function initApp() {
     });
     await loadSensors();
 
+    initIotQuickList({
+      getCurrentRoomId: () => currentRoomId,
+      getRoomsData: () => getRoomsData(),
+      getScenes: getScenes,
+      switchRoom: switchRoom,
+      getSensorsData: getSensorsData,
+      showCameraPreview: showCameraPreview,
+      showSensorGrafana: showSensorGrafana
+    });
+
     initZoomControl();
     initCompass({
       getCurrentRoomId: () => currentRoomId,
@@ -716,6 +727,7 @@ function switchRoom(roomId, initialYaw, initialPitch) {
 
   updateSensorWidget();
   renderCameraPanel();
+  renderIotQuickList();
 }
 
 /* ===== HOTSPOTS ===== */

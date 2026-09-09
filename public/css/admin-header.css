@@ -3,20 +3,21 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 14px 75px 14px 24px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  padding: 12px 75px 12px 24px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04);
+  font-family: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif);
 }
 
 .admin-header .header-content {
-  max-width: 1180px;
+  max-width: 1240px;
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .admin-header .header-brand {
@@ -24,67 +25,76 @@
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  color: #1a202c;
+  color: #0f172a;
   font-size: 15px;
   font-weight: 700;
   flex-shrink: 0;
-  margin-right: 8px;
+  margin-right: 12px;
+  letter-spacing: -0.2px;
 }
 
 .admin-header .header-brand img {
-  height: 30px;
+  height: 32px;
   object-fit: contain;
+  transition: transform 0.2s ease;
 }
 
-.admin-header .header-brand:hover {
-  opacity: 0.92;
+.admin-header .header-brand:hover img {
+  transform: scale(1.04);
 }
 
 .admin-header .header-nav {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
   min-width: 0;
 }
 
 .admin-header .nav-link {
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: 9999px;
   text-decoration: none;
   font-size: 13px;
   font-weight: 600;
-  transition: background 0.2s, transform 0.15s;
-  background: rgba(0, 0, 0, 0.05);
-  color: #4a5568;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  background: transparent;
+  color: #475569;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   white-space: nowrap;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
+  line-height: 1.4;
 }
 
 .admin-header .nav-link:hover {
-  background: rgba(0, 0, 0, 0.09);
+  background: rgba(241, 245, 249, 0.85);
+  color: #0f172a;
+  border-color: rgba(226, 232, 240, 0.8);
   transform: translateY(-1px);
-  color: #1a202c;
 }
 
 .admin-header .nav-link.active {
-  background: #2563eb;
-  color: #fff;
+  background: #0284c7;
+  color: #ffffff !important;
+  border-color: #0284c7;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.3);
 }
 
 .admin-header .nav-link--tour {
-  background: rgba(37, 99, 235, 0.15);
-  color: #2563eb;
+  background: rgba(2, 132, 199, 0.08);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.2);
   flex-shrink: 0;
 }
 
 .admin-header .nav-link--tour:hover {
-  background: rgba(37, 99, 235, 0.25);
-  color: #1d4ed8;
+  background: rgba(2, 132, 199, 0.16);
+  color: #0369a1;
+  border-color: rgba(2, 132, 199, 0.35);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15);
 }
 
 .admin-header .admin-menu-mobile {
@@ -95,17 +105,23 @@
 
 .admin-header .menu-button {
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: 9999px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  border: none;
-  background: #2b3278;
-  color: #fff;
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  background: #0f172a;
+  color: #ffffff;
   display: flex;
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+  transition: all 0.2s ease;
+}
+
+.admin-header .menu-button:hover {
+  background: #1e293b;
 }
 
 .admin-header .menu-caret {
@@ -117,10 +133,12 @@
   top: calc(100% + 8px);
   right: 0;
   min-width: 220px;
-  background: rgba(255, 255, 255, 0.98);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.12);
   padding: 8px;
   display: none;
   z-index: 200;
@@ -131,31 +149,33 @@
 }
 
 .admin-header .menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 14px;
-  color: #4a5568;
+  color: #475569;
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
   border-radius: 8px;
-  transition: background 0.15s;
+  transition: all 0.15s ease;
 }
 
 .admin-header .menu-item:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #1a202c;
+  background: rgba(241, 245, 249, 0.9);
+  color: #0f172a;
 }
 
 .admin-header .menu-item.active {
-  background: rgba(37, 99, 235, 0.12);
-  color: #2563eb;
+  background: rgba(2, 132, 199, 0.1);
+  color: #0284c7;
   font-weight: 600;
 }
 
 .admin-header .menu-item--tour {
   margin-top: 6px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  padding-top: 14px;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  padding-top: 12px;
 }
 
 @media (max-width: 1200px) {
@@ -369,30 +389,27 @@
 
 /* Settings button styling */
 .admin-settings-nav-btn {
-  position: absolute;
-  right: 24px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.05);
-  border: none;
+  position: static;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   cursor: pointer;
   color: #4a5568;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  padding: 0;
   border-radius: 50%;
-  transition: background 0.2s, color 0.2s, transform 0.15s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  z-index: 10;
+  width: 34px;
+  height: 34px;
 }
 
 .admin-settings-nav-btn:hover {
-  background: rgba(0, 0, 0, 0.09);
-  color: #2563eb;
-  transform: translateY(-50%) scale(1.05);
+  background: rgba(2, 132, 199, 0.1);
+  border-color: rgba(2, 132, 199, 0.3);
+  color: #0284c7;
+  transform: scale(1.06);
 }
 
 .admin-settings-nav-btn svg {
