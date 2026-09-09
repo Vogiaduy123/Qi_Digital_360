@@ -289,13 +289,6 @@ function handleMinimapHover(e) {
 
   const hoverIndex = getMarkerAtPosition(x, y);
   minimapViewport.style.cursor = hoverIndex !== -1 ? 'pointer' : 'grab';
-  if (hoverIndex !== -1) {
-    const marker = floor.markers[hoverIndex];
-    const room = marker.roomId ? env.getRoomsData()[marker.roomId] : null;
-    minimapViewport.title = room ? room.name : '';
-  } else {
-    minimapViewport.title = '';
-  }
 }
 
 function getMarkerAtPosition(x, y) {

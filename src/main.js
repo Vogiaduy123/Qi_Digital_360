@@ -37,6 +37,52 @@ let allBuildings = [];
 
 window.customIcons = {};
 
+// Ngăn hoàn toàn khung chữ trắng tooltip mặc định của trình duyệt (browser native tooltip) trên toàn bộ tour
+function suppressBrowserTooltips() {
+  const cleanElement = (el) => {
+    if (el && el.hasAttribute && el.hasAttribute('title')) {
+      if (!el.getAttribute('aria-label')) {
+        el.setAttribute('aria-label', el.getAttribute('title'));
+      }
+      el.removeAttribute('title');
+    }
+  };
+
+  document.querySelectorAll('[title]').forEach(cleanElement);
+
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach(m => {
+      if (m.type === 'attributes' && m.attributeName === 'title') {
+        cleanElement(m.target);
+      } else if (m.type === 'childList') {
+        m.addedNodes.forEach(node => {
+          if (node.nodeType === 1) {
+            cleanElement(node);
+            node.querySelectorAll?.('[title]')?.forEach(cleanElement);
+          }
+        });
+      }
+    });
+  });
+
+  const attachObserver = () => {
+    if (document.body) {
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['title'],
+        childList: true,
+        subtree: true
+      });
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachObserver);
+  } else {
+    attachObserver();
+  }
+}
+suppressBrowserTooltips();
 
 import { degToRad, radToDeg, parseJsonResponse } from './core/utils.js';
 import { fetchRooms, fetchBuildings } from './core/api.js';
@@ -202,7 +248,7 @@ async function initApp() {
         // Hiện/ẩn công cụ kéo thả điểm mail dựa vào quyền
         const mailDragBtn = document.getElementById('mailDragIcon');
         if (mailDragBtn) {
-          mailDragBtn.style.display = isManager ? 'block' : 'none';
+          mailDragBtn.style.display = isManager ? 'inline-flex' : 'none';
         }
 
         const profileBtn = document.getElementById('userProfileTourBtn');
@@ -233,6 +279,22 @@ async function initApp() {
           }
         } catch {
           alert('Lỗi kết nối khi đăng xuất');
+        }
+      });
+    }
+
+    // Hỗ trợ click-to-toggle và click-outside cho thanh công cụ ngang
+    const mailToolboxEl = document.getElementById('mailToolbox');
+    const toolsTriggerEl = mailToolboxEl?.querySelector('.tools-menu-trigger');
+    if (mailToolboxEl && toolsTriggerEl) {
+      toolsTriggerEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        mailToolboxEl.classList.toggle('is-open');
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!mailToolboxEl.contains(e.target)) {
+          mailToolboxEl.classList.remove('is-open');
         }
       });
     }

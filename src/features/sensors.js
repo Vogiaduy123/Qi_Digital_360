@@ -664,7 +664,7 @@ export function addSensorHotspots(roomId) {
     }
 
     el.className = hotspotClass;
-    el.title = sensor.name || (isCamera ? "Camera" : "Cảm biến");
+    el.setAttribute("aria-label", sensor.name || (isCamera ? "Camera" : "Cảm biến"));
 
     const iconEl = document.createElement("span");
     iconEl.className = "sensor-hotspot-icon";

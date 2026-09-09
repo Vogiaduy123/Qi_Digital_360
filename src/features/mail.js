@@ -453,7 +453,7 @@ export function createFixedMailHotspot(index, mailPoint) {
   const el = document.createElement("button");
   el.type = "button";
   el.className = "mail-hotspot mail-fixed-hotspot";
-  el.title = mailPoint.title || "Điểm gửi mail";
+  el.setAttribute("aria-label", mailPoint.title || "Điểm gửi mail");
   
   const customIcon = window.customIcons && window.customIcons.mail;
   if (customIcon) {
@@ -486,7 +486,7 @@ export function createPanoramaMailHotspot(container, index, mailPoint) {
   const el = document.createElement("button");
   el.type = "button";
   el.className = "mail-hotspot";
-  el.title = mailPoint.title || "Điểm gửi mail";
+  el.setAttribute("aria-label", mailPoint.title || "Điểm gửi mail");
 
   const customIcon = window.customIcons && window.customIcons.mail;
   if (customIcon) {

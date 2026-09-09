@@ -75,7 +75,7 @@ export function showStallCardModal(stallCard, media = {}) {
   const closeBtn = document.createElement("button");
   closeBtn.className = "stall-card-close-btn";
   closeBtn.innerHTML = "&times;";
-  closeBtn.title = "Đóng";
+  closeBtn.setAttribute("aria-label", "Đóng");
   closeBtn.onclick = closeStallModal;
   card.appendChild(closeBtn);
 

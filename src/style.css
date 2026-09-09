@@ -526,6 +526,28 @@ body.admin #pano>* {
     font-size: 10.5px;
     max-width: 180px;
   }
+  .tools-menu {
+    left: 14px;
+    bottom: 16px;
+    gap: 8px;
+  }
+  .tools-menu-trigger {
+    width: 42px;
+    height: 42px;
+    font-size: 19px;
+  }
+  .tools-menu-dropdown {
+    padding: 4px 10px;
+    gap: 6px;
+  }
+  .mail-drag-icon,
+  .dashboard-btn,
+  .tour-profile-btn,
+  .tour-logout-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
 }
 
 /* ===== ZOOM CONTROL ===== */
@@ -1206,170 +1228,179 @@ body.admin #pano>* {
   text-decoration: underline;
 }
 
-/* ===== TOOLS MENU & DROPDOWN ===== */
+/* ===== TOOLS MENU & DROPDOWN (DIGITAL TWIN 360 CYBER HUD) ===== */
 .tools-menu {
   position: fixed;
   left: 24px;
   bottom: 24px;
   z-index: 60;
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+}
+
+.tools-menu svg {
+  pointer-events: none;
+  display: block;
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  transition: transform 0.25s ease, stroke 0.25s ease;
 }
 
 .tools-menu-trigger {
-  width: 44px;
-  height: 44px;
-  background: rgba(0, 0, 0, 0.55);
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  width: 46px;
+  height: 46px;
+  background: rgba(10, 16, 30, 0.9);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
   border-radius: 50%;
-  backdrop-filter: blur(12px);
-  display: flex;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
   user-select: none;
+  flex-shrink: 0;
+  color: #38bdf8;
+  padding: 0;
+  margin: 0;
 }
 
-.tools-menu:hover .tools-menu-trigger {
-  transform: rotate(45deg);
-  background: rgba(0, 0, 0, 0.75);
-  border-color: rgba(255, 255, 255, 0.45);
+.tools-menu:hover .tools-menu-trigger,
+.tools-menu.is-open .tools-menu-trigger {
+  transform: rotate(90deg) scale(1.06);
+  background: rgba(15, 23, 42, 0.98);
+  border-color: #38bdf8;
+  color: #e0f2fe;
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.5), 0 8px 28px rgba(0, 0, 0, 0.6);
 }
 
 .tools-menu-dropdown {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 8px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 8px;
-  backdrop-filter: blur(14px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  background: rgba(10, 16, 30, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 9999px;
+  padding: 5px 10px;
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.65), 0 0 20px rgba(56, 189, 248, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.15);
 
   opacity: 0;
   pointer-events: none;
-  transform: translateY(12px);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transform: translateX(-16px) scale(0.94);
+  transform-origin: left center;
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.tools-menu:hover .tools-menu-dropdown {
+.tools-menu:hover .tools-menu-dropdown,
+.tools-menu.is-open .tools-menu-dropdown {
   opacity: 1;
   pointer-events: auto;
-  transform: translateY(0);
+  transform: translateX(0) scale(1);
+}
+
+/* Tooltip Cyber HUD */
+.tools-menu-dropdown [data-tooltip] {
+  position: relative;
+}
+
+.tools-menu-dropdown [data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(8, 14, 26, 0.95);
+  color: #f1f5f9;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 12px rgba(56, 189, 248, 0.2);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.tools-menu-dropdown [data-tooltip]:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Digital Twin 360 HUD Buttons */
+.mail-drag-icon,
+.dashboard-btn,
+.tour-profile-btn,
+.tour-logout-btn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50%;
+  box-sizing: border-box;
+  padding: 0 !important;
+  margin: 0;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  line-height: 0;
 }
 
 .mail-drag-icon {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  border-radius: 8px;
   cursor: grab;
-  user-select: none;
-  background: rgba(52, 152, 219, 0.25);
-  border: 1px solid rgba(154, 199, 255, 0.5);
-  transition: all 0.2s ease;
-}
-
-.mail-drag-icon:hover {
-  background: rgba(52, 152, 219, 0.45);
-  border-color: rgba(154, 199, 255, 0.8);
-  transform: scale(1.05);
 }
 
 .mail-drag-icon:active {
   cursor: grabbing;
 }
 
-.dashboard-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  border-radius: 8px;
-  text-decoration: none;
-  color: #fff;
-  background: rgba(241, 166, 35, 0.25);
-  border: 1px solid rgba(241, 166, 35, 0.5);
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.dashboard-btn:hover {
-  background: rgba(241, 166, 35, 0.45);
-  border-color: rgba(241, 166, 35, 0.8);
-  transform: scale(1.05);
-  box-shadow: 0 0 10px rgba(241, 166, 35, 0.3);
-}
-
-.dashboard-btn:active {
-  transform: scale(0.95);
-}
-
-.tour-profile-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  border-radius: 8px;
-  text-decoration: none;
-  color: #fff;
-  background: rgba(99, 102, 241, 0.25);
-  border: 1px solid rgba(99, 102, 241, 0.5);
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
+/* Hover States — High-tech Cyan Spatial Glow */
+.mail-drag-icon:hover,
+.dashboard-btn:hover,
 .tour-profile-btn:hover {
-  background: rgba(99, 102, 241, 0.45);
-  border-color: rgba(99, 102, 241, 0.8);
-  transform: scale(1.05);
-  box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+  background: rgba(56, 189, 248, 0.16);
+  border-color: rgba(56, 189, 248, 0.65);
+  color: #38bdf8;
+  transform: translateY(-2px) scale(1.08);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.4), 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
+.mail-drag-icon:active,
+.dashboard-btn:active,
 .tour-profile-btn:active {
-  transform: scale(0.95);
+  transform: translateY(0) scale(0.95);
+  background: rgba(56, 189, 248, 0.26);
 }
 
-.tour-logout-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  border-radius: 8px;
-  text-decoration: none;
-  color: #fff;
-  background: rgba(239, 68, 68, 0.25);
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
+/* Logout Exit Button — Subtle Cyber Rose Accent */
 .tour-logout-btn:hover {
-  background: rgba(239, 68, 68, 0.45);
-  border-color: rgba(239, 68, 68, 0.8);
-  transform: scale(1.05);
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+  background: rgba(244, 63, 94, 0.16);
+  border-color: rgba(244, 63, 94, 0.65);
+  color: #fb7185;
+  transform: translateY(-2px) scale(1.08);
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.4), 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .tour-logout-btn:active {
-  transform: scale(0.95);
+  transform: translateY(0) scale(0.95);
 }
 
 #pano.mail-drop-target {

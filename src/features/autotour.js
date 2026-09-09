@@ -647,12 +647,12 @@ function updateTourUI() {
         playPauseIcon.textContent = '▶';
         playPauseBtn.classList.add('paused');
         playPauseBtn.classList.remove('active');
-        playPauseBtn.title = 'Tiếp tục';
+        playPauseBtn.setAttribute('aria-label', 'Tiếp tục');
       } else {
         playPauseIcon.textContent = '⏸';
         playPauseBtn.classList.add('active');
         playPauseBtn.classList.remove('paused');
-        playPauseBtn.title = 'Tạm dừng';
+        playPauseBtn.setAttribute('aria-label', 'Tạm dừng');
       }
     }
     
