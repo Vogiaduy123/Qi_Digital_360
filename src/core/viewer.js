@@ -105,7 +105,7 @@ export function initZoomControl() {
     pano.addEventListener("wheel", (e) => {
       // Bỏ qua nếu thao tác cuộn chuột xảy ra bên trong popup, overlay, card hoặc modal
       if (e.target && e.target.closest && e.target.closest(
-        ".media-hotspot-overlay, .media-overlay, .info-hotspot-text, .stall-card, .stall-sidebar, .museum-card-modal, .camera-modal-content, [data-no-zoom]"
+        ".media-hotspot-overlay, .media-overlay, .info-hotspot-text, .stall-card, .stall-sidebar, .museum-card-modal, .camera-modal-content, .iot-quicklist-panel, [data-no-zoom]"
       )) {
         return;
       }

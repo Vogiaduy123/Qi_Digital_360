@@ -50,15 +50,8 @@ export function initIotQuickList(dependencies) {
     });
   });
 
-  // Close on click outside if panel is open
-  document.addEventListener('click', (e) => {
-    if (panel && panel.classList.contains('is-open')) {
-      const isClickInside = panel.contains(e.target) || (toggleBtn && toggleBtn.contains(e.target));
-      if (!isClickInside) {
-        closeIotQuickList();
-      }
-    }
-  });
+  // Panel is pinned: only closes when clicking the close 'x' button or the toggle button
+  // (click-outside listener removed as requested)
 
   // Close on Escape key
   document.addEventListener('keydown', (e) => {
