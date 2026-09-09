@@ -122,9 +122,25 @@
 
   <!-- ZOOM CONTROL -->
   <div id="zoomControl" class="zoom-control">
-    <span>🔍 Zoom</span>
-    <input type="range" id="zoomSlider" min="30" max="110" value="75" class="zoom-slider">
-    <span id="zoomValue">75</span>°
+    <div class="zoom-label-group">
+      <svg class="zoom-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        <line x1="11" y1="8" x2="11" y2="14"></line>
+        <line x1="8" y1="11" x2="14" y2="11"></line>
+      </svg>
+      <span class="zoom-label">Zoom</span>
+    </div>
+    <input type="range" id="zoomSlider" min="30" max="110" value="75" class="zoom-slider" aria-label="Điều chỉnh độ thu phóng góc nhìn">
+    <div class="zoom-value-badge">
+      <span id="zoomValue">75</span>°
+    </div>
+    <button id="zoomResetBtn" class="zoom-reset-btn" type="button" aria-label="Đặt lại góc nhìn mặc định (75°)" title="Đặt lại góc nhìn mặc định (75°)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+      </svg>
+    </button>
   </div>
 
   <!-- MEDIA OVERLAY -->

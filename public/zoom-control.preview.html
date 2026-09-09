@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zoom Control — 8-State Hallmark Preview</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <style>
+    body {
+      background: #0b0f19 radial-gradient(ellipse at 50% 20%, rgba(30, 41, 59, 0.7) 0%, #0b0f19 70%);
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 40px 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .preview-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .preview-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #f8fafc;
+      margin: 0 0 8px;
+    }
+    .preview-header p {
+      font-size: 13px;
+      color: #94a3b8;
+      margin: 0;
+    }
+    .states-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      max-width: 600px;
+      width: 100%;
+    }
+    .state-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 20px;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+    }
+    .state-label {
+      font-size: 12px;
+      font-family: monospace;
+      color: #38bdf8;
+      width: 90px;
+      flex-shrink: 0;
+    }
+    .preview-wrapper {
+      position: static !important;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-grow: 1;
+    }
+    .preview-wrapper .zoom-control {
+      position: static !important;
+      transform: none !important;
+      bottom: auto !important;
+      left: auto !important;
+    }
+    /* Simulated pseudo-classes for static rendering of states */
+    .is-hover {
+      background: rgba(15, 23, 42, 0.85) !important;
+      border-color: rgba(255, 255, 255, 0.22) !important;
+    }
+    .is-hover .zoom-reset-btn {
+      background: rgba(255, 255, 255, 0.2) !important;
+      border-color: rgba(255, 255, 255, 0.35) !important;
+      color: #ffffff !important;
+      transform: scale(1.08) !important;
+    }
+    .is-focus .zoom-reset-btn {
+      outline: 2px solid #10b981 !important;
+      outline-offset: 2px !important;
+    }
+    .is-active .zoom-reset-btn {
+      transform: scale(0.92) !important;
+      background: rgba(255, 255, 255, 0.25) !important;
+    }
+    .is-disabled {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .is-error {
+      border-color: rgba(239, 68, 68, 0.6) !important;
+    }
+    .is-success {
+      border-color: rgba(16, 185, 129, 0.6) !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-header">
+    <h1>Zoom Control — Hallmark 8-State Preview</h1>
+    <p>Component: <code>#zoomControl</code> · Theme: <code>dark-glass</code> · States Verification</p>
+  </div>
+
+  <div class="states-container">
+    <!-- 1. Default -->
+    <div class="state-row">
+      <span class="state-label">default</span>
+      <div class="preview-wrapper">
+        <div class="zoom-control">
+          <div class="zoom-label-group">
+            <svg class="zoom-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+            <span class="zoom-label">Zoom</span>
+          </div>
+          <input type="range" min="30" max="110" value="75" class="zoom-slider">
+          <div class="zoom-value-badge">75°</div>
+          <button class="zoom-reset-btn" type="button" aria-label="Reset zoom"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Hover -->
+    <div class="state-row">
+      <span class="state-label">hover</span>
+      <div class="preview-wrapper">
+        <div class="zoom-control is-hover">
+          <div class="zoom-label-group">
+            <svg class="zoom-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+            <span class="zoom-label">Zoom</span>
+          </div>
+          <input type="range" min="30" max="110" value="85" class="zoom-slider">
+          <div class="zoom-value-badge">85°</div>
+          <button class="zoom-reset-btn" type="button" aria-label="Reset zoom"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Focus -->
+    <div class="state-row">
+      <span class="state-label">focus</span>
+      <div class="preview-wrapper">
+        <div class="zoom-control is-focus">
+          <div class="zoom-label-group">
+            <svg class="zoom-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+            <span class="zoom-label">Zoom</span>
+          </div>
+          <input type="range" min="30" max="110" value="75" class="zoom-slider">
+          <div class="zoom-value-badge">75°</div>
+          <button class="zoom-reset-btn" type="button" aria-label="Reset zoom"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Active -->
+    <div class="state-row">
+      <span class="state-label">active</span>
+      <div class="preview-wrapper">
+        <div class="zoom-control is-active">
+          <div class="zoom-label-group">
+            <svg class="zoom-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+            <span class="zoom-label">Zoom</span>
+          </div>
+          <input type="range" min="30" max="110" value="75" class="zoom-slider">
+          <div class="zoom-value-badge">75°</div>
+          <button class="zoom-reset-btn" type="button" aria-label="Reset zoom"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Disabled -->
+    <div class="state-row">
+      <span class="state-label">disabled</span>
+      <div class="preview-wrapper">
+        <div class="zoom-control is-disabled">
+          <div class="zoom-label-group">
+            <svg class="zoom-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+            <span class="zoom-label">Zoom</span>
+          </div>
+          <input type="range" min="30" max="110" value="75" class="zoom-slider" disabled>
+          <div class="zoom-value-badge">75°</div>
+          <button class="zoom-reset-btn" type="button" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Loading / Resetting (Spinning) -->
+    <div class="state-row">
+      <span class="state-label">loading/reset</span>
+      <div class="preview-wrapper">
+        <div class="zoom-control">
+          <div class="zoom-label-group">
+            <svg class="zoom-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+            <span class="zoom-label">Zoom</span>
+          </div>
+          <input type="range" min="30" max="110" value="75" class="zoom-slider">
+          <div class="zoom-value-badge">75°</div>
+          <button class="zoom-reset-btn spinning" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Error -->
+    <div class="state-row">
+      <span class="state-label">error</span>
+      <div class="preview-wrapper">
+        <div class="zoom-control is-error">
+          <div class="zoom-label-group">
+            <svg class="zoom-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span class="zoom-label" style="color: #fca5a5;">Zoom</span>
+          </div>
+          <input type="range" min="30" max="110" value="30" class="zoom-slider">
+          <div class="zoom-value-badge" style="color: #fca5a5;">30°</div>
+          <button class="zoom-reset-btn" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. Success / Reset Complete -->
+    <div class="state-row">
+      <span class="state-label">success</span>
+      <div class="preview-wrapper">
+        <div class="zoom-control is-success">
+          <div class="zoom-label-group">
+            <svg class="zoom-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><polyline points="9 11 11 13 14 9"></polyline></svg>
+            <span class="zoom-label" style="color: #6ee7b7;">Zoom</span>
+          </div>
+          <input type="range" min="30" max="110" value="75" class="zoom-slider">
+          <div class="zoom-value-badge" style="color: #6ee7b7;">75°</div>
+          <button class="zoom-reset-btn" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -591,7 +591,6 @@ body {
   opacity: 1;
 }
 
-/* Room icon */
 .room-icon-wrap {
   width: 38px;
   height: 38px;
@@ -606,6 +605,13 @@ body {
   font-size: 14px;
   color: var(--accent-light);
   font-weight: 700;
+}
+
+.room-icon-wrap svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  color: #38bdf8;
 }
 
 /* Room text */
@@ -783,6 +789,17 @@ body {
   border-radius: 6px;
   transition: background 0.2s, color 0.2s;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.main-header-nav a svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: #38bdf8;
+  transition: color 0.2s ease;
 }
 
 .main-header-nav a:hover {
@@ -790,8 +807,16 @@ body {
   color: #fff;
 }
 
+.main-header-nav a:hover svg {
+  color: #fff;
+}
+
 .main-header-nav a.active {
   background: rgba(37, 99, 235, 0.28);
+  color: #ffffff;
+}
+
+.main-header-nav a.active svg {
   color: #ffffff;
 }
 

@@ -148,89 +148,116 @@ body.admin #pano>* {
 #roomListWrapper {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(10, 16, 30, 0.88);
-  padding: 12px 14px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(56, 189, 248, 0.22);
+  background: rgba(15, 23, 42, 0.46);
+  padding: 14px 16px;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px -4px rgba(0, 0, 0, 0.55), 0 6px 18px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#roomListWrapper:hover {
+  background: rgba(15, 23, 42, 0.60);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 24px 60px -4px rgba(0, 0, 0, 0.65), 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.28);
 }
 
 #roomListWrapper label {
   display: block;
-  margin-bottom: 5px;
-  font-weight: 700;
-  font-size: 12.5px;
-  color: #ffffff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
-  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 #roomSelect {
   width: 100%;
   box-sizing: border-box;
-  padding: 7px 10px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1.5px solid rgba(255, 255, 255, 0.7);
-  border-radius: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
   font-size: 13.5px;
   font-weight: 500;
-  color: #0f172a;
+  color: #f8fafc;
   cursor: pointer;
   transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  outline: none;
 }
 
 #roomSelect:hover {
-  border-color: #2980b9;
-  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
 }
 
 #roomSelect:focus {
-  outline: none;
-  border-color: #2980b9;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+#roomSelect option {
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 6px 10px;
 }
 
 #buildingSelectWrapper {
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #buildingSelectWrapper label {
   display: block;
-  margin-bottom: 5px;
-  font-weight: 700;
-  font-size: 12.5px;
-  color: #ffffff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
-  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.92);
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 #buildingSelect {
   width: 100%;
   box-sizing: border-box;
-  padding: 7px 10px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1.5px solid rgba(255, 255, 255, 0.7);
-  border-radius: 6px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
   font-size: 13.5px;
   font-weight: 500;
-  color: #0f172a;
+  color: #f8fafc;
   cursor: pointer;
   transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  outline: none;
 }
 
 #buildingSelect:hover {
-  border-color: #229954;
-  box-shadow: 0 2px 8px rgba(39, 174, 96, 0.2);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
 }
 
 #buildingSelect:focus {
-  outline: none;
-  border-color: #229954;
-  box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+#buildingSelect option {
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 6px 10px;
 }
 
 .room-btn {
@@ -316,46 +343,55 @@ body.admin #pano>* {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #82828284 0%, #9f9f9f 100%);
-  color: white;
-  border: none;
-  border-radius: 50px;
-  font-size: 16px;
+  padding: 10px 22px;
+  background: rgba(15, 23, 42, 0.46);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  font-size: 14.5px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-  transition: all 0.3s ease;
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.22);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
+  user-select: none;
 }
 
 .auto-tour-btn:hover {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+  box-shadow: 0 20px 48px -4px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.28);
+  color: #ffffff;
 }
 
 .auto-tour-btn:active {
   transform: translateY(0);
+  background: rgba(15, 23, 42, 0.75);
 }
 
 .tour-icon {
-  font-size: 18px;
+  font-size: 16px;
   display: inline-flex;
   align-items: center;
+  color: #38bdf8;
 }
 
 /* Panel điều khiển tour: play/pause/stop + trạng thái */
 .tour-control-panel {
-  background: rgba(149, 149, 149, 0.85);
-  padding: 15px 20px;
+  background: rgba(15, 23, 42, 0.52);
+  padding: 16px 22px;
   border-radius: 20px;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   display: flex;
   flex-direction: column;
   gap: 12px;
   min-width: 320px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 50px -4px rgba(0, 0, 0, 0.55), 0 6px 18px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.22);
 }
 
 .tour-controls {
@@ -366,26 +402,28 @@ body.admin #pano>* {
 }
 
 .tour-control-btn {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-  font-size: 18px;
-  backdrop-filter: blur(5px);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 16px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  outline: none;
 }
 
 .tour-control-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.4);
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.32);
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
 .tour-control-btn:active {
@@ -604,31 +642,81 @@ body.admin #pano>* {
 }
 
 /* ===== ZOOM CONTROL ===== */
+/* Hallmark · component: zoom-control · genre: modern-minimal · theme: dark-glass
+ * states: default · hover · focus · active · disabled · loading · error · success
+ * contrast: pass (46–50)
+ */
 .zoom-control {
   position: fixed;
-  bottom: 20px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(193, 193, 193, 0.432);
-  padding: 12px 20px;
-  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.46);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 6px 14px 6px 14px;
+  border-radius: 9999px;
   display: flex;
   align-items: center;
   gap: 12px;
-  color: white;
-  font-family: Arial, sans-serif;
-  font-size: 14px;
+  color: #f8fafc;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.22);
   z-index: 20;
+  user-select: none;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.zoom-control:hover {
+  background: rgba(15, 23, 42, 0.62);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 20px 48px -4px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.28);
+}
+
+.zoom-label-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+
+.zoom-icon {
+  display: block;
+  color: #38bdf8;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.zoom-control:hover .zoom-icon {
+  transform: scale(1.08);
+  color: #7dd3fc;
 }
 
 .zoom-slider {
-  width: 150px;
-  height: 6px;
-  border-radius: 3px;
-  background: linear-gradient(to right, #666, #888);
+  width: 130px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
   outline: none;
   -webkit-appearance: none;
+  appearance: none;
   cursor: pointer;
+  margin: 0;
+  transition: background 0.2s ease;
+}
+
+.zoom-slider:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.zoom-slider:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 3px;
 }
 
 .zoom-slider::-webkit-slider-thumb {
@@ -637,25 +725,103 @@ body.admin #pano>* {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #4CAF50;
+  background: #10b981;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(170, 170, 170, 0.3);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.zoom-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: #34d399;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+}
+
+.zoom-slider::-webkit-slider-thumb:active {
+  transform: scale(1.05);
 }
 
 .zoom-slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #4CAF50;
+  background: #10b981;
   cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 4px rgba(108, 108, 108, 0.3);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.zoom-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  background: #34d399;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+}
+
+.zoom-value-badge {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 13px;
+  min-width: 36px;
+  text-align: right;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
 }
 
 #zoomValue {
-  min-width: 35px;
-  text-align: right;
-  font-weight: bold;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+/* Nút reset về zoom mặc định */
+.zoom-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  padding: 0;
+  margin-left: 2px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  flex-shrink: 0;
+}
+
+.zoom-reset-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.zoom-reset-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.zoom-reset-btn:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+.zoom-reset-btn.spinning svg {
+  animation: zoomResetSpin 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes zoomResetSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
 }
 
 /* ===== MEDIA HOTSPOTS (USER): facebook/youtube/note ===== */
@@ -1303,18 +1469,18 @@ body.admin #pano>* {
 }
 
 .tools-menu-trigger {
-  width: 46px;
-  height: 46px;
-  background: rgba(10, 16, 30, 0.9);
-  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  width: 44px;
+  height: 44px;
+  background: rgba(15, 23, 42, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 50%;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.22);
   transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
   user-select: none;
   flex-shrink: 0;
@@ -1326,10 +1492,10 @@ body.admin #pano>* {
 .tools-menu:hover .tools-menu-trigger,
 .tools-menu.is-open .tools-menu-trigger {
   transform: rotate(90deg) scale(1.06);
-  background: rgba(15, 23, 42, 0.98);
-  border-color: #38bdf8;
+  background: rgba(15, 23, 42, 0.75);
+  border-color: rgba(56, 189, 248, 0.6);
   color: #e0f2fe;
-  box-shadow: 0 0 25px rgba(56, 189, 248, 0.5), 0 8px 28px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.5), 0 16px 36px rgba(0, 0, 0, 0.6);
 }
 
 .tools-menu-dropdown {
@@ -1337,13 +1503,13 @@ body.admin #pano>* {
   flex-direction: row;
   align-items: center;
   gap: 8px;
-  background: rgba(10, 16, 30, 0.88);
-  border: 1px solid rgba(56, 189, 248, 0.22);
+  background: rgba(15, 23, 42, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 9999px;
-  padding: 5px 10px;
-  backdrop-filter: blur(20px) saturate(190%);
-  -webkit-backdrop-filter: blur(20px) saturate(190%);
-  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.65), 0 0 20px rgba(56, 189, 248, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  padding: 6px 12px;
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.22);
 
   opacity: 0;
   pointer-events: none;
@@ -1864,17 +2030,24 @@ body.admin #pano>* {
   top: 20px;
   right: 20px;
   max-width: 280px;
-  background: rgba(10, 16, 30, 0.28);
+  background: rgba(15, 23, 42, 0.46);
   color: #f8fafc;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 50px -4px rgba(0, 0, 0, 0.55), 0 6px 18px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.22);
   padding: 0;
-  backdrop-filter: blur(28px) saturate(210%);
-  -webkit-backdrop-filter: blur(28px) saturate(210%);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
   z-index: 30;
   overflow: hidden;
   font-family: var(--font-sans);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#minimapWrapper:hover {
+  background: rgba(15, 23, 42, 0.62);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 24px 60px -4px rgba(0, 0, 0, 0.65), 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.28);
 }
 
 #floorTabs {
@@ -1886,22 +2059,22 @@ body.admin #pano>* {
 
 .floor-tab {
   padding: 5px 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 9999px;
   cursor: pointer;
   font-size: 11.5px;
   font-weight: 600;
   color: #e2e8f0;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .floor-tab:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .floor-tab.active {
@@ -1916,7 +2089,7 @@ body.admin #pano>* {
   justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   font-weight: 600;
   font-size: 13px;
@@ -1927,26 +2100,27 @@ body.admin #pano>* {
 
 #minimapToggle {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #ffffff;
   width: 26px;
   height: 26px;
-  border-radius: 6px;
+  border-radius: 50%;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 15px;
   font-weight: bold;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   line-height: 1;
+  outline: none;
 }
 
 #minimapToggle:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.35);
   color: #ffffff;
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 
 #minimapContent {
@@ -2075,26 +2249,37 @@ body.admin #pano>* {
 
 #minimapZoomControls button {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   color: #fff;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: 50%;
   cursor: pointer;
   font-size: 14px;
   font-weight: bold;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  outline: none;
 }
 
 #minimapZoomControls button:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.45);
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+#minimapZoomControls button:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.28);
+}
+
+#minimapZoomControls button:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
 }
 
 #minimapZoomLabel {
@@ -2170,16 +2355,23 @@ body.admin #pano>* {
   }
 
   .zoom-control {
-    bottom: 10px;
-    left: 10px;
-    right: 10px;
-    transform: none;
-    padding: 10px 15px;
+    bottom: 12px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    padding: 6px 12px;
     font-size: 12px;
+    gap: 8px;
+    max-width: calc(100vw - 24px);
   }
 
   .zoom-slider {
-    width: 100px;
+    width: 85px;
+  }
+
+  .zoom-reset-btn {
+    width: 24px;
+    height: 24px;
   }
 
   #compassContainer {
@@ -3200,12 +3392,12 @@ body.admin #pano>* {
   min-height: 0;
   display: none; /* Mặc định ẩn, không chiếm diện tích */
   flex-direction: column;
-  background: rgba(10, 16, 30, 0.92);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(56, 189, 248, 0.28);
-  border-radius: 12px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 20px rgba(56, 189, 248, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  background: rgba(15, 23, 42, 0.50);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px -4px rgba(0, 0, 0, 0.55), 0 6px 18px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.22);
   overflow: hidden;
 }
 
@@ -3496,7 +3688,12 @@ body.admin #pano>* {
    ========================================================================== */
 .sensor-hotspot.iot-target-beacon {
   z-index: 9999 !important;
-  animation: iotBeaconBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-color: #38bdf8 !important;
+  animation: iotBeaconGlow 1.2s ease-in-out;
+}
+
+.sensor-hotspot.iot-target-beacon .sensor-hotspot-icon {
+  animation: iotBeaconBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .sensor-hotspot.iot-target-beacon::before,
@@ -3518,9 +3715,21 @@ body.admin #pano>* {
   animation-delay: 0.55s;
 }
 
+@keyframes iotBeaconGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.9), 0 0 10px rgba(56, 189, 248, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(56, 189, 248, 0.35), 0 0 25px rgba(56, 189, 248, 0.95);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0), 0 0 12px rgba(56, 189, 248, 0.5);
+  }
+}
+
 @keyframes iotBeaconBounce {
   0% { transform: scale(1); }
-  50% { transform: scale(1.35); }
+  50% { transform: scale(1.38); }
   100% { transform: scale(1); }
 }
 

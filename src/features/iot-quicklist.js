@@ -325,13 +325,17 @@ function panCameraToSensor(targetYawDeg, targetPitchDeg, onComplete) {
   const targetPitchRad = degToRad(-Number(targetPitchDeg || 0));
 
   // Calculate shortest path around circle (-PI to +PI)
-  let diffYaw = (targetYawRad - startYaw) % (2 * Math.PI);
-  if (diffYaw > Math.PI) diffYaw -= 2 * Math.PI;
-  if (diffYaw < -Math.PI) diffYaw += 2 * Math.PI;
-
+  const diffYaw = Math.atan2(Math.sin(targetYawRad - startYaw), Math.cos(targetYawRad - startYaw));
   const diffPitch = targetPitchRad - startPitch;
 
-  const duration = 850; // ms for a pleasant, responsive feel
+  const angularDist = Math.hypot(diffYaw, diffPitch);
+  if (angularDist < 0.01) {
+    if (onComplete) onComplete();
+    return;
+  }
+
+  // Adaptive duration: quick for small adjustments, smooth for larger pans
+  const duration = Math.min(750, Math.max(280, angularDist * 320));
   const startTime = performance.now();
 
   function animate(now) {

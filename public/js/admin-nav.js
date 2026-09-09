@@ -3,12 +3,43 @@ window.initializeAdminNav = function () {
   window.adminNavInitialized = true;
 
   const NAV_ITEMS = [
-    { href: '/admin/buildings.html', label: '🏢 Tòa nhà', paths: ['/admin/buildings'] },
-    { href: '/admin/upload.html', label: '📤 Upload', paths: ['/admin/upload'] },
-    { href: '/admin/rooms.html', label: '🏠 Phòng', paths: ['/admin/rooms'] },
-    { href: '/admin/minimap.html', label: '🗺️ Minimap', paths: ['/admin/minimap'] },
-    { href: '/admin/tour.html', label: '⚡ Kịch bản', paths: ['/admin/tour'] },
-    { href: '/admin/users.html', label: '👥 Phân Quyền', paths: ['/admin/users'], role: 'admin' }
+    {
+      href: '/admin/buildings.html',
+      label: 'Tòa nhà',
+      icon: `<svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" fill="currentColor" fill-opacity="0.16"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>`,
+      paths: ['/admin/buildings']
+    },
+    {
+      href: '/admin/upload.html',
+      label: 'Upload',
+      icon: `<svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" fill="currentColor" fill-opacity="0.16"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>`,
+      paths: ['/admin/upload']
+    },
+    {
+      href: '/admin/rooms.html',
+      label: 'Phòng',
+      icon: `<svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="currentColor" fill-opacity="0.18"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
+      paths: ['/admin/rooms']
+    },
+    {
+      href: '/admin/minimap.html',
+      label: 'Minimap',
+      icon: `<svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" fill="currentColor" fill-opacity="0.16"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>`,
+      paths: ['/admin/minimap']
+    },
+    {
+      href: '/admin/tour.html',
+      label: 'Kịch bản',
+      icon: `<svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3" fill="currentColor" fill-opacity="0.25"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3" fill="currentColor" fill-opacity="0.25"/></svg>`,
+      paths: ['/admin/tour']
+    },
+    {
+      href: '/admin/users.html',
+      label: 'Phân Quyền',
+      icon: `<svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4" fill="currentColor" fill-opacity="0.2"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+      paths: ['/admin/users'],
+      role: 'admin'
+    }
   ];
 
   window.handleLogout = async function() {
@@ -43,12 +74,12 @@ window.initializeAdminNav = function () {
 
   const navLinks = filteredItems.map((item) => {
     const cls = isActive(item) ? 'nav-link active' : 'nav-link';
-    return `<a href="${item.href}" class="${cls}">${item.label}</a>`;
+    return `<a href="${item.href}" class="${cls}">${item.icon} <span>${item.label}</span></a>`;
   }).join('');
 
   const menuItems = filteredItems.map((item) => {
     const cls = isActive(item) ? 'menu-item active' : 'menu-item';
-    return `<a href="${item.href}" class="${cls}">${item.label}</a>`;
+    return `<a href="${item.href}" class="${cls}">${item.icon} <span>${item.label}</span></a>`;
   }).join('');
 
   const isUserAdmin = userRole === 'admin';
@@ -61,7 +92,10 @@ window.initializeAdminNav = function () {
         <span>Qi Dashboard</span>
       </a>
       <nav class="header-nav" aria-label="Menu quản lý">${navLinks}</nav>
-      <a href="/" class="nav-link nav-link--tour">👁️ Xem Tour</a>
+      <a href="/" class="nav-link nav-link--tour">
+        <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="currentColor" fill-opacity="0.12"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" fill-opacity="0.25"/></svg>
+        <span>Xem Tour</span>
+      </a>
 
       <div class="user-profile-nav" style="display:flex;align-items:center;gap:12px;margin-left:12px;padding-left:12px;border-left:1px solid rgba(226,232,240,0.85)">
         ${isDashboard && isUserAdmin ? `
@@ -93,7 +127,10 @@ window.initializeAdminNav = function () {
           </div>
         </div>
 
-        <span id="userProfileBtn" style="font-size:13px;color:#334155;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(0,0,0,0.04);border-radius:9999px;border:1px solid rgba(0,0,0,0.06);" title="Chỉnh sửa thông tin tài khoản">👤 <span>${userDisplayName}</span></span>
+        <span id="userProfileBtn" style="font-size:13px;color:#334155;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(0,0,0,0.04);border-radius:9999px;border:1px solid rgba(0,0,0,0.06);" title="Chỉnh sửa thông tin tài khoản">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4" fill="currentColor" fill-opacity="0.2"/><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/></svg>
+          <span>${userDisplayName}</span>
+        </span>
         <button onclick="handleLogout()" class="btn btn-sm" style="padding:5px 12px;font-size:12px;border-radius:9999px;background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.3);color:#e11d48;font-weight:600;">Đăng xuất</button>
       </div>
 
@@ -103,7 +140,10 @@ window.initializeAdminNav = function () {
         </button>
         <div class="menu-dropdown">
           ${menuItems}
-          <a href="/" class="menu-item menu-item--tour">👁️ Xem Tour</a>
+          <a href="/" class="menu-item menu-item--tour">
+            <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="currentColor" fill-opacity="0.12"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" fill-opacity="0.25"/></svg>
+            <span>Xem Tour</span>
+          </a>
         </div>
       </div>
     </div>

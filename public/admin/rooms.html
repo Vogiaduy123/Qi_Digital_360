@@ -148,28 +148,40 @@
 
       <!-- Nav/Tab icons -->
       <button class="icon-btn active" onclick="switchTab('rooms')" title="Danh sách Phòng">
-        <span class="ico">🏠</span>
+        <span class="ico">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="currentColor" fill-opacity="0.18"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </span>
         <span class="icon-label">Phòng</span>
       </button>
       <button class="icon-btn" onclick="switchTab('transitions')" title="Hotspot Di chuyển">
-        <span class="ico">🔀</span>
+        <span class="ico">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" fill="currentColor" fill-opacity="0.16"/><circle cx="12" cy="10" r="3"/></svg>
+        </span>
         <span class="icon-label">H.Spot</span>
       </button>
       <button class="icon-btn" onclick="switchTab('media')" title="Tư liệu Phòng">
-        <span class="ico">📂</span>
+        <span class="ico">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" fill="currentColor" fill-opacity="0.16"/></svg>
+        </span>
         <span class="icon-label">T.Liệu</span>
       </button>
       <button class="icon-btn" onclick="switchTab('mail')" title="Ghi chú & Mail">
-        <span class="ico">✉</span>
+        <span class="ico">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" fill="currentColor" fill-opacity="0.16"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </span>
         <span class="icon-label">Mail</span>
       </button>
       <button class="icon-btn" onclick="switchTab('sensors')" title="Cảm biến IoT">
-        <span class="ico">📶</span>
+        <span class="ico">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z" fill="currentColor" fill-opacity="0.16"/><circle cx="12" cy="17" r="2"/></svg>
+        </span>
         <span class="icon-label">Sens</span>
       </button>
 
       <a href="/" class="icon-btn" title="Xem Tour">
-        <span class="ico">👁</span>
+        <span class="ico">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="currentColor" fill-opacity="0.12"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" fill-opacity="0.25"/></svg>
+        </span>
         <span class="icon-label">Xem</span>
       </a>
     </nav>
@@ -189,7 +201,10 @@
           <div class="rooms-meta-row">
             <span class="rooms-count" id="roomsCountLabel">0 phòng</span>
             <div style="display:flex;gap:6px;align-items:center;">
-              <button type="button" class="btn-sort-rooms" onclick="sortRoomsAlphabetically()" title="Sắp xếp tự động tất cả phòng theo tên A-Z (1, 2...)" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--text);font-size:11px;padding:4px 8px;outline:none;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:3px;">🔤 Xếp A-Z</button>
+              <button type="button" class="btn-sort-rooms" onclick="sortRoomsAlphabetically()" title="Sắp xếp tự động tất cả phòng theo tên A-Z (1, 2...)" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--text);font-size:11px;padding:4px 8px;outline:none;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M20 8h-5"/><path d="M15 10V6.5a2.5 2.5 0 0 1 5 0V10"/><path d="M15 14h5l-5 6h5"/></svg>
+                <span>Xếp A-Z</span>
+              </button>
               <select id="filterBuilding" onchange="renderRooms()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:var(--text);font-size:11px;padding:4px 8px;outline:none;cursor:pointer;font-family:inherit;">
                 <option value="">Tất cả tòa nhà</option>
                 <option value="none">Phòng rời</option>
@@ -224,7 +239,10 @@
         <div class="rooms-list-wrap">
           <div id="transitionsActiveRoomInfo" style="margin-bottom:12px;font-size:12px;color:var(--text-muted);"></div>
           
-          <button type="button" class="btn btn-primary" id="addHotspotBtn" style="margin-bottom:15px;width:100%;">➕ Thêm điểm di chuyển</button>
+          <button type="button" class="btn btn-primary" id="addHotspotBtn" style="margin-bottom:15px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Thêm điểm di chuyển</span>
+          </button>
           
           <div class="hotspots-list" id="hotspotsList">
             <div class="empty-state compact">Chọn phòng để quản lý hotspot</div>
@@ -241,7 +259,10 @@
         <div class="rooms-list-wrap">
           <div id="mediaActiveRoomInfo" style="margin-bottom:15px;font-size:12px;color:var(--text-muted);"></div>
 
-          <button type="button" class="btn btn-edit" id="addMediaBtn" style="margin-bottom:15px;width:100%;">📁 Thêm tài liệu / hình ảnh</button>
+          <button type="button" class="btn btn-edit" id="addMediaBtn" style="margin-bottom:15px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" fill="currentColor" fill-opacity="0.16"/></svg>
+            <span>Thêm tài liệu / hình ảnh</span>
+          </button>
 
           <div class="hotspots-list" id="mediaHotspotsList">
             <div class="empty-state">Chọn phòng để quản lý tư liệu</div>
@@ -258,7 +279,10 @@
         <div class="rooms-list-wrap">
           <div id="mailActiveRoomInfo" style="margin-bottom:15px;font-size:12px;color:var(--text-muted);"></div>
 
-          <button type="button" class="btn btn-success" id="addMailBtn" onclick="openAddMailModal()" style="margin-bottom:15px;width:100%;">✉️ Thêm điểm gửi mail</button>
+          <button type="button" class="btn btn-success" id="addMailBtn" onclick="openAddMailModal()" style="margin-bottom:15px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" fill="currentColor" fill-opacity="0.16"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <span>Thêm điểm gửi mail</span>
+          </button>
 
           <div class="hotspots-list" id="mailHotspotsList">
             <div class="empty-state">Chọn phòng để quản lý điểm mail</div>
@@ -273,7 +297,7 @@
           <div class="rooms-meta-row">
             <span class="rooms-count" id="sensorsCountLabel">0 thiết bị</span>
             <div style="display:flex;align-items:center;gap:6px;">
-              <span id="autoRefreshStatus" style="font-size:11px;color:rgba(200,210,230,0.5);">🔄 OFF</span>
+              <span id="autoRefreshStatus" style="font-size:11px;color:rgba(200,210,230,0.5);">OFF</span>
               <button class="btn btn-small" onclick="toggleAutoRefresh()" style="background:rgba(255,255,255,0.08);color:var(--text-muted);border:none;margin:0;font-size:10px;padding:4px 8px;">Toggle</button>
             </div>
           </div>
@@ -281,7 +305,10 @@
         <div class="rooms-list-wrap">
           <div id="sensorsActiveRoomInfo" style="margin-bottom:15px;font-size:12px;color:var(--text-muted);"></div>
 
-          <button type="button" class="btn btn-success" id="addSensorBtn" style="margin-bottom:15px;width:100%;">🌡️ Thêm thiết bị IoT</button>
+          <button type="button" class="btn btn-success" id="addSensorBtn" style="margin-bottom:15px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z" fill="currentColor" fill-opacity="0.16"/><circle cx="12" cy="17" r="2"/></svg>
+            <span>Thêm thiết bị IoT</span>
+          </button>
 
           <div id="sensorsList">
             <div class="empty-state">Chọn phòng để quản lý cảm biến</div>
@@ -298,7 +325,10 @@
           <p style="font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:15px;">
             Thiết lập sơ đồ mặt bằng và định vị vị trí phòng. Click để mở trang quản lý sơ đồ tổng quát:
           </p>
-          <a href="/admin/minimap.html" class="btn btn-primary" style="display:block;text-align:center;text-decoration:none;line-height:1.8;">🗺️ Mở Trình Quản Lý Minimap</a>
+          <a href="/admin/minimap.html" class="btn btn-primary" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;text-align:center;text-decoration:none;line-height:1.8;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" fill="currentColor" fill-opacity="0.16"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
+            <span>Mở Trình Quản Lý Minimap</span>
+          </a>
         </div>
       </div>
 
@@ -316,12 +346,30 @@
         </a>
         <div class="main-header-spacer"></div>
         <nav class="main-header-nav">
-          <a href="/admin/buildings.html">🏢 Tòa nhà</a>
-          <a href="/admin/upload.html">📤 Upload</a>
-          <a href="/admin/rooms.html" class="active">🚪 Phòng</a>
-          <a href="/admin/minimap.html">🗺️ Minimap</a>
-          <a href="/admin/tour.html">⚡ Kịch bản</a>
-          <a href="/" class="main-header-nav-tour">👁️ Xem Tour</a>
+          <a href="/admin/buildings.html">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" fill="currentColor" fill-opacity="0.16"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+            <span>Tòa nhà</span>
+          </a>
+          <a href="/admin/upload.html">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" fill="currentColor" fill-opacity="0.16"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+            <span>Upload</span>
+          </a>
+          <a href="/admin/rooms.html" class="active">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="currentColor" fill-opacity="0.18"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            <span>Phòng</span>
+          </a>
+          <a href="/admin/minimap.html">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" fill="currentColor" fill-opacity="0.16"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
+            <span>Minimap</span>
+          </a>
+          <a href="/admin/tour.html">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3" fill="currentColor" fill-opacity="0.25"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3" fill="currentColor" fill-opacity="0.25"/></svg>
+            <span>Kịch bản</span>
+          </a>
+          <a href="/" class="main-header-nav-tour">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="currentColor" fill-opacity="0.12"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" fill-opacity="0.25"/></svg>
+            <span>Xem Tour</span>
+          </a>
         </nav>
       </header>
 
@@ -330,7 +378,9 @@
         
         <!-- Room Info Panel Overlay (Sticky top bar for selected room) -->
         <div id="roomEditTopBar" style="display:none;background:rgba(10,12,18,0.85);border-bottom:1px solid var(--border);padding:10px 20px;align-items:center;gap:12px;z-index:100;backdrop-filter:blur(10px);">
-          <span style="font-size:13px;font-weight:600;color:rgba(200,210,230,0.7);" id="currentRoomTitle">🏠</span>
+          <span style="font-size:13px;font-weight:600;color:rgba(200,210,230,0.7);display:inline-flex;align-items:center;gap:6px;" id="currentRoomTitle">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="currentColor" fill-opacity="0.18"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          </span>
 
           <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end;">
             <div class="building-row" style="margin-bottom:0;padding:4px 8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;gap:6px;">
@@ -339,7 +389,10 @@
                 <option value="">-- Phòng rời --</option>
               </select>
             </div>
-            <button class="btn btn-small btn-primary" onclick="saveRoomBuilding()" style="margin:0;padding:6px 12px;font-size:11px;">💾 Đổi tòa nhà</button>
+            <button class="btn btn-small btn-primary" onclick="saveRoomBuilding()" style="margin:0;padding:6px 12px;font-size:11px;display:inline-flex;align-items:center;gap:5px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" fill="currentColor" fill-opacity="0.16"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              <span>Đổi tòa nhà</span>
+            </button>
           </div>
         </div>
 

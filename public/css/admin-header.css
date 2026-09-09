@@ -62,11 +62,32 @@
   color: #475569;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   white-space: nowrap;
   border: 1px solid transparent;
   cursor: pointer;
   line-height: 1.4;
+}
+
+.admin-header .nav-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  color: #0284c7;
+  transition: color 0.2s ease;
+}
+
+.admin-header .nav-link.active .nav-icon {
+  color: #ffffff;
+}
+
+.admin-header .menu-item .nav-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 2px;
+  color: #0284c7;
 }
 
 .admin-header .nav-link:hover {

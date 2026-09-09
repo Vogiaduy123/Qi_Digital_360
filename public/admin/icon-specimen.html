@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bản Thiết Kế Mẫu Icon — Đa Chủ Đề Dự Án Virtual Tour 360</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --color-page: #f8fafc;
+      --color-surface: #ffffff;
+      --color-border: rgba(226, 232, 240, 0.9);
+      --color-text: #0f172a;
+      --color-muted: #64748b;
+      --color-accent: #0284c7;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: var(--color-page);
+      color: var(--color-text);
+      line-height: 1.5;
+      padding-bottom: 90px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Specimen Header */
+    .specimen-header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--color-border);
+      padding: 20px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    }
+    .specimen-header__inner {
+      max-width: 1360px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .specimen-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .specimen-badge {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(2, 132, 199, 0.1);
+      color: #0284c7;
+      border: 1px solid rgba(2, 132, 199, 0.25);
+    }
+    .specimen-title {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    /* Style Switcher */
+    .theme-selector-bar {
+      display: flex;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 14px;
+      gap: 3px;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      overflow-x: auto;
+      max-width: 100%;
+    }
+    .style-btn {
+      border: none;
+      background: transparent;
+      padding: 8px 14px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border-radius: 9px;
+      color: var(--color-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .style-btn:hover {
+      color: var(--color-text);
+    }
+    .style-btn.active {
+      background: #ffffff;
+      color: #0284c7;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      font-weight: 700;
+    }
+
+    .container-wide {
+      max-width: 1360px;
+      margin: 28px auto 0;
+      padding: 0 24px;
+    }
+
+    /* Theme Card Summary */
+    .theme-summary-card {
+      background: #ffffff;
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .theme-summary-info h3 {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .theme-summary-info p {
+      font-size: 13px;
+      color: var(--color-muted);
+      margin: 0;
+    }
+
+    /* Comparison Table */
+    .section-headline {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .table-container {
+      background: #ffffff;
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      overflow-x: auto;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 16px -4px rgba(0,0,0,0.03);
+    }
+    .table-specimen {
+      width: 100%;
+      min-width: 1050px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .table-specimen th {
+      background: #f8fafc;
+      padding: 12px 16px;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--color-muted);
+      border-bottom: 1px solid var(--color-border);
+      text-align: center;
+    }
+    .table-specimen th:first-child {
+      text-align: left;
+    }
+    .table-specimen th.highlight-col {
+      background: rgba(2, 132, 199, 0.08);
+      color: #0284c7;
+      border-bottom: 2px solid #0284c7;
+    }
+    .table-specimen td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--color-border);
+      vertical-align: middle;
+      text-align: center;
+    }
+    .table-specimen td:first-child {
+      text-align: left;
+    }
+    .table-specimen td.highlight-col {
+      background: rgba(2, 132, 199, 0.03);
+      font-weight: 600;
+    }
+    .table-specimen tr:last-child td {
+      border-bottom: none;
+    }
+
+    .icon-cell {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      transition: transform 0.2s;
+    }
+    .icon-cell:hover {
+      transform: scale(1.1);
+    }
+    .emoji-pill {
+      font-size: 22px;
+      line-height: 1;
+      display: inline-block;
+    }
+
+    /* Mockup Preview Area */
+    .mockup-card {
+      background: #ffffff;
+      border: 1px solid var(--color-border);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 12px 32px -8px rgba(0,0,0,0.06);
+      margin-bottom: 40px;
+    }
+    .mockup-nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: #ffffff;
+      border: 1px solid var(--color-border);
+      border-radius: 14px;
+      margin-bottom: 32px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .mockup-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 14.5px;
+    }
+    .mockup-brand img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+    .mockup-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .mockup-nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 13px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .mockup-nav-link:hover, .mockup-nav-link.active {
+      background: #f1f5f9;
+      color: #0284c7;
+    }
+    .mockup-nav-link--tour {
+      background: rgba(2, 132, 199, 0.08);
+      color: #0284c7;
+      border: 1px solid rgba(2, 132, 199, 0.2);
+    }
+    .mockup-nav-link--tour:hover {
+      background: rgba(2, 132, 199, 0.15);
+    }
+
+    /* Bento Stats */
+    .mockup-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .mockup-stat {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 20px 24px;
+      background: #ffffff;
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      box-shadow: 0 4px 12px -2px rgba(0,0,0,0.03);
+    }
+    .mockup-stat__icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+      transition: all 0.25s ease;
+    }
+    .mockup-stat__value {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+    .mockup-stat__label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-muted);
+      margin-top: 4px;
+    }
+
+    /* Grid of 8 Tool Cards */
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 992px) {
+      .mockup-grid, .mockup-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 640px) {
+      .mockup-grid, .mockup-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .mockup-card-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 22px;
+      background: #ffffff;
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .mockup-card-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 28px -6px rgba(0,0,0,0.07);
+      border-color: rgba(2, 132, 199, 0.35);
+    }
+    .mockup-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      transition: all 0.25s ease;
+    }
+    .mockup-card-item:hover .mockup-card-icon {
+      transform: scale(1.08);
+    }
+    .mockup-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .mockup-card-desc {
+      font-size: 12.5px;
+      color: var(--color-muted);
+      line-height: 1.45;
+    }
+    .mockup-card-arrow {
+      margin-left: auto;
+      color: #94a3b8;
+      font-size: 16px;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+    .mockup-card-item:hover .mockup-card-arrow {
+      transform: translateX(3px);
+      color: var(--color-accent);
+    }
+
+    /* Actions Footer */
+    .specimen-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 28px;
+      background: #ffffff;
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .btn-apply {
+      background: #0284c7;
+      color: #ffffff;
+      font-weight: 700;
+      padding: 12px 26px;
+      border-radius: 10px;
+      border: none;
+      font-size: 13.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-apply:hover {
+      background: #0369a1;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(2, 132, 199, 0.25);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="specimen-header">
+    <div class="specimen-header__inner">
+      <div class="specimen-brand">
+        <span class="specimen-badge">Beamo 360 Design System</span>
+        <h1 class="specimen-title">Bộ Sưu Tập Mẫu Icon 360°</h1>
+      </div>
+
+      <!-- Theme Bar -->
+      <div class="theme-selector-bar">
+        <button class="style-btn" id="btnMode_emoji" onclick="switchIconMode('emoji')">
+          <span>🏢</span> Hiện Tại
+        </button>
+        <button class="style-btn" id="btnMode_lucide" onclick="switchIconMode('lucide')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Mẫu 1: SaaS Monoline
+        </button>
+        <button class="style-btn" id="btnMode_duotone" onclick="switchIconMode('duotone')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" fill="currentColor" fill-opacity="0.2"/><path d="m9 12 2 2 4-4"/></svg>
+          Mẫu 2: Duotone Depth
+        </button>
+        <button class="style-btn active" id="btnMode_spatial" onclick="switchIconMode('spatial')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Mẫu 3: 3D Spatial & VR
+        </button>
+        <button class="style-btn" id="btnMode_digitaltwin" onclick="switchIconMode('digitaltwin')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          Mẫu 4: Digital Twin & IoT
+        </button>
+        <button class="style-btn" id="btnMode_luxury" onclick="switchIconMode('luxury')">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Mẫu 5: Architectural Fine
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container-wide">
+    <!-- Theme Summary Banner -->
+    <div class="theme-summary-card" id="themeSummaryCard">
+      <div class="theme-summary-info">
+        <h3 id="themeSummaryTitle">Mẫu 3: 3D Spatial & Virtual Reality (Được Khuyên Dùng Cho Dự Án 360°)</h3>
+        <p id="themeSummaryDesc">Được thiết kế chuyên biệt cho nền tảng Virtual Tour 360: Hình cầu toàn cảnh Equirectangular, kính thực tế ảo VR Headset, quét sóng radar minimap và khối lập thể không gian 3D.</p>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 700; color: #0284c7; background: rgba(2,132,199,0.1); padding: 6px 14px; border-radius: 999px;">
+          Lưới 24×24 · Stroke 2.0px · Vector SVG Chuẩn
+        </span>
+      </div>
+    </div>
+
+    <!-- Comparative Table -->
+    <h2 class="section-headline">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+      Bảng So Sánh Toàn Diện Các Chủ Đề Icon
+    </h2>
+    <div class="table-container">
+      <table class="table-specimen">
+        <thead>
+          <tr>
+            <th style="width: 170px;">Chức Năng</th>
+            <th style="width: 90px;">Hiện Tại</th>
+            <th id="th_lucide">Mẫu 1: SaaS Monoline</th>
+            <th id="th_duotone">Mẫu 2: Duotone Depth</th>
+            <th id="th_spatial" class="highlight-col">Mẫu 3: 3D Spatial & VR ⭐</th>
+            <th id="th_digitaltwin">Mẫu 4: Digital Twin (IoT)</th>
+            <th id="th_luxury">Mẫu 5: Architectural Fine</th>
+          </tr>
+        </thead>
+        <tbody id="specimenTableBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Interactive Mockup Section -->
+    <h2 class="section-headline">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+      Mô Phỏng Trực Tiếp Trên Giao Diện Dashboard
+      <span style="font-size: 12px; font-weight: 600; color: #0284c7; background: rgba(2,132,199,0.1); padding: 4px 12px; border-radius: 999px;">Đang chọn: <span id="currentModeLabel">Mẫu 3: 3D Spatial & VR</span></span>
+    </h2>
+
+    <div class="mockup-card">
+      <!-- 1. Simulated Header Navigation -->
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-muted); margin-bottom: 10px; letter-spacing: 0.06em;">1. Thanh Điều Hướng (Top Navigation Bar)</div>
+      <div class="mockup-nav-bar" id="mockupNavBar">
+        <div class="mockup-brand">
+          <img src="/images/logo-qi.png" alt="Qi" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%230284c7%22><circle cx=%2212%22 cy=%2212%22 r=%2210%22/></svg>'">
+          <span>Qi Dashboard</span>
+        </div>
+        <div class="mockup-nav-links" id="mockupNavLinks">
+          <!-- Populated by JS -->
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <a href="#" class="mockup-nav-link mockup-nav-link--tour" id="mockupNavTour">
+            <!-- Populated by JS -->
+          </a>
+          <button style="border:none;background:rgba(0,0,0,0.04);padding:8px;border-radius:50%;color:#475569;display:flex;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+          <button style="border:none;background:rgba(0,0,0,0.04);padding:8px;border-radius:50%;color:#475569;display:flex;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. Simulated Bento Stats -->
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-muted); margin-bottom: 10px; letter-spacing: 0.06em;">2. Khối Thống Kê Nổi Bật (Stats Bento)</div>
+      <div class="mockup-stats" id="mockupStats">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- 3. Simulated 8 Tools Cards -->
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-muted); margin-bottom: 10px; letter-spacing: 0.06em;">3. Danh Mục Công Cụ Quản Lý (8 Cards Grid)</div>
+      <div class="mockup-grid" id="mockupCards">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Apply & Feedback Bar -->
+    <div class="specimen-actions">
+      <div>
+        <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">Bạn thích mẫu icon chủ đề nào nhất?</h4>
+        <p style="font-size: 13px; color: var(--color-muted); margin: 0;">
+          Chọn chủ đề bạn ưng ý và gửi phản hồi, hệ thống sẽ đồng bộ toàn bộ icon vào <code>public/admin/index.html</code> và <code>public/js/admin-nav.js</code>.
+        </p>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <button class="btn-apply" onclick="confirmApply()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Chọn & Áp Dụng Mẫu Này
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Theme metadata
+    const THEMES = {
+      emoji: {
+        name: 'Hiện Tại (Emoji)',
+        desc: 'Sử dụng các emoji gốc của hệ điều hành, nét vẽ bão hòa và hiển thị không đồng đều giữa các thiết bị.'
+      },
+      lucide: {
+        name: 'Mẫu 1: SaaS Monoline (Tối giản tiêu chuẩn)',
+        desc: 'Được ưa chuộng bởi Stripe, Linear: Nét đơn thanh thoát 2px, đường cong hình học chính xác, mang lại cảm giác công nghệ chuẩn SaaS.'
+      },
+      duotone: {
+        name: 'Mẫu 2: Duotone Depth (Chiều sâu 2 lớp)',
+        desc: 'Phong cách Phosphor Duotone: Lớp viền nét kết hợp cùng diện tích tô màu mờ 15-20% mang lại cảm giác mềm mại, ấm cúng.'
+      },
+      spatial: {
+        name: 'Mẫu 3: 3D Spatial & VR (Khuyên Dùng Cho Tour 360°)',
+        desc: 'Thiết kế riêng cho hệ thống Không gian ảo 360°: Hình cầu toàn cảnh Equirectangular, kính VR headset, ghim radar nón và không gian lập thể.'
+      },
+      digitaltwin: {
+        name: 'Mẫu 4: Digital Twin & Smart Building (Bản Sao Số & IoT)',
+        desc: 'Phong cách Trung tâm điều hành thông minh (Smart Campus/City): Phù hợp dự án có tích hợp cảm biến IoT, camera realtime và bản đồ công trình số.'
+      },
+      luxury: {
+        name: 'Mẫu 5: Architectural Fine (Kiến Trúc Tinh Tế & Triển Lãm)',
+        desc: 'Nét vẽ mảnh tinh xảo (1.8px), phong cách tạp chí kiến trúc và bảo tàng cao cấp (ArchDaily/Dezeen), phù hợp showroom và dự án bất động sản sang trọng.'
+      }
+    };
+
+    // Master list of 9 items with icons for ALL 5 styles
+    const ICONS_CONFIG = [
+      {
+        id: 'buildings',
+        name: 'Cấu trúc Tòa nhà',
+        navLabel: 'Tòa nhà',
+        desc: 'Quản lý và nhóm các phòng theo tòa nhà',
+        color: '#0284c7',
+        bg: 'rgba(2, 132, 199, 0.12)',
+        emoji: '🏢',
+        // Style 1: Lucide Monoline
+        lucide: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>`,
+        // Style 2: Duotone
+        duotone: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" fill="currentColor" fill-opacity="0.16"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>`,
+        // Style 3: 3D Spatial & VR (Isometric Building Layers)
+        spatial: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>`,
+        // Style 4: Digital Twin (Smart Building with Antenna/Network)
+        digitaltwin: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16"/><path d="M6 22V7a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v15"/><path d="M14 22V11a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v11"/><path d="M10 2v4"/><circle cx="10" cy="2" r="1.5"/></svg>`,
+        // Style 5: Architectural Fine (Monolith Arch)
+        luxury: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9a8 8 0 0 1 16 0v12"/><line x1="2" y1="21" x2="22" y2="21"/><path d="M9 21v-7a3 3 0 0 1 6 0v7"/></svg>`
+      },
+      {
+        id: 'upload',
+        name: 'Upload Panorama',
+        navLabel: 'Upload',
+        desc: 'Tải lên ảnh 360° mới cho phòng',
+        color: '#8b5cf6',
+        bg: 'rgba(139, 92, 246, 0.12)',
+        emoji: '📤',
+        lucide: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>`,
+        duotone: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" fill="currentColor" fill-opacity="0.16"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>`,
+        // Style 3: 360 Sphere Upload
+        spatial: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h7"/><path d="M15 12h7"/><path d="M12 17v-8"/><path d="m9 12 3-3 3 3"/></svg>`,
+        // Style 4: Upload Cloud Stream
+        digitaltwin: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
+        // Style 5: Aperture / Panorama Lens Upload
+        luxury: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="12" r="4"/><path d="M12 8v8"/><path d="m9 11 3-3 3 3"/></svg>`
+      },
+      {
+        id: 'rooms',
+        name: 'Quản lý Phòng',
+        navLabel: 'Phòng',
+        desc: 'Thêm hotspot, tư liệu, mail và cảm biến',
+        color: '#10b981',
+        bg: 'rgba(16, 185, 129, 0.12)',
+        emoji: '🏠',
+        lucide: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
+        duotone: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="currentColor" fill-opacity="0.18"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
+        // Style 3: 3D Cube Room
+        spatial: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.12 6.4-6.05-4.06a2 2 0 0 0-2.17-.05L2.95 6.35a2 2 0 0 0-1 1.76v8.43a2 2 0 0 0 .97 1.73l6.05 4.06a2 2 0 0 0 2.17.05l9.93-4.05a2 2 0 0 0 1-1.76V8.14a2 2 0 0 0-.95-1.74Z"/><path d="m3.29 7 9.8 4.22a2 2 0 0 0 1.6.03L24.5 7"/><path d="M12 22V12"/></svg>`,
+        // Style 4: Smart Circuit Room Nodes
+        digitaltwin: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/><circle cx="15" cy="15" r="2"/></svg>`,
+        // Style 5: Art Gallery Interior Room
+        luxury: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v16"/><path d="M7 11h10"/><path d="M12 7v8"/></svg>`
+      },
+      {
+        id: 'minimap',
+        name: 'Minimap',
+        navLabel: 'Minimap',
+        desc: 'Chỉnh sửa bản đồ và vị trí phòng',
+        color: '#f59e0b',
+        bg: 'rgba(245, 158, 11, 0.12)',
+        emoji: '🗺️',
+        lucide: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>`,
+        duotone: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" fill="currentColor" fill-opacity="0.16"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>`,
+        // Style 3: Radar Cone Viewpoint
+        spatial: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m12 12 7-7"/><path d="M12 2a10 10 0 0 1 10 10"/><circle cx="12" cy="12" r="2"/></svg>`,
+        // Style 4: Coordinate Grid Blueprint
+        digitaltwin: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/><circle cx="12" cy="12" r="4"/></svg>`,
+        // Style 5: Navigation Compass Rose
+        luxury: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9 12 2"/></svg>`
+      },
+      {
+        id: 'tour',
+        name: 'Kịch bản Auto Tour',
+        navLabel: 'Kịch bản',
+        desc: 'Tạo lộ trình tour tự động',
+        color: '#f97316',
+        bg: 'rgba(249, 115, 22, 0.12)',
+        emoji: '⚡',
+        lucide: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></svg>`,
+        duotone: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3" fill="currentColor" fill-opacity="0.25"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3" fill="currentColor" fill-opacity="0.25"/></svg>`,
+        // Style 3: Orbit Camera Motion
+        spatial: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`,
+        // Style 4: Automation Flow Node
+        digitaltwin: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+        // Style 5: Cinema Film Clapper
+        luxury: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="15" rx="2"/><polygon points="10 11 15 13.5 10 16 10 11"/></svg>`
+      },
+      {
+        id: 'stalls',
+        name: 'Mẫu Sạp Hàng',
+        navLabel: 'Sạp Hàng',
+        desc: 'Tùy biến & thiết kế các bộ mẫu sạp hàng hoá',
+        color: '#06b6d4',
+        bg: 'rgba(6, 182, 212, 0.12)',
+        emoji: '🎨',
+        lucide: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>`,
+        duotone: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" fill="currentColor" fill-opacity="0.15"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>`,
+        // Style 3: 3D Exhibition Pavilion / Pavilion Booth
+        spatial: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/><path d="M2 9h20"/></svg>`,
+        // Style 4: Interactive Smart Kiosk
+        digitaltwin: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="18" r="1"/><path d="M8 6h8"/></svg>`,
+        // Style 5: Luxury Showroom Boutique
+        luxury: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`
+      },
+      {
+        id: 'users',
+        name: 'Phân Quyền',
+        navLabel: 'Phân Quyền',
+        desc: 'Quản lý tài khoản và quyền hệ thống',
+        color: '#6366f1',
+        bg: 'rgba(99, 102, 241, 0.12)',
+        emoji: '👥',
+        lucide: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+        duotone: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4" fill="currentColor" fill-opacity="0.2"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+        // Style 3: Keylock Security Shield
+        spatial: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16.5" r="1.5"/></svg>`,
+        // Style 4: Biometric Shield / Identity
+        digitaltwin: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>`,
+        // Style 5: VIP Seal / Luxury Badge
+        luxury: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>`
+      },
+      {
+        id: 'view',
+        name: 'Xem Tour',
+        navLabel: 'Xem Tour',
+        desc: 'Trải nghiệm virtual tour như người dùng',
+        color: '#0284c7',
+        bg: 'rgba(2, 132, 199, 0.14)',
+        emoji: '👁️',
+        lucide: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`,
+        duotone: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="currentColor" fill-opacity="0.12"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" fill-opacity="0.25"/></svg>`,
+        // Style 3: VR Headset (Kính Thực Tế Ảo)
+        spatial: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-4.5a2 2 0 0 0-1.6.8L13.5 19a2 2 0 0 1-3 0l-1.4-1.2a2 2 0 0 0-1.6-.8H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><circle cx="7.5" cy="12" r="2.5"/><circle cx="16.5" cy="12" r="2.5"/></svg>`,
+        // Style 4: Monitor Panoptic View
+        digitaltwin: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`,
+        // Style 5: Viewfinder / Focus Scope
+        luxury: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>`
+      },
+      {
+        id: 'hotspot_stat',
+        name: 'Hotspot (Điểm Tương Tác)',
+        navLabel: 'Hotspot',
+        desc: 'Tổng số điểm tương tác trong toàn bộ không gian',
+        color: '#6366f1',
+        bg: 'rgba(99, 102, 241, 0.1)',
+        emoji: '📤',
+        lucide: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>`,
+        duotone: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" fill="currentColor" fill-opacity="0.16"/><circle cx="12" cy="10" r="3"/></svg>`,
+        // Style 3: Pulsing Target Spot
+        spatial: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>`,
+        // Style 4: Sensor IoT Node
+        digitaltwin: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>`,
+        // Style 5: Fine Diamond Landmark
+        luxury: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 12 12 22 2 12 12 2"/><circle cx="12" cy="12" r="2"/></svg>`
+      }
+    ];
+
+    let currentMode = 'spatial'; // Default to 3D Spatial
+
+    function renderSpecimenTable() {
+      const tbody = document.getElementById('specimenTableBody');
+      tbody.innerHTML = ICONS_CONFIG.map(item => `
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #0f172a;">${item.name}</div>
+            <div style="font-size: 11px; color: #64748b;">${item.desc}</div>
+          </td>
+          <td>
+            <div class="icon-cell" style="background: ${item.bg};">
+              <span class="emoji-pill">${item.emoji}</span>
+            </div>
+          </td>
+          <td class="${currentMode === 'lucide' ? 'highlight-col' : ''}">
+            <div class="icon-cell" style="background: ${item.bg}; color: ${item.color};">
+              ${item.lucide}
+            </div>
+          </td>
+          <td class="${currentMode === 'duotone' ? 'highlight-col' : ''}">
+            <div class="icon-cell" style="background: ${item.bg}; color: ${item.color};">
+              ${item.duotone}
+            </div>
+          </td>
+          <td class="${currentMode === 'spatial' ? 'highlight-col' : ''}">
+            <div class="icon-cell" style="background: ${item.bg}; color: ${item.color};">
+              ${item.spatial}
+            </div>
+          </td>
+          <td class="${currentMode === 'digitaltwin' ? 'highlight-col' : ''}">
+            <div class="icon-cell" style="background: ${item.bg}; color: ${item.color};">
+              ${item.digitaltwin}
+            </div>
+          </td>
+          <td class="${currentMode === 'luxury' ? 'highlight-col' : ''}">
+            <div class="icon-cell" style="background: ${item.bg}; color: ${item.color};">
+              ${item.luxury}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderMockup() {
+      // 1. Navigation items
+      const navLinksContainer = document.getElementById('mockupNavLinks');
+      const navTourBtn = document.getElementById('mockupNavTour');
+      const navItems = ICONS_CONFIG.filter(i => ['buildings', 'upload', 'rooms', 'minimap', 'tour', 'users'].includes(i.id));
+
+      navLinksContainer.innerHTML = navItems.map((item, idx) => {
+        let iconHtml = '';
+        if (currentMode === 'emoji') {
+          iconHtml = `<span>${item.emoji}</span>`;
+        } else {
+          // Resize SVG to 16px for navbar
+          const svgCode = item[currentMode].replace('width="24" height="24"', 'width="16" height="16"');
+          iconHtml = `<span style="display:inline-flex;color:${item.color};">${svgCode}</span>`;
+        }
+        const activeClass = idx === 0 ? 'active' : '';
+        return `<a href="#" class="mockup-nav-link ${activeClass}">${iconHtml} <span>${item.navLabel}</span></a>`;
+      }).join('');
+
+      const viewTourItem = ICONS_CONFIG.find(i => i.id === 'view');
+      let tourIconHtml = '';
+      if (currentMode === 'emoji') {
+        tourIconHtml = `<span>${viewTourItem.emoji}</span>`;
+      } else {
+        const svgTour = viewTourItem[currentMode].replace('width="24" height="24"', 'width="16" height="16"');
+        tourIconHtml = `<span style="display:inline-flex;color:#0284c7;">${svgTour}</span>`;
+      }
+      navTourBtn.innerHTML = `${tourIconHtml} <span>Xem Tour</span>`;
+
+      // 2. Bento Stats (3 items: buildings, rooms, hotspot_stat)
+      const statsContainer = document.getElementById('mockupStats');
+      const statItems = [
+        { ...ICONS_CONFIG.find(i => i.id === 'buildings'), val: '1', label: 'TÒA NHÀ' },
+        { ...ICONS_CONFIG.find(i => i.id === 'rooms'), val: '42', label: 'PHÒNG 360°' },
+        { ...ICONS_CONFIG.find(i => i.id === 'hotspot_stat'), val: '159', label: 'HOTSPOT' }
+      ];
+
+      statsContainer.innerHTML = statItems.map(st => {
+        let iconMarkup = currentMode === 'emoji' ? `<span class="emoji-pill">${st.emoji}</span>` : st[currentMode];
+        return `
+          <div class="mockup-stat">
+            <div class="mockup-stat__icon" style="background: ${st.bg}; color: ${st.color};">
+              ${iconMarkup}
+            </div>
+            <div>
+              <div class="mockup-stat__value">${st.val}</div>
+              <div class="mockup-stat__label">${st.label}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 3. Grid of 8 Tool Cards
+      const cardsContainer = document.getElementById('mockupCards');
+      const cardItems = ICONS_CONFIG.filter(i => i.id !== 'hotspot_stat');
+
+      cardsContainer.innerHTML = cardItems.map(item => {
+        let iconMarkup = currentMode === 'emoji' ? `<span class="emoji-pill">${item.emoji}</span>` : item[currentMode];
+        return `
+          <a href="#" class="mockup-card-item">
+            <div class="mockup-card-icon" style="background: ${item.bg}; color: ${item.color};">
+              ${iconMarkup}
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div class="mockup-card-title">${item.name}</div>
+              <div class="mockup-card-desc">${item.desc}</div>
+            </div>
+            <span class="mockup-card-arrow">→</span>
+          </a>
+        `;
+      }).join('');
+    }
+
+    function switchIconMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+      const activeBtn = document.getElementById('btnMode_' + mode);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const meta = THEMES[mode] || { name: mode, desc: '' };
+      document.getElementById('themeSummaryTitle').textContent = meta.name;
+      document.getElementById('themeSummaryDesc').textContent = meta.desc;
+      document.getElementById('currentModeLabel').textContent = meta.name;
+
+      // Update table headers highlight
+      ['lucide', 'duotone', 'spatial', 'digitaltwin', 'luxury'].forEach(m => {
+        const th = document.getElementById('th_' + m);
+        if (th) {
+          if (m === mode) {
+            th.classList.add('highlight-col');
+          } else {
+            th.classList.remove('highlight-col');
+          }
+        }
+      });
+
+      renderSpecimenTable();
+      renderMockup();
+    }
+
+    function confirmApply() {
+      const meta = THEMES[currentMode] || { name: currentMode };
+      alert(`Đã ghi nhận lựa chọn của bạn: ${meta.name}!\n\nVui lòng nhắn tên mẫu bạn chọn trong khung chat để AI tự động áp dụng vào hệ thống.`);
+    }
+
+    // Initialize
+    switchIconMode('spatial');
+  </script>
+</body>
+</html>

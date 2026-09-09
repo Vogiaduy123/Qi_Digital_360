@@ -293,6 +293,14 @@ html, body {
   font-size: 24px;
   flex-shrink: 0;
   transition: transform 0.25s ease;
+  color: var(--card-accent, var(--dash-accent));
+}
+
+.dash-card__icon svg,
+.dash-stat__icon svg {
+  width: 26px;
+  height: 26px;
+  display: block;
 }
 
 .dash-card:hover .dash-card__icon {
@@ -300,28 +308,28 @@ html, body {
 }
 
 .dash-card--buildings { --card-accent: #0284c7; }
-.dash-card--buildings .dash-card__icon { background: rgba(2, 132, 199, 0.12); }
+.dash-card--buildings .dash-card__icon { background: rgba(2, 132, 199, 0.12); color: #0284c7; }
 
 .dash-card--upload { --card-accent: #8b5cf6; }
-.dash-card--upload .dash-card__icon { background: rgba(139, 92, 246, 0.12); }
+.dash-card--upload .dash-card__icon { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
 
 .dash-card--rooms { --card-accent: #10b981; }
-.dash-card--rooms .dash-card__icon { background: rgba(16, 185, 129, 0.12); }
+.dash-card--rooms .dash-card__icon { background: rgba(16, 185, 129, 0.12); color: #10b981; }
 
 .dash-card--minimap { --card-accent: #f59e0b; }
-.dash-card--minimap .dash-card__icon { background: rgba(245, 158, 11, 0.12); }
+.dash-card--minimap .dash-card__icon { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
 
 .dash-card--tour { --card-accent: #f97316; }
-.dash-card--tour .dash-card__icon { background: rgba(249, 115, 22, 0.12); }
+.dash-card--tour .dash-card__icon { background: rgba(249, 115, 22, 0.12); color: #f97316; }
 
 .dash-card--stalls { --card-accent: #06b6d4; }
-.dash-card--stalls .dash-card__icon { background: rgba(6, 182, 212, 0.12); }
+.dash-card--stalls .dash-card__icon { background: rgba(6, 182, 212, 0.12); color: #06b6d4; }
 
 .dash-card--view { --card-accent: #38bdf8; }
-.dash-card--view .dash-card__icon { background: rgba(56, 189, 248, 0.14); }
+.dash-card--view .dash-card__icon { background: rgba(56, 189, 248, 0.14); color: #0284c7; }
 
 .dash-card--users { --card-accent: #6366f1; }
-.dash-card--users .dash-card__icon { background: rgba(99, 102, 241, 0.12); }
+.dash-card--users .dash-card__icon { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
 
 .dash-card__body {
   flex: 1;

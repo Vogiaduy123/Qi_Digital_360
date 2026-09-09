@@ -58,8 +58,24 @@ export function setupDeviceMode() {
 export function initZoomControl() {
   const zoomSlider = document.getElementById("zoomSlider");
   const zoomValue = document.getElementById("zoomValue");
+  const zoomResetBtn = document.getElementById("zoomResetBtn");
   const pano = document.getElementById("pano");
   const viewer = getViewer();
+
+  // Nút đặt lại mức thu phóng về mặc định (DEFAULT_FOV_DEG = 75°)
+  if (zoomResetBtn) {
+    zoomResetBtn.addEventListener("click", () => {
+      const defaultFovRad = DEFAULT_FOV_DEG * Math.PI / 180;
+      animateFovTo(defaultFovRad);
+
+      zoomResetBtn.classList.remove("spinning");
+      void zoomResetBtn.offsetWidth; // restart animation
+      zoomResetBtn.classList.add("spinning");
+      setTimeout(() => {
+        zoomResetBtn.classList.remove("spinning");
+      }, 500);
+    });
+  }
 
   // Thiết lập slider: value = FOV degree, giảm = zoom in, tăng = zoom out
   if (zoomSlider) {

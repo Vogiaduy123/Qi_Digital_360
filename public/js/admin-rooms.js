@@ -829,7 +829,10 @@
       let html = '';
       Object.entries(groups).forEach(([bKey, bRooms]) => {
         const b = adminBuildings.find(x => x.id === bKey);
-        const bLabel = b ? `🏢 ${b.name}` : '🏠 Phòng rời';
+        const bIconSvg = b
+          ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px;color:#38bdf8;"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" fill="currentColor" fill-opacity="0.16"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>`
+          : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px;color:#38bdf8;"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="currentColor" fill-opacity="0.18"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`;
+        const bLabel = b ? `${bIconSvg}${b.name}` : `${bIconSvg}Phòng rời`;
         const groupId = `group_${bKey}`;
 
         html += `
@@ -854,7 +857,7 @@
                       </svg>
                     </span>
                     <div class="room-icon-wrap" onclick="selectRoom(${room.id})">
-                      🏠
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="currentColor" fill-opacity="0.18"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
                     </div>
                     <div class="room-item-text" onclick="selectRoom(${room.id})">
                       <div class="room-item-name">${room.name}</div>
@@ -864,7 +867,9 @@
                       <button class="room-action-btn rename" title="Đổi tên phòng" onclick="inlineRenameRoom(event, ${room.id})">
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </button>
-                      <button class="room-action-btn danger" title="Xóa phòng" onclick="deleteRoom(${room.id}, event)">🗑️</button>
+                      <button class="room-action-btn danger" title="Xóa phòng" onclick="deleteRoom(${room.id}, event)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                      </button>
                     </div>
                   </div>
                 `).join('')}
@@ -3683,7 +3688,7 @@
         // Cập nhật tiêu đề phòng trên Top Bar
         const currentRoomTitle = document.getElementById('currentRoomTitle');
         if (currentRoomTitle) {
-          currentRoomTitle.textContent = `🏠 ${room.name}`;
+          currentRoomTitle.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px;color:#38bdf8;"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="currentColor" fill-opacity="0.18"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span>${room.name}</span>`;
         }
         
         // Cập nhật text phụ chỉ rõ đang sửa phòng nào
@@ -4019,7 +4024,9 @@
             if (selectedRoomId === roomId) {
               // Cập nhật tiêu đề top bar
               const titleEl = document.getElementById('currentRoomTitle');
-              if (titleEl) titleEl.textContent = `🏠 ${newName}`;
+              if (titleEl) {
+                titleEl.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:5px;color:#38bdf8;"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="currentColor" fill-opacity="0.18"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><span>${newName}</span>`;
+              }
             }
           } else {
             alert('Lỗi: ' + (res?.error || 'Không rõ nguyên nhân.'));
