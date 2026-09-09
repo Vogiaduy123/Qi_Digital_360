@@ -1,3 +1,5 @@
+import { MIN_FOV, MAX_FOV } from './viewer.js';
+
 const scenes = {};
 const roomsData = {};
 const preloadedImages = new Set();
@@ -68,7 +70,16 @@ export function initRooms(rooms, roomSelectEl) {
       source = Marzipano.ImageUrlSource.fromString(imageUrl);
       geometry = new Marzipano.EquirectGeometry([{ width: 4000 }]);
 
-      const view = new Marzipano.RectilinearView({ fov: Math.PI / 2 });
+      // Dùng vfov limiter trực tiếp — không dùng traditional() vì maxResolution
+      // sẽ tính giới hạn zoom-out dựa theo image resolution, gây cap sai ở ~71°
+      const limiter = Marzipano.RectilinearView.limit.vfov(
+        MIN_FOV,  // min vfov (phóng to hết — góc hẹp nhất)
+        MAX_FOV   // max vfov (thu nhỏ hết — góc rộng nhất)
+      );
+      const view = new Marzipano.RectilinearView(
+        { fov: 75 * Math.PI / 180 }, // default 75°
+        limiter
+      );
 
       const scene = viewer.createScene({ source, geometry, view });
       scenes[room.id] = scene;

@@ -1,7 +1,12 @@
 let viewerInstance = null;
 
-export const MIN_FOV = 45 * Math.PI / 180;
-export const MAX_FOV = 85 * Math.PI / 180;
+// FOV range chuẩn (theo Google Street View & Marzipano)
+const DEFAULT_FOV_DEG = 75;  // mặc định: tự nhiên, gần với tầm nhìn con người
+const MAX_FOV_DEG = 110;     // thu nhỏ hết (góc rộng)
+const MIN_FOV_DEG = 30;      // phóng to hết (góc hẹp)
+export const MIN_FOV = MIN_FOV_DEG * Math.PI / 180;
+export const MAX_FOV = MAX_FOV_DEG * Math.PI / 180;
+
 
 let env = {
   getCurrentRoomId: () => null,
@@ -55,59 +60,70 @@ export function initZoomControl() {
   const zoomValue = document.getElementById("zoomValue");
   const pano = document.getElementById("pano");
   const viewer = getViewer();
-  
-  // Đồng bộ giới hạn slider với cấu hình FOV
+
+  // Thiết lập slider: value = FOV degree, giảm = zoom in, tăng = zoom out
   if (zoomSlider) {
-    const minDeg = Math.round(MIN_FOV * 180 / Math.PI);
-    const maxDeg = Math.round(MAX_FOV * 180 / Math.PI);
-    zoomSlider.min = String(minDeg);
-    zoomSlider.max = String(maxDeg);
-    // Clamp giá trị hiện tại nếu ngoài khoảng
-    const cur = parseInt(zoomSlider.value || String(minDeg), 10);
-    const clamped = Math.min(maxDeg, Math.max(minDeg, cur));
+    zoomSlider.min = String(MIN_FOV_DEG);
+    zoomSlider.max = String(MAX_FOV_DEG);
+    const cur = parseInt(zoomSlider.value, 10);
+    const clamped = (isNaN(cur) || cur < MIN_FOV_DEG || cur > MAX_FOV_DEG) ? DEFAULT_FOV_DEG : cur;
     zoomSlider.value = String(clamped);
     if (zoomValue) zoomValue.textContent = String(clamped);
   }
-  
+
   if (!zoomSlider) return;
-  
-  // Cập nhật từ slider với animation mượt
+
+  // Khi kéo slider: value = FOV degree trực tiếp
   zoomSlider.addEventListener("input", (e) => {
-    const targetFov = parseFloat(e.target.value) * Math.PI / 180;
-    if (zoomValue) zoomValue.textContent = e.target.value;
+    const fovDeg = parseFloat(e.target.value);
+    const targetFov = fovDeg * Math.PI / 180;
+    if (zoomValue) zoomValue.textContent = String(Math.round(fovDeg));
     animateFovTo(targetFov);
   });
-  
-  // Zoom bằng cách cuộn chuột với throttling
-  let lastWheelTime = 0;
-  const wheelThrottle = 50; // ms - tối ưu tốc độ cuộn
-  
+
+  // Zoom bằng cuộn chuột: 1°/notch, không easing (easing gây giật lui)
+  let pendingWheelDelta = 0;
+  let wheelRafId = null;
+
   if (pano) {
     pano.addEventListener("wheel", (e) => {
-      const now = Date.now();
-      if (now - lastWheelTime < wheelThrottle) return;
-      lastWheelTime = now;
-      
       e.preventDefault();
-      
-      const currentRoomId = env.getCurrentRoomId();
-      if (!viewer || !currentRoomId) return;
-      
-      const scene = env.getScene(currentRoomId);
-      if (!scene || !scene.view()) return;
-      
-      const currentFov = scene.view().fov();
+      pendingWheelDelta += e.deltaY;
 
-      // Tính toán zoom step dựa trên deltaY (mượt hơn)
-      const baseStep = 1.2 * Math.PI / 180; // ~1.2° mỗi tick
-      const accel = Math.min(3, 1 + Math.abs(e.deltaY) / 150); // tăng nhẹ theo tốc độ cuộn
-      const delta = (e.deltaY < 0 ? -1 : 1) * baseStep * accel;
+      if (wheelRafId) return;
+      wheelRafId = requestAnimationFrame(() => {
+        wheelRafId = null;
 
-      // Mục tiêu FOV + easing
-      let targetFov = currentFov + delta;
-      targetFov = Math.max(MIN_FOV, Math.min(MAX_FOV, targetFov));
+        const currentRoomId = env.getCurrentRoomId();
+        if (!viewer || !currentRoomId) { pendingWheelDelta = 0; return; }
 
-      animateFovTo(targetFov);
+        const scene = env.getScene(currentRoomId);
+        if (!scene || !scene.view()) { pendingWheelDelta = 0; return; }
+
+        // Huỷ animation đang chạy trước khi đọc view.fov()
+        // (đọc SAU cancel = lấy vị trí thực tế, không bị drift)
+        if (fovAnimFrame) {
+          cancelAnimationFrame(fovAnimFrame);
+          fovAnimFrame = null;
+        }
+
+        const view = scene.view();
+        const currentFovDeg = view.fov() * 180 / Math.PI; // vị trí thực tế
+
+        // 1° mỗi notch (deltaY ~100 mỗi notch)
+        const notches = pendingWheelDelta / 100;
+        pendingWheelDelta = 0;
+
+        const targetDeg = Math.min(MAX_FOV_DEG, Math.max(MIN_FOV_DEG, currentFovDeg + notches));
+        view.setFov(targetDeg * Math.PI / 180);
+
+        // Đồng bộ slider
+        const deg = Math.round(targetDeg);
+        const slider = document.getElementById("zoomSlider");
+        const valueEl = document.getElementById("zoomValue");
+        if (slider) slider.value = String(deg);
+        if (valueEl) valueEl.textContent = String(deg);
+      });
     }, { passive: false });
   }
 }
@@ -138,15 +154,15 @@ export function animateFovTo(targetFov) {
   if (fovAnimFrame) cancelAnimationFrame(fovAnimFrame);
 
   const view = scene.view();
-  const ease = 0.25; // hệ số easing (0-1)
+  const ease = 0.08; // chậm, mượt — mỗi frame tiến 8% khoảng cách còn lại
 
   function step() {
     const cur = view.fov();
     const diff = targetFov - cur;
     if (Math.abs(diff) < 0.0005) {
       view.setFov(targetFov);
-      // đồng bộ slider
-      const deg = Math.round(targetFov * 180 / Math.PI);
+      // đồng bộ slider theo FOV degree
+      const deg = Math.min(MAX_FOV_DEG, Math.max(MIN_FOV_DEG, Math.round(targetFov * 180 / Math.PI)));
       const slider = document.getElementById("zoomSlider");
       const valueEl = document.getElementById("zoomValue");
       if (slider) slider.value = String(deg);
@@ -156,12 +172,12 @@ export function animateFovTo(targetFov) {
     }
     const next = cur + diff * ease;
     view.setFov(next);
-    // đồng bộ slider mỗi frame
-    const deg = Math.round(next * 180 / Math.PI);
+    // đồng bộ slider mỗi frame theo FOV degree
+    const degNext = Math.min(MAX_FOV_DEG, Math.max(MIN_FOV_DEG, Math.round(next * 180 / Math.PI)));
     const slider = document.getElementById("zoomSlider");
     const valueEl = document.getElementById("zoomValue");
-    if (slider) slider.value = String(deg);
-    if (valueEl) valueEl.textContent = String(deg);
+    if (slider) slider.value = String(degNext);
+    if (valueEl) valueEl.textContent = String(degNext);
     fovAnimFrame = requestAnimationFrame(step);
   }
   fovAnimFrame = requestAnimationFrame(step);
