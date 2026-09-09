@@ -347,6 +347,9 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
   const overlayEl = document.createElement("div");
   overlayEl.className = "media-hotspot-overlay";
   overlayEl.onclick = (e) => e.stopPropagation();
+  ["mousedown", "pointerdown", "touchstart", "wheel"].forEach((ev) => {
+    overlayEl.addEventListener(ev, (e) => e.stopPropagation(), { passive: false });
+  });
   
   // Header
   const header = document.createElement("div");
@@ -407,10 +410,14 @@ export function createMediaHotspotOverlay(media, container, yaw, pitch) {
     desc.style.whiteSpace = "pre-wrap";
     desc.style.lineHeight = "1.5";
     desc.style.fontSize = "12px";
-    desc.style.maxHeight = "80px";
+    desc.style.maxHeight = "120px";
     desc.style.overflowY = "auto";
+    desc.style.overscrollBehavior = "contain";
     desc.style.padding = "6px 10px";
     desc.textContent = media.description;
+    ["mousedown", "pointerdown", "touchstart", "wheel"].forEach((ev) => {
+      desc.addEventListener(ev, (e) => e.stopPropagation(), { passive: false });
+    });
     content.appendChild(desc);
   }
 

@@ -1180,6 +1180,7 @@ body.admin #pano>* {
   box-sizing: border-box;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  overscroll-behavior: contain;
 }
 
 .media-hotspot-overlay::-webkit-scrollbar {
@@ -1221,8 +1222,22 @@ body.admin #pano>* {
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   line-height: 1.4;
-  max-height: 80px;
+  max-height: 120px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.media-overlay-description::-webkit-scrollbar {
+  width: 4px;
+}
+.media-overlay-description::-webkit-scrollbar-track {
+  background: transparent;
+}
+.media-overlay-description::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
 }
 
 .media-overlay-content {
