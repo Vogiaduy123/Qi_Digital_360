@@ -15,8 +15,11 @@ backend/raw/
 .agents/
 .vscode/
 
-# AI agent config (chỉ dùng local)
+# AI agent config & Thiết kế (chỉ dùng local)
 .agent/
+skills/
+AGENTS.md
+design.md
 
 # Runtime data (lưu trên Supabase, không cần commit)
 data/
@@ -27,3 +30,4 @@ docs/plans/
 scripts/*
 !scripts/check-syntax.js
 !scripts/sync-stall-templates-to-db.js
+
