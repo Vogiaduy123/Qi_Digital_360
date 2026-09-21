@@ -1,13 +1,8 @@
-const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
+const { supabase } = require('../db');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
 const BUCKET_NAME = 'virtual-tour';
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
  * Lấy MIME Type phù hợp với file extension
@@ -85,13 +80,28 @@ async function ensureBucket() {
   }
 }
 
-module.exports = {
+/**
+ * Hàm helper dọn dẹp các folder rỗng sau khi xóa file
+ */
+function cleanupEmptyDirs(dirPath) {
+  if (!fs.existsSync(dirPath)) return;
+  const files = fs.readdirSync(dirPath);
+  files.forEach(file => {
+    const filePath = path.join(dirPath, file);
+    if (fs.statSync(filePath).isDirectory()) {
+      cleanupEmptyDirs(filePath);
+      if (fs.readdirSync(filePath).length === 0) {
+        fs.rmdirSync(filePath);
+      }
+    }
+  });
+}
+
+const StorageService = {
   sanitizePath,
+  
   /**
    * Tải một file đơn lẻ lên Supabase Storage
-   * @param {string} localFilePath Đường dẫn file ở local
-   * @param {string} destStoragePath Đường dẫn file trên Storage (ví dụ: uploads/filename.jpg)
-   * @returns {Promise<string>} Public URL của file sau khi upload
    */
   async uploadFile(localFilePath, destStoragePath) {
     if (!fs.existsSync(localFilePath)) {
@@ -100,7 +110,7 @@ module.exports = {
 
     await ensureBucket();
 
-    const cleanDestPath = sanitizePath(destStoragePath.replace(/^\//, '')); // Loại bỏ dấu gạch chéo đầu và chuẩn hóa ký tự
+    const cleanDestPath = sanitizePath(destStoragePath.replace(/^\//, ''));
     const fileBuffer = fs.readFileSync(localFilePath);
     const mimeType = getMimeType(localFilePath);
 
@@ -116,7 +126,6 @@ module.exports = {
       throw error;
     }
 
-    // Lấy Public URL của file
     const { data: publicUrlData } = supabase.storage
       .from(BUCKET_NAME)
       .getPublicUrl(cleanDestPath);
@@ -126,8 +135,6 @@ module.exports = {
 
   /**
    * Upload toàn bộ folder đệ quy lên Storage và XÓA folder local sau khi upload thành công
-   * @param {string} localFolderPath Thư mục local
-   * @param {string} destStorageFolder Thư mục đích trên Cloud (ví dụ: tiles/building_name/room_id)
    */
   async uploadFolder(localFolderPath, destStorageFolder) {
     if (!fs.existsSync(localFolderPath)) {
@@ -138,7 +145,6 @@ module.exports = {
     const files = getAllFilesRecursive(localFolderPath);
     console.log(`🚀 Bắt đầu upload folder: ${localFolderPath} (${files.length} tệp)`);
 
-    // Cấu hình kích thước lô (batch size) để upload song song (tối ưu hóa tốc độ)
     const BATCH_SIZE = 50;
     
     for (let i = 0; i < files.length; i += BATCH_SIZE) {
@@ -160,7 +166,6 @@ module.exports = {
       console.log(`⚡ Tiến trình: Đã tải lên ${Math.min(i + BATCH_SIZE, files.length)}/${files.length} tệp...`);
     }
 
-    // Xóa các thư mục con rỗng đệ quy để dọn dẹp folder chính
     try {
       cleanupEmptyDirs(localFolderPath);
       if (fs.existsSync(localFolderPath) && fs.readdirSync(localFolderPath).length === 0) {
@@ -173,19 +178,4 @@ module.exports = {
   }
 };
 
-/**
- * Hàm helper dọn dẹp các folder rỗng sau khi xóa file
- */
-function cleanupEmptyDirs(dirPath) {
-  if (!fs.existsSync(dirPath)) return;
-  const files = fs.readdirSync(dirPath);
-  files.forEach(file => {
-    const filePath = path.join(dirPath, file);
-    if (fs.statSync(filePath).isDirectory()) {
-      cleanupEmptyDirs(filePath);
-      if (fs.readdirSync(filePath).length === 0) {
-        fs.rmdirSync(filePath);
-      }
-    }
-  });
-}
+module.exports = StorageService;

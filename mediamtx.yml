@@ -32,3 +32,11 @@ paths:
     source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
     rtspTransport: tcp
     sourceOnDemand: yes
+  cam_test_auto:
+    source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  cam_test_final:
+    source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
+    rtspTransport: tcp
+    sourceOnDemand: yes

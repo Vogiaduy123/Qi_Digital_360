@@ -3,7 +3,7 @@ const path = require('path');
 
 const MEDIAMTX_API_URL = process.env.MEDIAMTX_API_URL || 'http://127.0.0.1:9997';
 const MEDIAMTX_WHEP_PORT = process.env.MEDIAMTX_WHEP_PORT || '8889';
-const CONFIG_FILE = path.resolve(__dirname, '../mediamtx.yml');
+const CONFIG_FILE = path.resolve(__dirname, '../../mediamtx.yml');
 
 /**
  * Generate a clean stream key from sensor ID or name
@@ -38,7 +38,6 @@ function readExistingPathsFromYaml() {
       }
       if (inPaths) {
         if (/^[a-zA-Z0-9_-]+:/.test(line)) {
-          // Reached another top-level section
           break;
         }
         const keyMatch = line.match(/^ {2}([a-zA-Z0-9_-]+):\s*$/);
@@ -128,7 +127,6 @@ async function registerRtspStream(streamKey, rtspUrl) {
       return { success: true, streamKey: key };
     }
 
-    // If already exists, patch it
     const patchRes = await fetch(`${MEDIAMTX_API_URL}/v3/config/paths/patch/${key}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -143,7 +141,6 @@ async function registerRtspStream(streamKey, rtspUrl) {
 
     return { success: true, streamKey: key, note: 'Saved to mediamtx.yml' };
   } catch (err) {
-    // MediaMTX automatically reloads from mediamtx.yml, so timeout/error is completely safe
     return { success: true, streamKey: key, note: 'Saved to mediamtx.yml' };
   }
 }
@@ -162,12 +159,10 @@ function getWhepUrl(streamKey, req) {
 
   const isHttps = req && (req.headers['x-forwarded-proto'] === 'https' || req.protocol === 'https');
 
-  // If in production HTTPS behind reverse proxy, standard path is /whep/:key/whep
   if (isHttps) {
     return `https://${host}/whep/${key}/whep`;
   }
 
-  // Local development: direct port 8889
   return `http://${host}:${MEDIAMTX_WHEP_PORT}/${key}/whep`;
 }
 
@@ -190,6 +185,7 @@ async function syncAllCameraStreams(sensors) {
 module.exports = {
   sanitizeStreamKey,
   registerRtspStream,
+  addCameraStream: registerRtspStream,
   getWhepUrl,
   syncAllCameraStreams
 };

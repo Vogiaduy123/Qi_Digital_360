@@ -13,25 +13,6 @@ if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your-project-id')) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 const LOCAL_BUILDINGS_FILE = path.join(__dirname, '..', 'data', 'buildings.json');
 
-function readLocalBuildings() {
-  try {
-    if (!fs.existsSync(LOCAL_BUILDINGS_FILE)) return [];
-    const raw = fs.readFileSync(LOCAL_BUILDINGS_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter(item => item && item.id && item.name)
-      .map(item => ({
-        id: item.id,
-        name: item.name,
-        created_at: item.createdAt || item.created_at || new Date().toISOString()
-      }));
-  } catch (err) {
-    console.warn('⚠️ [Supabase DB] Failed to load local buildings fallback:', err.message);
-    return [];
-  }
-}
-
 module.exports = {
   supabase,
 
@@ -227,40 +208,45 @@ module.exports = {
 
   // --- SENSORS ---
   async getSensors() {
-    const { data: sensors, error } = await supabase
-      .from('sensors')
-      .select('*');
-    if (error) {
-      console.error('Error fetching sensors:', error);
-      return [];
-    }
-
-    return sensors.map(s => {
-      const result = {
-        id: Number(s.id),
-        name: s.name,
-        roomId: (s.room_id !== null && s.room_id !== undefined && s.room_id !== '') ? Number(s.room_id) : null,
-        type: s.type,
-        position: {
-          yaw: Number(s.yaw),
-          pitch: Number(s.pitch)
-        },
-        lastUpdate: s.last_update,
-        color: s.color || undefined,
-        iconUrl: s.icon_url || s.data?.iconUrl || null
-      };
-      
-      // Parse sensors value or camera data
-      if (s.type === 'camera') {
-        result.camera = s.data || {};
-      } else {
-        result.sensors = s.data || {};
-        if (s.data?.iconUrl) {
-          result.iconUrl = s.data.iconUrl;
-        }
+    try {
+      const { data: sensors, error } = await supabase
+        .from('sensors')
+        .select('*');
+      if (!error && Array.isArray(sensors) && sensors.length > 0) {
+        return sensors.map(s => {
+          const result = {
+            id: Number(s.id),
+            name: s.name,
+            roomId: (s.room_id !== null && s.room_id !== undefined && s.room_id !== '') ? Number(s.room_id) : null,
+            type: s.type,
+            position: {
+              yaw: Number(s.yaw),
+              pitch: Number(s.pitch)
+            },
+            lastUpdate: s.last_update,
+            color: s.color || undefined,
+            iconUrl: s.icon_url || s.data?.iconUrl || null
+          };
+          
+          // Parse sensors value or camera data
+          if (s.type === 'camera') {
+            result.camera = s.data || {};
+          } else {
+            result.sensors = s.data || {};
+            if (s.data?.iconUrl) {
+              result.iconUrl = s.data.iconUrl;
+            }
+          }
+          return result;
+        });
       }
-      return result;
-    });
+      if (error) {
+        console.error('Error fetching sensors from Supabase:', error);
+      }
+    } catch (err) {
+      console.warn('⚠️ [Supabase DB] Exception fetching sensors:', err.message);
+    }
+    return [];
   },
 
   async insertSensor(sensor) {
@@ -269,6 +255,7 @@ module.exports = {
       ...(rawData || {}),
       ...(sensor.iconUrl ? { iconUrl: sensor.iconUrl } : {})
     };
+
     const { error } = await supabase.from('sensors').insert({
       id: Number(sensor.id),
       name: sensor.name,
@@ -339,8 +326,8 @@ module.exports = {
     }
 
     if (!updatedRows || updatedRows.length === 0) {
-      const msg = `Không tìm thấy thiết bị nào trong CSDL có ID = ${id} để cập nhật.`;
-      console.error('❌ [db.updateSensor] ' + msg);
+      const msg = `Không tìm thấy thiết bị nào trong CSDL có ID = ${id} để cập nhật trên Supabase.`;
+      console.warn('⚠️ [db.updateSensor] ' + msg);
       throw new Error(msg);
     }
 
@@ -354,6 +341,28 @@ module.exports = {
       .delete()
       .eq('id', Number(id));
     if (error) throw error;
+  },
+
+  async saveSensors(sensors) {
+    const list = Array.isArray(sensors) ? sensors : [];
+    for (const sensor of list) {
+      const rawData = sensor.type === 'camera' ? sensor.camera : sensor.sensors;
+      const data = {
+        ...(rawData || {}),
+        ...(sensor.iconUrl ? { iconUrl: sensor.iconUrl } : {})
+      };
+      await supabase.from('sensors').upsert({
+        id: Number(sensor.id),
+        name: sensor.name,
+        room_id: (sensor.roomId !== null && sensor.roomId !== undefined && sensor.roomId !== '') ? Number(sensor.roomId) : null,
+        type: sensor.type,
+        yaw: Number(sensor.position?.yaw || 0),
+        pitch: Number(sensor.position?.pitch || 0),
+        data: data || {},
+        last_update: sensor.lastUpdate || new Date().toISOString(),
+        color: sensor.color || null
+      });
+    }
   },
 
   async insertSensorLog(log) {
@@ -632,25 +641,37 @@ module.exports = {
 
   // --- USERS & AUTH ---
   async getUsers() {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .order('created_at', { ascending: true });
-    if (error) {
-      console.error('Error fetching users:', error);
-      return [];
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (!error && Array.isArray(data)) {
+        return data;
+      }
+      if (error) {
+        console.error('Error fetching users from Supabase:', error);
+      }
+    } catch (err) {
+      console.warn('⚠️ [Supabase DB] Error fetching users from cloud:', err.message);
     }
-    return data;
+    return [];
   },
 
   async getUserByUsername(username) {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('username', username)
-      .limit(1);
-    if (error) throw error;
-    return data && data.length > 0 ? data[0] : null;
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', username)
+        .limit(1);
+      if (!error && data && data.length > 0) {
+        return data[0];
+      }
+    } catch (err) {
+      console.warn('⚠️ [Supabase DB] Error getting user by username from cloud:', err.message);
+    }
+    return null;
   },
 
   async createUser(user) {

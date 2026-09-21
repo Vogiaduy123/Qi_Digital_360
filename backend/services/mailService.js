@@ -16,7 +16,7 @@ function getSmtpConfig() {
 function createMailTransporter(config) {
   const host = String(config.host || "").toLowerCase();
   const timeouts = {
-    connectionTimeout: 10000, // 10 giây
+    connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 15000
   };
@@ -197,11 +197,17 @@ async function sendMailRaw({ to, subject, text, html }) {
   return { messageId: info.messageId, provider: "smtp" };
 }
 
+class MailService {
+  static async sendMail(options) {
+    return await sendMailRaw(options);
+  }
+}
+
 module.exports = {
+  MailService,
+  sendMailRaw,
   getSmtpConfig,
   createMailTransporter,
   getMailApiConfig,
-  parseEmailAddress,
-  sendMailViaHttpApi,
-  sendMailRaw
+  parseEmailAddress
 };
