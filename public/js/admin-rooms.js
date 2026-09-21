@@ -495,6 +495,11 @@
     }
 
     async function attachWebRtcPreview(whepUrl, videoEl) {
+      if (currentPreviewPeerConnection) {
+        try { currentPreviewPeerConnection.close(); } catch (_) { }
+        currentPreviewPeerConnection = null;
+      }
+
       const peerConnection = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       });
@@ -504,9 +509,18 @@
       peerConnection.addTransceiver('audio', { direction: 'recvonly' });
 
       peerConnection.ontrack = (event) => {
-        const [stream] = event.streams || [];
-        if (stream) {
-          videoEl.srcObject = stream;
+        let stream = (event.streams && event.streams[0]) ? event.streams[0] : null;
+        if (!stream) {
+          stream = (videoEl.srcObject instanceof MediaStream) ? videoEl.srcObject : new MediaStream();
+          stream.addTrack(event.track);
+        }
+        videoEl.srcObject = stream;
+        videoEl.muted = true;
+        videoEl.defaultMuted = true;
+        videoEl.playsInline = true;
+        const playPromise = videoEl.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((e) => console.warn('Preview play notice:', e));
         }
       };
 
@@ -527,11 +541,43 @@
 
       const answerSdp = await res.text();
       await peerConnection.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+      return peerConnection;
     }
 
-    function previewCameraStream() {
+    async function resolveStreamUrlToWhep(streamUrl, sensorId, name) {
+      const trimmed = (streamUrl || '').trim();
+      if (trimmed.toLowerCase().startsWith('rtsp://')) {
+        setCameraConnectionStatus('⏳ Đang kết nối và chuyển đổi luồng RTSP sang WebRTC ở Backend...', '#8b5cf6');
+        try {
+          const res = await fetch('/api/camera/convert-rtsp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rtspUrl: trimmed, sensorId, name }),
+            signal: AbortSignal.timeout(6000)
+          });
+          const data = await res.json();
+          if (!data.success) {
+            throw new Error(data.error || 'Lỗi chuyển đổi RTSP');
+          }
+          return { whepUrl: data.whepUrl, rtspUrl: data.rtspUrl, streamKey: data.streamKey };
+        } catch (err) {
+          throw new Error(`Không thể chuyển đổi RTSP sang WebRTC: ${err.message}`);
+        }
+      }
+      const whepUrl = normalizeWebRtcUrl(trimmed);
+      if (!whepUrl) {
+        throw new Error('URL không hợp lệ. Vui lòng nhập link rtsp://... hoặc link WebRTC /whep');
+      }
+      return { whepUrl, rtspUrl: null };
+    }
+
+    async function previewCameraStream() {
       const streamUrl = (document.getElementById('cameraStreamUrl')?.value || '').trim();
       const wrapper = document.getElementById('snapshotPreviewWrapper');
+      const sensorName = (document.getElementById('sensorName')?.value || '').trim();
+      const sensorId = (typeof selectedDbSensorId !== 'undefined' && selectedDbSensorId)
+        ? selectedDbSensorId
+        : (typeof editingSensorIndex !== 'undefined' && editingSensorIndex !== null && typeof roomSensors !== 'undefined' && roomSensors[editingSensorIndex] ? roomSensors[editingSensorIndex].id : null);
 
       if (!streamUrl) {
         resetCameraDiagnostics();
@@ -545,18 +591,21 @@
         return;
       }
 
-      const whepUrl = normalizeWebRtcUrl(streamUrl);
-      if (!whepUrl) {
+      let whepUrl = null;
+      try {
+        const resolved = await resolveStreamUrlToWhep(streamUrl, sensorId, sensorName);
+        whepUrl = resolved.whepUrl;
+      } catch (err) {
         resetCameraDiagnostics();
-        setCameraConnectionStatus('❌ URL không hợp lệ. Dùng URL /whep hoặc webrtc://host/path', '#e74c3c');
+        setCameraConnectionStatus(`❌ ${err.message}`, '#e74c3c');
         return;
       }
 
       if (!wrapper) return;
 
       wrapper.innerHTML = `
-        <video id="cameraStreamPreviewVideo" autoplay muted controls playsinline style="width: 100%; max-height: 220px; object-fit: contain; border-radius: 6px; background: white;"></video>
-        <img id="cameraStreamPreviewImageFallback" alt="Stream preview" style="display: none; width: 100%; max-height: 220px; object-fit: contain; border-radius: 6px; background: white;">
+        <video id="cameraStreamPreviewVideo" autoplay muted controls playsinline style="width: 100%; max-height: 240px; object-fit: contain; border-radius: 8px; background: #000; border: 1px solid rgba(255,255,255,0.15);"></video>
+        <img id="cameraStreamPreviewImageFallback" alt="Stream preview" style="display: none; width: 100%; max-height: 240px; object-fit: contain; border-radius: 8px; background: #000;">
       `;
       wrapper.style.display = 'block';
       setCameraConnectionStatus('⏳ Đang kết nối WebRTC...', '#3498db');
@@ -565,15 +614,30 @@
       const imageFallback = document.getElementById('cameraStreamPreviewImageFallback');
       if (!video || !imageFallback) return;
 
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+
+      video.onloadedmetadata = () => {
+        video.muted = true;
+        video.play().catch(() => { });
+      };
+
       video.oncanplay = () => {
-        setCameraConnectionStatus('✅ Stream đang phát', '#27ae60');
+        setCameraConnectionStatus('✅ Stream đang phát qua WebRTC (<0.5s)', '#27ae60');
+        video.muted = true;
+        video.play().catch(() => { });
+      };
+
+      video.onplaying = () => {
+        setCameraConnectionStatus('✅ Stream đang phát qua WebRTC (<0.5s)', '#27ae60');
       };
 
       video.onerror = () => {
         video.style.display = 'none';
         imageFallback.style.display = 'block';
         imageFallback.src = withCacheBuster(streamUrl);
-        setCameraConnectionStatus('ℹ️ Không phát được WebRTC, đang thử hiển thị ảnh snapshot/MJPEG...', '#f39c12');
+        setCameraConnectionStatus('ℹ️ Đang thử hiển thị ảnh snapshot/MJPEG...', '#f39c12');
       };
 
       imageFallback.onload = () => {
@@ -587,6 +651,7 @@
 
       attachWebRtcPreview(whepUrl, video)
         .then(() => {
+          video.muted = true;
           video.play().catch(() => { });
         })
         .catch((err) => {
@@ -599,6 +664,10 @@
     async function checkCameraStreamUrl() {
       const streamUrl = (document.getElementById('cameraStreamUrl')?.value || '').trim();
       const cameraStatusSelect = document.getElementById('cameraStatus');
+      const sensorName = (document.getElementById('sensorName')?.value || '').trim();
+      const sensorId = (typeof selectedDbSensorId !== 'undefined' && selectedDbSensorId)
+        ? selectedDbSensorId
+        : (typeof editingSensorIndex !== 'undefined' && editingSensorIndex !== null && typeof roomSensors !== 'undefined' && roomSensors[editingSensorIndex] ? roomSensors[editingSensorIndex].id : null);
 
       if (!streamUrl) {
         setCameraConnectionStatus('⚠️ Vui lòng nhập URL stream trước khi kiểm tra', '#e67e22');
@@ -610,15 +679,18 @@
         return;
       }
 
-      const whepUrl = normalizeWebRtcUrl(streamUrl);
-      if (!whepUrl) {
+      try {
+        const resolved = await resolveStreamUrlToWhep(streamUrl, sensorId, sensorName);
+        if (cameraStatusSelect) cameraStatusSelect.value = 'online';
+        if (streamUrl.toLowerCase().startsWith('rtsp://')) {
+          setCameraConnectionStatus('✅ Link RTSP kết nối thành công (Backend đã tự động phát qua WebRTC ngầm)', '#27ae60');
+        } else {
+          setCameraConnectionStatus('✅ URL WebRTC hợp lệ', '#27ae60');
+        }
+      } catch (err) {
         if (cameraStatusSelect) cameraStatusSelect.value = 'offline';
-        setCameraConnectionStatus('❌ URL không hợp lệ. Dùng URL /whep hoặc webrtc://host/path', '#e74c3c');
-        return;
+        setCameraConnectionStatus(`❌ ${err.message}`, '#e74c3c');
       }
-
-      if (cameraStatusSelect) cameraStatusSelect.value = 'online';
-      setCameraConnectionStatus(`✅ URL WebRTC hợp lệ: ${whepUrl}`, '#27ae60');
     }
     window.checkCameraStreamUrl = checkCameraStreamUrl;
 
@@ -4323,7 +4395,7 @@
         if (sensor.camera) {
           const isWebcam = sensor.camera.streamUrl === 'webcam://0';
           document.getElementById('useWebcam').checked = isWebcam;
-          document.getElementById('cameraStreamUrl').value = sensor.camera.streamUrl || '';
+          document.getElementById('cameraStreamUrl').value = sensor.camera.rtspUrl || sensor.camera.streamUrl || '';
           document.getElementById('cameraSnapshotUrl').value = sensor.camera.snapshotUrl || '';
           document.getElementById('cameraResolution').value = sensor.camera.resolution || '1920x1080';
           document.getElementById('cameraStatus').value = sensor.camera.status || 'online';
@@ -4435,8 +4507,11 @@
           ...(grafanaUrl ? { grafanaUrl } : {})
         };
       } else if (sensorType === 'camera') {
+        const streamInput = (document.getElementById('cameraStreamUrl')?.value || '').trim();
+        const editingCam = (editingSensorIndex !== null ? roomSensors[editingSensorIndex]?.camera : null) || dbSensor?.camera;
         sensorData.camera = {
-          streamUrl: document.getElementById('cameraStreamUrl').value,
+          rtspUrl: streamInput.toLowerCase().startsWith('rtsp://') ? streamInput : (editingCam?.rtspUrl || null),
+          streamUrl: streamInput,
           snapshotUrl: document.getElementById('cameraSnapshotUrl').value,
           resolution: document.getElementById('cameraResolution').value,
           status: document.getElementById('cameraStatus').value,
@@ -4515,7 +4590,7 @@
         // Fill camera fields
         const isWebcam = sensor.camera?.streamUrl === 'webcam://0';
         document.getElementById('useWebcam').checked = isWebcam;
-        document.getElementById('cameraStreamUrl').value = sensor.camera?.streamUrl || '';
+        document.getElementById('cameraStreamUrl').value = sensor.camera?.rtspUrl || sensor.camera?.streamUrl || '';
         document.getElementById('cameraSnapshotUrl').value = sensor.camera?.snapshotUrl || '';
         document.getElementById('cameraResolution').value = sensor.camera?.resolution || '1920x1080';
         document.getElementById('cameraStatus').value = sensor.camera?.status || 'online';

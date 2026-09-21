@@ -14,6 +14,7 @@ const { getNotifications, createNotification } = require("./backend/notification
 
 // Import admin routes
 const adminRoutes = require("./backend/admin-api");
+const webrtcManager = require("./backend/webrtc-manager");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -967,6 +968,30 @@ app.get("/api/sensors/:id", async (req, res) => {
   res.json({ success: true, sensor });
 });
 
+app.post("/api/camera/convert-rtsp", async (req, res) => {
+  try {
+    const { rtspUrl, sensorId, name } = req.body || {};
+    if (!rtspUrl || typeof rtspUrl !== "string" || !rtspUrl.trim().toLowerCase().startsWith("rtsp://")) {
+      return res.status(400).json({ success: false, error: "Đường dẫn RTSP không hợp lệ (phải bắt đầu bằng rtsp://)" });
+    }
+
+    const cleanRtsp = rtspUrl.trim();
+    const streamKey = sensorId ? `cam_${sensorId}` : (name ? webrtcManager.sanitizeStreamKey(name) : `cam_${Date.now()}`);
+    await webrtcManager.registerRtspStream(streamKey, cleanRtsp);
+    const whepUrl = webrtcManager.getWhepUrl(streamKey, req);
+
+    res.json({
+      success: true,
+      streamKey,
+      rtspUrl: cleanRtsp,
+      whepUrl
+    });
+  } catch (err) {
+    console.error("❌ Lỗi chuyển đổi RTSP sang WebRTC:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.put("/api/sensors/:id", authMiddleware, requireRole("admin", "collaborator"), async (req, res) => {
   const sensorId = req.params.id;
   const { name, roomId, position, sensors: envSensors, type, camera, iconUrl } = req.body;
@@ -982,8 +1007,20 @@ app.put("/api/sensors/:id", authMiddleware, requireRole("admin", "collaborator")
     if (roomId !== undefined) updates.roomId = roomId;
     if (position) { updates.position = position; }
     if (iconUrl !== undefined) updates.iconUrl = iconUrl;
-    if (isCamera && camera) updates.camera = camera;
-    else if (!isCamera && envSensors) updates.sensors = envSensors;
+    if (isCamera && camera) {
+      const cameraObj = { ...camera };
+      if (cameraObj.streamUrl && cameraObj.streamUrl.trim().toLowerCase().startsWith("rtsp://")) {
+        const cleanRtsp = cameraObj.streamUrl.trim();
+        const streamKey = cameraObj.streamKey || `cam_${sensorId}`;
+        await webrtcManager.registerRtspStream(streamKey, cleanRtsp);
+        cameraObj.rtspUrl = cleanRtsp;
+        cameraObj.streamKey = streamKey;
+        cameraObj.streamUrl = webrtcManager.getWhepUrl(streamKey, req);
+      }
+      updates.camera = cameraObj;
+    } else if (!isCamera && envSensors) {
+      updates.sensors = envSensors;
+    }
     updates.lastUpdate = new Date().toISOString();
 
     await db.updateSensor(sensorId, updates);
@@ -1000,15 +1037,26 @@ app.post("/api/sensors", authMiddleware, requireRole("admin", "collaborator"), a
   if (!name || !roomId) return res.status(400).json({ success: false, error: "Missing required fields" });
 
   try {
+    const newSensorId = Date.now();
+    let finalCamera = camera ? { ...camera } : {};
+    if (type === "camera" && finalCamera.streamUrl && finalCamera.streamUrl.trim().toLowerCase().startsWith("rtsp://")) {
+      const cleanRtsp = finalCamera.streamUrl.trim();
+      const streamKey = finalCamera.streamKey || `cam_${newSensorId}`;
+      await webrtcManager.registerRtspStream(streamKey, cleanRtsp);
+      finalCamera.rtspUrl = cleanRtsp;
+      finalCamera.streamKey = streamKey;
+      finalCamera.streamUrl = webrtcManager.getWhepUrl(streamKey, req);
+    }
+
     const newSensor = {
-      id: Date.now(),
+      id: newSensorId,
       name, roomId,
       type: type || "environment",
       position: position || { yaw: 0, pitch: 0 },
       lastUpdate: new Date().toISOString(),
       color: type === "camera" ? "#2196F3" : "#4CAF50",
       iconUrl: iconUrl || null,
-      ...(type === "camera" ? { camera: camera || {} } : { sensors: sensors || {} })
+      ...(type === "camera" ? { camera: finalCamera } : { sensors: sensors || {} })
     };
     await db.insertSensor(newSensor);
     await broadcastSensors();
@@ -1821,6 +1869,12 @@ app.post("/api/auth/me/profile", authMiddleware, async (req, res) => {
 app.use("/api/admin", authMiddleware, adminRoutes);
 
 /* ===== START ===== */
-app.listen(PORT, () => {
-  console.log("Server running");
+app.listen(PORT, async () => {
+  console.log(`Server running on port ${PORT}`);
+  try {
+    const sensors = await getSensors();
+    await webrtcManager.syncAllCameraStreams(sensors);
+  } catch (err) {
+    console.warn("ℹ️ [WebRTC Sync] Startup sync notice:", err.message);
+  }
 });

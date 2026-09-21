@@ -2433,12 +2433,14 @@ body.admin #pano>* {
 }
 
 .camera-modal-content {
-  background: #606060;
-  border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(134, 134, 134, 0.8);
-  max-width: 90vw;
-  width: 100%;
-  max-height: 90vh;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.7);
+  max-width: 580px;
+  width: 92%;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -2446,107 +2448,112 @@ body.admin #pano>* {
 }
 
 .camera-modal-header {
-  padding: 20px 24px;
+  padding: 12px 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.25);
 }
 
 .camera-modal-header h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 16px;
   font-weight: 600;
+  color: #f1f5f9;
 }
 
 .camera-modal-close {
   background: none;
   border: none;
-  color: #fff;
-  font-size: 32px;
+  color: #94a3b8;
+  font-size: 22px;
   cursor: pointer;
   padding: 0;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  transition: background 0.2s;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 
 .camera-modal-close:hover {
-  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .camera-modal-body {
-  padding: 24px;
+  padding: 14px 18px;
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  background: #0b0f19;
 }
 
 #cameraPreviewContainer {
   width: 100%;
-  max-width: 800px;
+  max-width: 100%;
 }
 
 #cameraPreviewContainer video,
 #cameraPreviewContainer img {
   width: 100%;
-  border-radius: 12px;
+  max-height: 340px;
+  object-fit: contain;
+  border-radius: 8px;
   background: #000;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .camera-status-badge {
   position: absolute;
-  top: 16px;
-  left: 16px;
+  top: 12px;
+  left: 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: rgba(0, 0, 0, 0.8);
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 
 .camera-info-bar {
-  margin-top: 16px;
+  margin-top: 10px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .camera-info-item {
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .camera-info-item strong {
   display: block;
-  font-size: 11px;
-  color: #9ac7ff;
-  margin-bottom: 4px;
+  font-size: 10px;
+  color: #94a3b8;
+  margin-bottom: 2px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .camera-info-item span {
   display: block;
-  font-size: 14px;
-  color: #fff;
+  font-size: 12px;
+  color: #e2e8f0;
+  font-weight: 500;
 }
 
 /* ===== CAMERA PANEL: danh sách + trạng thái camera ===== */

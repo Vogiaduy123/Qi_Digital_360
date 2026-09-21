@@ -178,13 +178,19 @@ async function playWebRtcWhep(whepUrl, videoElement) {
   peerConnection.addTransceiver('audio', { direction: 'recvonly' });
 
   peerConnection.ontrack = (event) => {
-    const [firstStream] = event.streams || [];
-    if (firstStream) {
-      videoElement.srcObject = firstStream;
-      return;
+    let stream = (event.streams && event.streams[0]) ? event.streams[0] : null;
+    if (!stream) {
+      stream = (videoElement.srcObject instanceof MediaStream) ? videoElement.srcObject : new MediaStream();
+      stream.addTrack(event.track);
     }
-    const mediaStream = new MediaStream([event.track]);
-    videoElement.srcObject = mediaStream;
+    videoElement.srcObject = stream;
+    videoElement.muted = true;
+    videoElement.defaultMuted = true;
+    videoElement.playsInline = true;
+    const playPromise = videoElement.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((e) => console.warn('Camera play notice:', e));
+    }
   };
 
   const offer = await peerConnection.createOffer();
@@ -256,7 +262,7 @@ function showSnapshotFallback(camera, container, statusText) {
   return true;
 }
 
-export function showCameraPreview(camera) {
+export async function showCameraPreview(camera) {
   const cameraModal = document.getElementById('cameraModal');
   const cameraModalTitle = document.getElementById('cameraModalTitle');
   const cameraPreviewContainer = document.getElementById('cameraPreviewContainer');
@@ -353,8 +359,14 @@ export function showCameraPreview(camera) {
     video.autoplay = true;
     video.playsinline = true;
     video.muted = true;
+    video.defaultMuted = true;
     video.controls = true;
     video.style.cssText = 'width: 100%; border-radius: 12px; background: #000; border: 1px solid rgba(255,255,255,0.1);';
+
+    video.onloadedmetadata = () => {
+      video.muted = true;
+      video.play().catch(() => {});
+    };
 
     const statusDiv = document.createElement('div');
     statusDiv.className = 'camera-status-badge';
@@ -384,7 +396,23 @@ export function showCameraPreview(camera) {
       setStatus('🔴 Lỗi stream', '🔴 Không phát được stream', 'rgba(244, 67, 54, 0.85)');
     };
 
-    const whepUrl = normalizeWebRtcUrl(streamUrl);
+    let whepUrl = normalizeWebRtcUrl(streamUrl);
+    if (!whepUrl && streamUrl.toLowerCase().startsWith('rtsp://')) {
+      try {
+        const convertRes = await fetch('/api/camera/convert-rtsp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rtspUrl: streamUrl, sensorId: camera.id, name: camera.name })
+        });
+        const convertData = await convertRes.json();
+        if (convertData.success && convertData.whepUrl) {
+          whepUrl = convertData.whepUrl;
+        }
+      } catch (err) {
+        console.warn('⚠️ Auto-convert RTSP in viewer notice:', err.message);
+      }
+    }
+
     if (!whepUrl) {
       if (showSnapshotFallback(camera, cameraPreviewContainer, '📸 Fallback snapshot')) {
         setStatus('📸 Snapshot', '📸 Fallback snapshot', 'rgba(52, 152, 219, 0.85)');

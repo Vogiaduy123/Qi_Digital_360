@@ -3,11 +3,32 @@
 
 logLevel: info
 
+# REST API for dynamic stream path management
+api: yes
+apiAddress: :9997
+
 # WebRTC (WHEP/WHIP) listener
 webrtc: yes
 webrtcAddress: :8889
 
 paths:
   cam101:
-    source: rtsp://admin:RUBY2017@10.10.100.30:554/Streaming/channels/101
+    source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  cam_test_1:
+    source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  camera_cong_1:
+    source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  cam_1787306462029:
+    source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  cam_1787306595926:
+    source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
+    rtspTransport: tcp
     sourceOnDemand: yes
