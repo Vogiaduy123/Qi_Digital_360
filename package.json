@@ -10,12 +10,7 @@
     "build": "vite build",
     "dev:ui": "vite",
     "build:ui": "vite build",
-    "dev": "concurrently \"npm start\" \"npm run dev:ui\"",
-    "test:strix": "powershell -ExecutionPolicy Bypass -File .\\scripts\\strix-test.ps1",
-    "test:strix:reset": "powershell -ExecutionPolicy Bypass -File .\\scripts\\strix-test.ps1 -Reset",
-    "test:strix:restore": "powershell -ExecutionPolicy Bypass -File .\\scripts\\strix-test.ps1 -Restore",
-    "test:strix:finish": "powershell -ExecutionPolicy Bypass -File .\\scripts\\strix-finish.ps1",
-    "test:scan": "node scripts/run-security-scan.js"
+    "dev": "concurrently \"npm start\" \"npm run dev:ui\""
   },
   "keywords": [],
   "author": "",

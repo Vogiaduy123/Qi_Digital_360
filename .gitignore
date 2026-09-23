@@ -24,15 +24,13 @@ design.md
 # Runtime data (lưu trên Supabase, không cần commit)
 data/
 
-# Script tạm và kế hoạch phát triển
+# Script tạm, tài liệu bảo mật và kế hoạch phát triển
 scratch/
 docs/plans/
+docs/security/
 scripts/*
 !scripts/check-syntax.js
 !scripts/sync-stall-templates-to-db.js
-!scripts/strix-test.ps1
-!scripts/strix-finish.ps1
-!scripts/run-security-scan.js
 
 # Strix security test sandbox (dữ liệu test, không commit)
 strix-sandbox/
