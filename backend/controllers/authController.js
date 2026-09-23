@@ -1,6 +1,7 @@
 const db = require("../db");
 const crypto = require("crypto");
 const { hashPassword, comparePassword, signToken } = require("../services/authService");
+const { resetLoginAttempts } = require("../middlewares/loginRateLimiter");
 
 class AuthController {
   // GET /api/auth/setup-status
@@ -60,6 +61,12 @@ class AuthController {
       }
 
       await db.updateLastLogin(user.id);
+
+      // Reset brute-force counter cho IP này sau khi đăng nhập thành công
+      const clientIp = req.ip ||
+        req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+        req.connection?.remoteAddress;
+      if (clientIp) resetLoginAttempts(clientIp);
 
       const token = signToken({
         id: user.id,
@@ -192,7 +199,11 @@ class AuthController {
   static async getAdminUsers(req, res) {
     try {
       const users = await db.getUsers();
-      res.json({ success: true, users });
+      // Lọc bỏ password_hash — không bao giờ trả về client
+      const safeUsers = Array.isArray(users)
+        ? users.map(({ password_hash, ...rest }) => rest)
+        : [];
+      res.json({ success: true, users: safeUsers });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
     }

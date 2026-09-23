@@ -1,23 +1,101 @@
 const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
+const { DATA_DIR } = require('./config/env');
+const { createMockSupabase } = require('./services/mockSupabase');
 require('dotenv').config();
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
-if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your-project-id')) {
-  console.warn('⚠️ [Supabase DB] Cảnh báo: SUPABASE_URL hoặc SUPABASE_KEY chưa được cấu hình đúng trong file .env');
+const isTestMode = process.env.NODE_ENV === 'test' || !supabaseUrl || supabaseUrl.includes('your-project-id');
+
+function readLocalJson(filename, defaultVal = []) {
+  try {
+    const filePath = path.join(DATA_DIR, filename);
+    if (!fs.existsSync(filePath)) return defaultVal;
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch (err) {
+    console.warn(`[db.js] Error reading ${filename}:`, err.message);
+    return defaultVal;
+  }
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-const LOCAL_BUILDINGS_FILE = path.join(__dirname, '..', 'data', 'buildings.json');
+function writeLocalJson(filename, data) {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(path.join(DATA_DIR, filename), JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.warn(`[db.js] Error writing ${filename}:`, err.message);
+  }
+}
+
+let supabase;
+if (isTestMode) {
+  console.log(`🛡️  [SECURITY SANDBOX] Đang chạy chế độ TEST. Supabase Cloud: TẮT. Dữ liệu thật BẢO VỆ 100% tại: ${DATA_DIR}`);
+  supabase = createMockSupabase(DATA_DIR);
+} else {
+  supabase = createClient(supabaseUrl, supabaseKey);
+}
+
+const LOCAL_BUILDINGS_FILE = path.join(DATA_DIR, 'buildings.json');
 
 module.exports = {
   supabase,
 
   // --- ROOMS & HOTSPOTS ---
   async getRooms() {
+    if (isTestMode) {
+      const rooms = readLocalJson('rooms.json', []);
+      return rooms.map(r => ({
+        id: Number(r.id),
+        name: r.name,
+        image: r.image || r.image_url,
+        tilesPath: r.tilesPath || r.tiles_path || '',
+        tilesConfig: r.tilesConfig || r.tiles_config || { levels: [] },
+        floor: Number(r.floor || 1),
+        buildingId: r.buildingId || r.building_id || undefined,
+        orderIndex: Number(r.orderIndex || r.order_index || 0),
+        hotspots: (r.hotspots || []).map(h => ({
+          id: h.id,
+          yaw: Number(h.yaw),
+          pitch: Number(h.pitch),
+          target: Number(h.target !== undefined ? h.target : h.target_room_id),
+          rotation: Number(h.rotation || 0),
+          color: h.color || undefined,
+          iconUrl: h.iconUrl || h.icon_url || undefined,
+          initialYaw: h.initialYaw !== undefined ? Number(h.initialYaw) : (h.initial_yaw !== undefined ? Number(h.initial_yaw) : undefined),
+          initialPitch: h.initialPitch !== undefined ? Number(h.initialPitch) : (h.initial_pitch !== undefined ? Number(h.initial_pitch) : undefined)
+        })),
+        mediaHotspots: (r.mediaHotspots || []).map(m => ({
+          id: m.id,
+          yaw: Number(m.yaw),
+          pitch: Number(m.pitch),
+          title: m.title,
+          description: m.description,
+          mediaUrl: m.mediaUrl || m.media_url || '',
+          mediaType: m.mediaType || m.media_type || 'note',
+          iconUrl: m.iconUrl || m.icon_url || null,
+          mediaItems: m.mediaItems || null,
+          highlightPolygon: m.highlightPolygon || m.highlight_polygon
+        })),
+        mailHotspots: (r.mailHotspots || []).map(ma => ({
+          id: ma.id,
+          title: ma.title,
+          recipient: ma.recipient,
+          subject: ma.subject,
+          body: ma.body,
+          updatedAt: ma.updatedAt || ma.updated_at,
+          yaw: ma.yaw !== undefined ? Number(ma.yaw) : undefined,
+          pitch: ma.pitch !== undefined ? Number(ma.pitch) : undefined,
+          screenX: ma.screenX !== undefined ? Number(ma.screenX) : undefined,
+          screenY: ma.screenY !== undefined ? Number(ma.screenY) : undefined
+        }))
+      }));
+    }
+
     let result = await supabase
       .from('rooms')
       .select('*, hotspots(*), media_hotspots(*), mail_hotspots(*)')
@@ -109,6 +187,25 @@ module.exports = {
   },
 
   async insertRoom(room) {
+    if (isTestMode) {
+      const rooms = readLocalJson('rooms.json', []);
+      rooms.push({
+        id: Number(room.id || Date.now()),
+        name: room.name,
+        image: room.image || room.image_url || '',
+        tilesPath: room.tilesPath || '',
+        tilesConfig: room.tilesConfig || { levels: [] },
+        floor: Number(room.floor || 1),
+        buildingId: room.buildingId || undefined,
+        orderIndex: Number(room.orderIndex || 0),
+        hotspots: [],
+        mediaHotspots: [],
+        mailHotspots: []
+      });
+      writeLocalJson('rooms.json', rooms);
+      return;
+    }
+
     const { error } = await supabase.from('rooms').insert({
       id: Number(room.id),
       name: room.name,
@@ -123,6 +220,22 @@ module.exports = {
   },
 
   async updateRoom(id, updates) {
+    if (isTestMode) {
+      const rooms = readLocalJson('rooms.json', []);
+      const idx = rooms.findIndex(r => r.id === Number(id));
+      if (idx !== -1) {
+        if (updates.name !== undefined) rooms[idx].name = updates.name;
+        if (updates.image !== undefined) rooms[idx].image = updates.image;
+        if (updates.tilesPath !== undefined) rooms[idx].tilesPath = updates.tilesPath;
+        if (updates.tilesConfig !== undefined) rooms[idx].tilesConfig = updates.tilesConfig;
+        if (updates.floor !== undefined) rooms[idx].floor = Number(updates.floor);
+        if (updates.buildingId !== undefined) rooms[idx].buildingId = updates.buildingId || undefined;
+        if (updates.orderIndex !== undefined) rooms[idx].orderIndex = Number(updates.orderIndex);
+        writeLocalJson('rooms.json', rooms);
+      }
+      return;
+    }
+
     const mapped = {};
     if (updates.name !== undefined) mapped.name = updates.name;
     if (updates.image !== undefined) mapped.image_url = updates.image;
@@ -140,6 +253,16 @@ module.exports = {
   },
 
   async updateRoomOrder(id, orderIndex) {
+    if (isTestMode) {
+      const rooms = readLocalJson('rooms.json', []);
+      const r = rooms.find(rm => rm.id === Number(id));
+      if (r) {
+        r.orderIndex = Number(orderIndex);
+        writeLocalJson('rooms.json', rooms);
+      }
+      return;
+    }
+
     const { error } = await supabase
       .from('rooms')
       .update({ order_index: Number(orderIndex) })
@@ -148,6 +271,13 @@ module.exports = {
   },
 
   async deleteRoom(id) {
+    if (isTestMode) {
+      let rooms = readLocalJson('rooms.json', []);
+      rooms = rooms.filter(r => r.id !== Number(id));
+      writeLocalJson('rooms.json', rooms);
+      return;
+    }
+
     const { error } = await supabase
       .from('rooms')
       .delete()
@@ -157,6 +287,10 @@ module.exports = {
 
   // --- BUILDINGS ---
   async getBuildings() {
+    if (isTestMode) {
+      return readLocalJson('buildings.json', []);
+    }
+
     const { data, error } = await supabase
       .from('buildings')
       .select('*')
@@ -169,7 +303,7 @@ module.exports = {
       return data;
     }
 
-    const localBuildings = readLocalBuildings();
+    const localBuildings = readLocalJson('buildings.json', []);
     if (localBuildings.length > 0) {
       console.warn('⚠️ [Supabase DB] Using local buildings fallback data');
       return localBuildings;
@@ -179,6 +313,17 @@ module.exports = {
   },
 
   async insertBuilding(bldg) {
+    if (isTestMode) {
+      const list = readLocalJson('buildings.json', []);
+      list.push({
+        id: bldg.id,
+        name: bldg.name,
+        created_at: bldg.createdAt || new Date().toISOString()
+      });
+      writeLocalJson('buildings.json', list);
+      return;
+    }
+
     const { error } = await supabase.from('buildings').insert({
       id: bldg.id,
       name: bldg.name,
@@ -188,6 +333,16 @@ module.exports = {
   },
 
   async updateBuilding(id, updates) {
+    if (isTestMode) {
+      const list = readLocalJson('buildings.json', []);
+      const idx = list.findIndex(b => b.id === id);
+      if (idx !== -1) {
+        if (updates.name !== undefined) list[idx].name = String(updates.name).trim();
+        writeLocalJson('buildings.json', list);
+      }
+      return;
+    }
+
     const mapped = {};
     if (updates.name !== undefined) mapped.name = String(updates.name).trim();
 
@@ -199,6 +354,13 @@ module.exports = {
   },
 
   async deleteBuilding(id) {
+    if (isTestMode) {
+      let list = readLocalJson('buildings.json', []);
+      list = list.filter(b => b.id !== id);
+      writeLocalJson('buildings.json', list);
+      return;
+    }
+
     const { error } = await supabase
       .from('buildings')
       .delete()
@@ -208,6 +370,10 @@ module.exports = {
 
   // --- SENSORS ---
   async getSensors() {
+    if (isTestMode) {
+      return readLocalJson('sensors.json', []);
+    }
+
     try {
       const { data: sensors, error } = await supabase
         .from('sensors')
@@ -250,6 +416,13 @@ module.exports = {
   },
 
   async insertSensor(sensor) {
+    if (isTestMode) {
+      const list = readLocalJson('sensors.json', []);
+      list.push(sensor);
+      writeLocalJson('sensors.json', list);
+      return;
+    }
+
     const rawData = sensor.type === 'camera' ? sensor.camera : sensor.sensors;
     const data = {
       ...(rawData || {}),
@@ -271,6 +444,17 @@ module.exports = {
   },
 
   async updateSensor(id, sensor) {
+    if (isTestMode) {
+      const list = readLocalJson('sensors.json', []);
+      const idx = list.findIndex(s => Number(s.id) === Number(id));
+      if (idx !== -1) {
+        list[idx] = { ...list[idx], ...sensor };
+        writeLocalJson('sensors.json', list);
+        return list[idx];
+      }
+      return null;
+    }
+
     const mapped = {};
     if (sensor.name !== undefined) mapped.name = sensor.name;
     if (sensor.roomId !== undefined) mapped.room_id = (sensor.roomId !== null && sensor.roomId !== '') ? Number(sensor.roomId) : null;
@@ -336,6 +520,13 @@ module.exports = {
   },
 
   async deleteSensor(id) {
+    if (isTestMode) {
+      let list = readLocalJson('sensors.json', []);
+      list = list.filter(s => Number(s.id) !== Number(id));
+      writeLocalJson('sensors.json', list);
+      return;
+    }
+
     const { error } = await supabase
       .from('sensors')
       .delete()
@@ -344,6 +535,11 @@ module.exports = {
   },
 
   async saveSensors(sensors) {
+    if (isTestMode) {
+      writeLocalJson('sensors.json', sensors);
+      return;
+    }
+
     const list = Array.isArray(sensors) ? sensors : [];
     for (const sensor of list) {
       const rawData = sensor.type === 'camera' ? sensor.camera : sensor.sensors;
@@ -366,6 +562,8 @@ module.exports = {
   },
 
   async insertSensorLog(log) {
+    if (isTestMode) return;
+
     const { error } = await supabase
       .from('sensor_logs')
       .insert({
@@ -382,6 +580,10 @@ module.exports = {
 
   // --- MINIMAPS & MARKERS (1 Phân khu = 1 Minimap) ---
   async getMinimap() {
+    if (isTestMode) {
+      return readLocalJson('minimap.json', { floors: [] });
+    }
+
     const buildings = await this.getBuildings();
     const rooms = await this.getRooms();
 
@@ -403,8 +605,8 @@ module.exports = {
     }
 
     // Đọc rotations & building mappings dự phòng từ app_configs & local file
-    const LOCAL_ROT_FILE = path.join(__dirname, '..', 'data', 'minimap-rotations.json');
-    const LOCAL_BLDG_MAP_FILE = path.join(__dirname, '..', 'data', 'building-minimaps.json');
+    const LOCAL_ROT_FILE = path.join(DATA_DIR, 'minimap-rotations.json');
+    const LOCAL_BLDG_MAP_FILE = path.join(DATA_DIR, 'building-minimaps.json');
     let savedRotations = {};
     let buildingMinimapsConfig = {};
 
@@ -514,11 +716,16 @@ module.exports = {
   },
 
   async saveMinimap(minimapData) {
+    if (isTestMode) {
+      writeLocalJson('minimap.json', minimapData);
+      return;
+    }
+
     const floors = minimapData.floors || [];
     
     // Cập nhật rotations & buildings map
-    const LOCAL_ROT_FILE = path.join(__dirname, '..', 'data', 'minimap-rotations.json');
-    const LOCAL_BLDG_MAP_FILE = path.join(__dirname, '..', 'data', 'building-minimaps.json');
+    const LOCAL_ROT_FILE = path.join(DATA_DIR, 'minimap-rotations.json');
+    const LOCAL_BLDG_MAP_FILE = path.join(DATA_DIR, 'building-minimaps.json');
     let currentRotations = {};
     let buildingMinimapsConfig = {};
 
@@ -618,6 +825,11 @@ module.exports = {
 
   // --- APP CONFIGS (api_config, tour_scenario) ---
   async getAppConfig(key) {
+    if (isTestMode) {
+      const configs = readLocalJson('app-configs.json', {});
+      return configs[key] !== undefined ? configs[key] : null;
+    }
+
     const { data, error } = await supabase
       .from('app_configs')
       .select('data')
@@ -633,6 +845,13 @@ module.exports = {
   },
 
   async saveAppConfig(key, data) {
+    if (isTestMode) {
+      const configs = readLocalJson('app-configs.json', {});
+      configs[key] = data;
+      writeLocalJson('app-configs.json', configs);
+      return;
+    }
+
     const { error } = await supabase
       .from('app_configs')
       .upsert({ key, data });
@@ -641,6 +860,10 @@ module.exports = {
 
   // --- USERS & AUTH ---
   async getUsers() {
+    if (isTestMode) {
+      return readLocalJson('users.json', []);
+    }
+
     try {
       const { data, error } = await supabase
         .from('users')
@@ -659,6 +882,11 @@ module.exports = {
   },
 
   async getUserByUsername(username) {
+    if (isTestMode) {
+      const users = readLocalJson('users.json', []);
+      return users.find(u => u.username === username) || null;
+    }
+
     try {
       const { data, error } = await supabase
         .from('users')
@@ -675,6 +903,21 @@ module.exports = {
   },
 
   async createUser(user) {
+    if (isTestMode) {
+      const users = readLocalJson('users.json', []);
+      const newUser = {
+        id: Date.now(),
+        username: user.username,
+        password_hash: user.passwordHash,
+        role: user.role || 'user',
+        display_name: user.displayName || user.username,
+        created_at: new Date().toISOString()
+      };
+      users.push(newUser);
+      writeLocalJson('users.json', users);
+      return newUser;
+    }
+
     const { data, error } = await supabase
       .from('users')
       .insert({
@@ -689,6 +932,20 @@ module.exports = {
   },
 
   async updateUser(id, updates) {
+    if (isTestMode) {
+      const users = readLocalJson('users.json', []);
+      const idx = users.findIndex(u => Number(u.id) === Number(id));
+      if (idx !== -1) {
+        if (updates.username !== undefined) users[idx].username = updates.username;
+        if (updates.passwordHash !== undefined) users[idx].password_hash = updates.passwordHash;
+        if (updates.role !== undefined) users[idx].role = updates.role;
+        if (updates.displayName !== undefined) users[idx].display_name = updates.displayName;
+        writeLocalJson('users.json', users);
+        return users[idx];
+      }
+      return null;
+    }
+
     const mapped = {};
     if (updates.username !== undefined) mapped.username = updates.username;
     if (updates.passwordHash !== undefined) mapped.password_hash = updates.passwordHash;
@@ -705,6 +962,13 @@ module.exports = {
   },
 
   async deleteUser(id) {
+    if (isTestMode) {
+      let users = readLocalJson('users.json', []);
+      users = users.filter(u => Number(u.id) !== Number(id));
+      writeLocalJson('users.json', users);
+      return;
+    }
+
     const { error } = await supabase
       .from('users')
       .delete()
@@ -734,6 +998,10 @@ module.exports = {
 
   // --- STALL TEMPLATES (DATABASE SUPABASE / POSTGRESQL) ---
   async getStallTemplates() {
+    if (isTestMode) {
+      return readLocalJson('stall-templates.json', []);
+    }
+
     // 1. Thử truy vấn từ bảng riêng stall_templates trên Supabase nếu đã tạo
     try {
       const { data, error } = await supabase
@@ -768,19 +1036,17 @@ module.exports = {
     }
 
     // 3. Fallback về file JSON cục bộ
-    const localFile = path.join(__dirname, '..', 'data', 'stall-templates.json');
-    if (fs.existsSync(localFile)) {
-      try {
-        const raw = fs.readFileSync(localFile, 'utf8');
-        return JSON.parse(raw);
-      } catch {}
-    }
-    return [];
+    return readLocalJson('stall-templates.json', []);
   },
 
   async saveStallTemplates(templates) {
     const validList = Array.isArray(templates) ? templates : [];
     
+    if (isTestMode) {
+      writeLocalJson('stall-templates.json', validList);
+      return;
+    }
+
     // 1. Lưu vào bảng app_configs trên Supabase
     try {
       await this.saveAppConfig('stall_templates', validList);
@@ -812,8 +1078,7 @@ module.exports = {
 
     // 3. Đồng bộ vào file JSON cục bộ
     try {
-      const localFile = path.join(__dirname, '..', 'data', 'stall-templates.json');
-      fs.writeFileSync(localFile, JSON.stringify(validList, null, 2), 'utf8');
+      writeLocalJson('stall-templates.json', validList);
     } catch (err) {
       console.warn('Failed to write local stall-templates.json:', err.message);
     }

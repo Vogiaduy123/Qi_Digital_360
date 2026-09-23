@@ -64,6 +64,7 @@ const upload = multer({ storage: generalStorage });
 
 const uploadPanorama = multer({
   storage: panoramaStorage,
+  limits: { fileSize: 150 * 1024 * 1024 }, // 150MB max cho panorama
   fileFilter: (req, file, cb) => {
     if (file.mimetype === "image/jpeg" || file.mimetype === "image/png" || file.mimetype === "image/webp") {
       cb(null, true);

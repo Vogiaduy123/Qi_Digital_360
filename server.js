@@ -1,13 +1,18 @@
-require("dotenv").config();
+const path = require("path");
+const dotenvPath = process.env.DOTENV_CONFIG_PATH
+  ? path.resolve(process.cwd(), process.env.DOTENV_CONFIG_PATH)
+  : undefined;
+require("dotenv").config(dotenvPath ? { path: dotenvPath, override: true } : {});
 
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const path = require("path");
 const fs = require("fs");
 
 const { PORT, UPLOADS_DIR, LEGACY_UPLOADS_DIR } = require("./backend/config/env");
 const errorHandler = require("./backend/middlewares/errorHandler");
+const securityHeaders = require("./backend/middlewares/securityHeaders");
+const { generalApiLimiter } = require("./backend/middlewares/apiRateLimiter");
 const { verifyToken } = require("./backend/services/authService");
 const UserModel = require("./backend/models/userModel");
 
@@ -20,11 +25,39 @@ const sseRoutes = require("./backend/routes/sseRoutes");
 require("./backend/services/webrtcService");
 
 const app = express();
+app.disable("x-powered-by");
 app.set("trust proxy", 1);
 
 /* ===== MIDDLEWARE ===== */
+app.use(securityHeaders);
 app.use(cookieParser());
-app.use(cors());
+
+// CORS — chỉ cho phép các origin hợp lệ
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
+
+const defaultOrigins = [
+  "http://localhost:5173",  // Vite dev
+  "http://localhost:3000",  // Express dev
+  "http://localhost:5000",  // Express alt port
+];
+
+const allowedSet = new Set([...defaultOrigins, ...ALLOWED_ORIGINS]);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Cho phép request không có origin (mobile app, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedSet.has(origin)) return callback(null, true);
+    callback(new Error(`CORS: Origin '${origin}' không được phép`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -83,6 +116,7 @@ app.get("/test", (req, res) => {
 
 /* ===== MOUNT ROUTERS ===== */
 app.use("/events", sseRoutes);
+app.use("/api", generalApiLimiter);
 app.use("/api", publicRoutes);
 app.use("/api/admin", adminRoutes);
 

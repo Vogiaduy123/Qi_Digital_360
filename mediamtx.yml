@@ -40,3 +40,39 @@ paths:
     source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
     rtspTransport: tcp
     sourceOnDemand: yes
+  cam_probe_test:
+    source: rtsp://127.0.0.1:554/test
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  cam_scan_440201938:
+    source: rtsp://127.0.0.1:22/ssh
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  cam_scan_1274617864:
+    source: rtsp://127.0.0.1:3306/mysql
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  cam_scan_182115358:
+    source: rtsp://192.168.1.1:80/router
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  cam_test:
+    source: rtsp://127.0.0.1:3306/mysql
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  cam_1790148958925:
+    source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  cam_1790148962326:
+    source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  cam_1790148963099:
+    source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
+    rtspTransport: tcp
+    sourceOnDemand: yes
+  cam_1790148965398:
+    source: rtsp://admin:admin@192.168.1.126:554/unicaststream/2
+    rtspTransport: tcp
+    sourceOnDemand: yes

@@ -30,4 +30,10 @@ docs/plans/
 scripts/*
 !scripts/check-syntax.js
 !scripts/sync-stall-templates-to-db.js
+!scripts/strix-test.ps1
+!scripts/strix-finish.ps1
+!scripts/run-security-scan.js
+
+# Strix security test sandbox (dữ liệu test, không commit)
+strix-sandbox/
 

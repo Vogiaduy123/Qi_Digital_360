@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const authMiddleware = require("../middlewares/authMiddleware");
+const { loginRateLimiter } = require("../middlewares/loginRateLimiter");
+const { sensitiveOpLimiter } = require("../middlewares/apiRateLimiter");
 const requireRole = require("../middlewares/roleGuard");
 const { upload, uploadCustomIcon } = require("../middlewares/uploadMiddleware");
 
@@ -41,8 +43,8 @@ router.post("/sensors", authMiddleware, requireRole("admin", "collaborator"), Se
 router.put("/sensors/:id", authMiddleware, requireRole("admin", "collaborator"), SensorController.updateSensor);
 router.delete("/sensors/:id", authMiddleware, requireRole("admin", "collaborator"), SensorController.deleteSensor);
 
-// Camera RTSP to WebRTC conversion
-router.post("/camera/convert-rtsp", SensorController.convertRtsp);
+// Camera RTSP to WebRTC conversion — requires auth to prevent SSRF
+router.post("/camera/convert-rtsp", authMiddleware, SensorController.convertRtsp);
 
 // Protected realtime sensor update
 router.post("/sensors/realtime-update", authMiddleware, SensorController.updateRealtime);
@@ -73,12 +75,12 @@ router.post("/mail/send", authMiddleware, MailController.sendMail);
 
 // --- AUTH & ACCOUNT ---
 router.get("/auth/setup-status", AuthController.getSetupStatus);
-router.post("/auth/setup", AuthController.setupAdmin);
-router.post("/auth/login", AuthController.login);
+router.post("/auth/setup", sensitiveOpLimiter, AuthController.setupAdmin);
+router.post("/auth/login", loginRateLimiter, AuthController.login);
 router.post("/auth/logout", AuthController.logout);
 router.get("/auth/me", authMiddleware, AuthController.getMe);
 router.post("/auth/me/profile", authMiddleware, AuthController.updateProfile);
-router.get("/auth/invitations/verify", AuthController.verifyInvitation);
-router.post("/auth/invitations/accept", AuthController.acceptInvitation);
+router.get("/auth/invitations/verify", sensitiveOpLimiter, AuthController.verifyInvitation);
+router.post("/auth/invitations/accept", sensitiveOpLimiter, AuthController.acceptInvitation);
 
 module.exports = router;

@@ -1,7 +1,12 @@
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
-require("dotenv").config();
+
+// Hỗ trợ load file .env tùy chỉnh (ví dụ: .env.test cho Strix sandbox)
+const dotenvPath = process.env.DOTENV_CONFIG_PATH
+  ? path.resolve(process.cwd(), process.env.DOTENV_CONFIG_PATH)
+  : undefined;
+require("dotenv").config(dotenvPath ? { path: dotenvPath, override: true } : {});
 
 const PORT = process.env.PORT || 3000;
 const DEFAULT_UPLOADS_DIR = path.join(__dirname, "../../uploads");
@@ -45,6 +50,18 @@ const JWT_SECRET = process.env.JWT_SECRET || "vt_secret_key_qi_360_security_key_
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
 
+// NODE_DATA_DIR cho phép Strix test script redirect DATA_DIR về sandbox
+const DATA_DIR = process.env.NODE_DATA_DIR
+  ? path.resolve(process.env.NODE_DATA_DIR)
+  : path.join(__dirname, "../../data");
+
+if (process.env.NODE_DATA_DIR) {
+  // Đảm bảo thư mục sandbox tồn tại
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.mkdirSync(path.join(DATA_DIR, "room-api-configs"), { recursive: true });
+  console.log(`[TEST MODE] DATA_DIR overridden -> ${DATA_DIR}`);
+}
+
 module.exports = {
   PORT,
   UPLOADS_DIR,
@@ -53,7 +70,7 @@ module.exports = {
   SUPABASE_URL,
   SUPABASE_KEY,
   canUseDirectory,
-  DATA_DIR: path.join(__dirname, "../../data"),
+  DATA_DIR,
   TILES_DIR: path.join(__dirname, "../tiles"),
-  ROOM_API_CONFIGS_DIR: path.join(__dirname, "../../data/room-api-configs")
+  ROOM_API_CONFIGS_DIR: path.join(DATA_DIR, "room-api-configs")
 };
