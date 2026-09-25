@@ -160,10 +160,9 @@ function getAvailableFloorsForCurrentContext() {
   if (activeBldgId) {
     const bldgFloor = minimapData.floors.find(f => f.buildingId === activeBldgId || f.id === activeBldgId);
     if (bldgFloor) return [bldgFloor];
-    return [];
   }
 
-  // Nếu chưa chọn phân khu, tìm sơ đồ của phòng hiện tại hoặc sơ đồ đầu tiên
+  // Nếu chưa chọn phân khu hoặc phân khu chưa có sơ đồ riêng, tìm sơ đồ của phòng hiện tại hoặc sơ đồ đầu tiên
   const curRoomId = env.getCurrentRoomId();
   if (curRoomId) {
     const matchingFloor = minimapData.floors.find(f => f.markers && f.markers.some(m => m.roomId === curRoomId));
@@ -212,6 +211,10 @@ function switchFloor(floorId) {
       initUserMinimapCanvas();
       drawUserMinimap();
     };
+    if (userMinimapImage.complete && userMinimapImage.naturalWidth > 0) {
+      initUserMinimapCanvas();
+      drawUserMinimap();
+    }
   } else {
     minimapWrapper.style.display = 'none';
   }
@@ -222,9 +225,10 @@ function switchFloor(floorId) {
 export async function loadMinimap() {
   try {
     const data = await fetchMinimap();
+    const map = (data && data.minimap) ? data.minimap : ((data && data.floors) ? data : null);
 
-    if (data.success && data.minimap && data.minimap.floors && data.minimap.floors.length > 0) {
-      minimapData = data.minimap;
+    if (map && map.floors && map.floors.length > 0) {
+      minimapData = map;
       updateMinimapHighlight();
     }
   } catch (err) {

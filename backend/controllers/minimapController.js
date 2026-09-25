@@ -49,7 +49,7 @@ class MinimapController {
   static async getMinimap(req, res) {
     try {
       const minimap = await MinimapModel.getMinimap();
-      res.json(minimap);
+      res.json({ success: true, minimap });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
     }
